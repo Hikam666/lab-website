@@ -1,0 +1,521 @@
+/* PROFIL LAB SECTION */
+
+.profile-page-img-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.profile-page-main-image {
+    transition: transform 0.5s ease;
+}
+
+.profile-page-main-image:hover {
+    transform: scale(1.05);
+}
+
+.profile-page-feature-box {
+    padding: 20px;
+    border-left: 3px solid var(--bs-primary);
+    background: #f8f9fa;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.profile-page-feature-box:hover {
+    background: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateX(5px);
+}
+
+.profile-page-feature-box i {
+    font-size: 2.5rem;
+}
+
+.profile-page-feature-box h5 {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.profile-page-feature-box p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+
+/* VISI MISI SECTION (id="visi-misi") */
+
+/* --- UBAHAN 1: KARTU VISI (Sekarang Biru) --- */
+.profile-page-vision-card {
+    /* Mengubah gradient ungu menjadi Biru Primary ke Biru Gelap (Sesuai Tema) */
+    background: linear-gradient(135deg, #3368C6 0%, #031B4E 100%);
+    padding: 40px;
+    border-radius: 15px;
+    /* Mengubah bayangan (shadow) agar bernuansa biru, bukan ungu */
+    box-shadow: 0 10px 30px rgba(51, 104, 198, 0.3); 
+    color: #fff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-page-vision-card:hover {
+    transform: translateY(-10px);
+    /* Shadow saat hover juga disesuaikan */
+    box-shadow: 0 15px 40px rgba(51, 104, 198, 0.4);
+}
+
+.profile-page-vision-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.profile-page-vision-icon i {
+    font-size: 2.5rem;
+    color: #fff;
+}
+
+.profile-page-vision-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
+    letter-spacing: 2px;
+}
+
+.profile-page-vision-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 0;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* --- UBAHAN 2: KARTU MISI (Icon & Border) --- */
+.profile-page-mission-card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 2px solid #f0f0f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-page-mission-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    /* Border saat hover menggunakan warna Primary (Biru) */
+    border-color: #3368C6;
+}
+
+.profile-page-mission-icon {
+    width: 80px;
+    height: 80px;
+    /* Mengubah background Icon Misi menjadi Biru juga */
+    background: linear-gradient(135deg, #3368C6 0%, #031B4E 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.profile-page-mission-icon i {
+    font-size: 2.5rem;
+    color: #fff;
+}
+
+.profile-page-mission-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #031B4E; /* Judul menggunakan warna gelap tema */
+    letter-spacing: 2px;
+}
+
+.profile-page-mission-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile-page-mission-list li {
+    padding-left: 35px;
+    margin-bottom: 15px;
+    position: relative;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #555;
+}
+
+.profile-page-mission-list li:before {
+    content: "\f00c";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 2px;
+    /* Centang menggunakan warna Primary (Biru) */
+    color: #3368C6; 
+    font-size: 1rem;
+}
+
+.profile-page-mission-list li:last-child {
+    margin-bottom: 0;
+}
+
+
+/* TEAM SECTION (id="anggota")= */
+
+.profile-page-team-card {
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s ease;
+    height: 100%;
+}
+
+.profile-page-team-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* Kepala Lab - Special Card */
+.profile-page-team-head {
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+    border: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.profile-page-team-head:hover {
+    box-shadow: 0 15px 45px rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* Team Image Container */
+.profile-page-team-img {
+    position: relative;
+    overflow: hidden;
+    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    padding: 20px;
+}
+
+.profile-page-team-img img {
+    width: 280px;
+    height: 280px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+.profile-page-team-head .profile-page-team-img {
+    height: 400px;
+    padding: 30px;
+}
+
+.profile-page-team-head .profile-page-team-img img {
+    width: 320px;
+    height: 320px;
+    border-width: 6px;
+    border-color: #667eea;
+}
+
+.profile-page-team-card:hover .profile-page-team-img img {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Social Media Overlay */
+.profile-page-team-social {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.profile-page-team-card:hover .profile-page-team-social {
+    opacity: 1;
+}
+
+.profile-page-team-social a {
+    width: 45px;
+    height: 45px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    transform: translateY(20px);
+}
+
+.profile-page-team-card:hover .profile-page-team-social a {
+    transform: translateY(0);
+}
+
+.profile-page-team-social a:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.profile-page-team-social a:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.profile-page-team-social a:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.profile-page-team-social a:hover {
+    background: #333;
+    color: #fff;
+    transform: scale(1.15) translateY(0);
+}
+
+/* Team Content */
+.profile-page-team-content {
+    padding: 25px;
+    text-align: center;
+}
+
+.profile-page-team-content h5 {
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.profile-page-team-head .profile-page-team-content h5 {
+    font-size: 1.4rem;
+    color: #667eea;
+}
+
+.profile-page-team-position {
+    display: inline-block;
+    padding: 5px 15px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.profile-page-team-position.kepala-lab {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+}
+
+/* EXPERTISE DESCRIPTION - Muncul saat Hover */
+.profile-page-team-expertise {
+    font-size: 0.85rem;
+    color: #0d6efd;
+    margin-bottom: 0;
+    font-style: italic;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.5s ease;
+    margin-top: 0;
+    padding-top: 0;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.profile-page-team-card:hover .profile-page-team-expertise {
+    opacity: 1;
+    max-height: 200px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #e8f0fe;
+}
+
+
+/* RESPONSIVE DESIGN */
+
+/* Tablet (992px and below) */
+@media (max-width: 991.98px) {
+    .profile-page-vision-title,
+    .profile-page-mission-title {
+        font-size: 1.75rem;
+    }
+
+    .profile-page-vision-text {
+        font-size: 1rem;
+    }
+
+    .profile-page-mission-list li {
+        font-size: 0.9rem;
+    }
+
+    .profile-page-team-img {
+        height: 320px;
+        padding: 15px;
+    }
+
+    .profile-page-team-img img {
+        width: 250px;
+        height: 250px;
+    }
+
+    .profile-page-team-head .profile-page-team-img {
+        height: 360px;
+        padding: 20px;
+    }
+
+    .profile-page-team-head .profile-page-team-img img {
+        width: 280px;
+        height: 280px;
+    }
+    
+    .profile-page-team-card:hover .profile-page-team-expertise {
+        max-height: 180px;
+    }
+}
+
+/* Mobile (768px and below) */
+@media (max-width: 767.98px) {
+    .profile-page-vision-card,
+    .profile-page-mission-card {
+        padding: 30px 20px;
+    }
+
+    .profile-page-vision-icon,
+    .profile-page-mission-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 20px;
+    }
+
+    .profile-page-vision-icon i,
+    .profile-page-mission-icon i {
+        font-size: 2rem;
+    }
+
+    .profile-page-vision-title,
+    .profile-page-mission-title {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+
+    .profile-page-vision-text {
+        font-size: 0.95rem;
+    }
+
+    .profile-page-mission-list li {
+        font-size: 0.85rem;
+        padding-left: 30px;
+        margin-bottom: 12px;
+    }
+
+    .profile-page-team-img {
+        height: 280px;
+        padding: 15px;
+    }
+
+    .profile-page-team-img img {
+        width: 220px;
+        height: 220px;
+        border-width: 4px;
+    }
+
+    .profile-page-team-head .profile-page-team-img {
+        height: 320px;
+        padding: 20px;
+    }
+
+    .profile-page-team-head .profile-page-team-img img {
+        width: 250px;
+        height: 250px;
+        border-width: 5px;
+    }
+
+    .profile-page-team-head .profile-page-team-content h5 {
+        font-size: 1.2rem;
+    }
+
+    .profile-page-feature-box {
+        padding: 15px;
+    }
+
+    .profile-page-feature-box i {
+        font-size: 2rem;
+    }
+    
+    .profile-page-team-expertise {
+        font-size: 0.8rem;
+    }
+    
+    .profile-page-team-card:hover .profile-page-team-expertise {
+        max-height: 160px;
+    }
+}
+
+/* Small Mobile (576px and below) */
+@media (max-width: 575.98px) {
+    .profile-page-vision-title,
+    .profile-page-mission-title {
+        font-size: 1.3rem;
+    }
+
+    .profile-page-team-content h5 {
+        font-size: 1.1rem;
+    }
+
+    .profile-page-team-social a {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .profile-page-team-img {
+        height: 260px;
+        padding: 10px;
+    }
+
+    .profile-page-team-img img {
+        width: 200px;
+        height: 200px;
+    }
+
+    .profile-page-team-head .profile-page-team-img {
+        height: 300px;
+        padding: 15px;
+    }
+
+    .profile-page-team-head .profile-page-team-img img {
+        width: 230px;
+        height: 230px;
+    }
+    
+    .profile-page-team-expertise {
+        font-size: 0.75rem;
+    }
+    
+    .profile-page-team-card:hover .profile-page-team-expertise {
+        max-height: 140px;
+    }
+}
