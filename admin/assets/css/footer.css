@@ -1,0 +1,83 @@
+/**
+ * FOOTER.CSS
+ * ==========
+ * Styling khusus untuk footer admin panel
+ */
+
+/* ========================================
+   FOOTER CONTAINER
+   ======================================== */
+
+.admin-footer {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    color: var(--gray-600);
+    font-size: 0.85rem;
+    margin-left: var(--sidebar-width);
+    transition: all 0.3s ease;
+}
+
+/* Ketika sidebar collapsed */
+.admin-sidebar.collapsed ~ .admin-content .admin-footer {
+    margin-left: 80px;
+}
+
+/* ========================================
+   FOOTER CONTENT
+   ======================================== */
+
+.admin-footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.admin-footer-left {
+    flex: 1;
+}
+
+.admin-footer-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.admin-footer-links a {
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.admin-footer-links a:hover {
+    color: var(--primary-blue);
+}
+
+/* ========================================
+   RESPONSIVE - FOOTER
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Footer full width di mobile */
+    .admin-footer {
+        margin-left: 0;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .admin-footer-links {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

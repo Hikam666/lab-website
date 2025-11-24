@@ -1,0 +1,221 @@
+/**
+ * SIDEBAR.CSS
+ * ===========
+ * Styling khusus untuk sidebar navigasi admin panel
+ */
+
+/* ========================================
+   SIDEBAR CONTAINER
+   ======================================== */
+
+.admin-sidebar {
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, #1F2937 0%, #111827 100%);
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbar untuk sidebar */
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   LOGO SIDEBAR
+   ======================================== */
+
+.sidebar-logo {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-logo-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-blue);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.sidebar-logo-text h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.sidebar-logo-text p {
+    font-size: 0.75rem;
+    margin: 0;
+    color: var(--gray-400);
+}
+
+/* ========================================
+   MENU SIDEBAR
+   ======================================== */
+
+.sidebar-menu {
+    padding: 1rem 0;
+}
+
+.sidebar-menu-section {
+    margin-bottom: 1.5rem;
+}
+
+.sidebar-menu-title {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-400);
+    font-weight: 600;
+}
+
+.sidebar-menu-item {
+    margin: 0.25rem 0.75rem;
+}
+
+.sidebar-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    position: relative;
+}
+
+.sidebar-menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.sidebar-menu-link.active {
+    background-color: var(--primary-blue);
+    color: white;
+    font-weight: 600;
+}
+
+.sidebar-menu-link i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Badge notifikasi di menu */
+.sidebar-menu-badge {
+    margin-left: auto;
+    background-color: var(--danger-red);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+}
+
+/* ========================================
+   SIDEBAR COLLAPSED STATE
+   ======================================== */
+
+.admin-sidebar.collapsed {
+    width: 80px;
+}
+
+.admin-sidebar.collapsed .sidebar-logo-text,
+.admin-sidebar.collapsed .sidebar-menu-title,
+.admin-sidebar.collapsed .sidebar-menu-badge {
+    display: none;
+}
+
+.admin-sidebar.collapsed .sidebar-menu-link {
+    justify-content: center;
+}
+
+.admin-sidebar.collapsed .sidebar-menu-link span {
+    display: none;
+}
+
+/* ========================================
+   SIDEBAR BACKDROP (MOBILE)
+   ======================================== */
+
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sidebar-backdrop.show {
+    display: block;
+}
+
+/* ========================================
+   RESPONSIVE - SIDEBAR
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Sidebar menjadi overlay di mobile */
+    .admin-sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+}
+
+/* ========================================
+   ANIMATIONS - SIDEBAR
+   ======================================== */
+
+/* Slide in from left (untuk sidebar mobile) */
+.slide-in-left {
+    animation: slideInLeft 0.3s ease;
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

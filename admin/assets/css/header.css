@@ -1,0 +1,219 @@
+/**
+ * HEADER.CSS
+ * ==========
+ * Styling khusus untuk header top navbar admin panel
+ */
+
+/* ========================================
+   HEADER CONTAINER
+   ======================================== */
+
+.admin-header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--header-height);
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    z-index: 999;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Ketika sidebar collapsed */
+.admin-sidebar.collapsed ~ .admin-header {
+    left: 80px;
+}
+
+/* ========================================
+   HEADER LEFT - TOGGLE & SEARCH
+   ======================================== */
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+/* Toggle button */
+.header-toggle {
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.header-toggle:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+}
+
+/* Search bar */
+.header-search {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.header-search input {
+    width: 100%;
+    padding: 0.625rem 1rem 0.625rem 2.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.header-search input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.header-search i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    font-size: 1rem;
+}
+
+/* ========================================
+   HEADER RIGHT - NOTIFICATIONS & USER
+   ======================================== */
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Notification button */
+.header-notification {
+    position: relative;
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.header-notification:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+}
+
+.header-notification-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    background-color: var(--danger-red);
+    color: white;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ========================================
+   USER DROPDOWN
+   ======================================== */
+
+.header-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.header-user:hover {
+    background-color: var(--gray-100);
+    border-color: var(--gray-300);
+}
+
+.header-user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.header-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.header-user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--gray-800);
+    line-height: 1.2;
+}
+
+.header-user-role {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+/* ========================================
+   RESPONSIVE - HEADER
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .header-search {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Header full width di mobile */
+    .admin-header {
+        left: 0;
+        padding: 0 1rem;
+    }
+    
+    /* Hide search di mobile */
+    .header-search {
+        display: none;
+    }
+    
+    /* Simplify user info */
+    .header-user-info {
+        display: none;
+    }
+    
+    .header-user {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-header {
+        padding: 0 0.75rem;
+    }
+}

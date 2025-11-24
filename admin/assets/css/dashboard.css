@@ -1,0 +1,252 @@
+/**
+ * DASHBOARD.CSS
+ * =============
+ * Styling khusus untuk halaman dashboard admin
+ */
+
+/* ========================================
+   ADMIN WRAPPER & LAYOUT
+   ======================================== */
+
+/* Wrapper utama admin panel */
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--gray-50);
+}
+
+/* Main content area */
+.admin-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    padding: 2rem;
+    min-height: calc(100vh - var(--header-height));
+    transition: all 0.3s ease;
+}
+
+/* Ketika sidebar collapsed */
+.admin-sidebar.collapsed ~ .admin-content {
+    margin-left: 80px;
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+}
+
+/* ========================================
+   BREADCRUMB
+   ======================================== */
+
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: var(--gray-400);
+    font-weight: 600;
+}
+
+.breadcrumb-item a {
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-blue);
+}
+
+.breadcrumb-item.active {
+    color: var(--gray-800);
+    font-weight: 600;
+}
+
+/* ========================================
+   DASHBOARD STATS CARDS
+   ======================================== */
+
+.dashboard-stat-card {
+    transition: transform 0.2s ease;
+}
+
+.dashboard-stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+/* ========================================
+   DASHBOARD CHART
+   ======================================== */
+
+.dashboard-chart {
+    min-height: 300px;
+    padding: 1rem;
+}
+
+/* ========================================
+   QUICK ACTION BUTTONS
+   ======================================== */
+
+.dashboard-quick-action {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--gray-700);
+    transition: all 0.2s ease;
+    border: 1px solid var(--gray-200);
+}
+
+.dashboard-quick-action:hover {
+    background-color: var(--gray-50);
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    transform: translateX(5px);
+}
+
+.dashboard-quick-action i {
+    font-size: 1.25rem;
+}
+
+.dashboard-quick-action span {
+    flex: 1;
+}
+
+/* ========================================
+   DASHBOARD INFO CARDS
+   ======================================== */
+
+/* Card untuk pesan baru, pending approval, dll */
+.dashboard-info-card {
+    transition: box-shadow 0.2s ease;
+}
+
+.dashboard-info-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.dashboard-info-card .card-body {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-info-card .empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--gray-500);
+}
+
+.dashboard-info-card .empty-state i {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+/* ========================================
+   RESPONSIVE - DASHBOARD
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .admin-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Content full width di mobile */
+    .admin-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    /* Page header smaller */
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-content {
+        padding: 0.75rem;
+    }
+    
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .page-header p {
+        font-size: 0.85rem;
+    }
+    
+    /* Dashboard cards stack */
+    .dashboard-stat-icon {
+        font-size: 2rem;
+    }
+    
+    .dashboard-info-card .card-body {
+        min-height: auto;
+    }
+}
+
+/* ========================================
+   ANIMATIONS - DASHBOARD
+   ======================================== */
+
+/* Fade in untuk content */
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Slide up untuk cards */
+.slide-up {
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

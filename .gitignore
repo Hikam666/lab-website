@@ -1,5 +1,6 @@
 .env
 /.env
 uploads/*
-
+/admin/test_layout.php
+/admin/setup_users
 
