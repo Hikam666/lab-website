@@ -23,9 +23,6 @@
             All rights reserved.
         </div>
         <div class="admin-footer-links">
-            <a href="<?php echo SITE_URL; ?>" target="_blank">
-                <i class="bi bi-globe me-1"></i> Lihat Website
-            </a>
             <a href="#">
                 <i class="bi bi-question-circle me-1"></i> Bantuan
             </a>

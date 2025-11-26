@@ -165,17 +165,12 @@ $flash = getFlashMessage();
                     <i class="bi bi-info-circle me-1"></i>
                     Gunakan akun yang telah terdaftar
                 </p>
+                &copy; <?php echo date('Y'); ?> Laboratorium Teknologi Data JTI Polinema
             </div>
             
         </div>
         
-        <!-- Copyright -->
-        <div class="text-center mt-4">
-            <p class="text-muted small mb-0">
-                &copy; <?php echo date('Y'); ?> Laboratorium Teknologi Data JTI Polinema
-            </p>
-        </div>
-    </div>
+ 
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

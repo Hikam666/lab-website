@@ -22,7 +22,7 @@ $current_user = getCurrentUser();
     <!-- Logo Lab -->
     <div class="sidebar-logo">
         <div class="sidebar-logo-icon">
-            <i class="bi bi-shield-check"></i>
+            <img src="assets/img/logoLab-bg.png" alt="Logo Login" class="img-fluid">
         </div>
         <div class="sidebar-logo-text">
             <h4>Lab Admin</h4>
