@@ -1,21 +1,9 @@
-/**
- * DASHBOARD.CSS
- * =============
- * Styling khusus untuk halaman dashboard admin
- */
-
-/* ========================================
-   ADMIN WRAPPER & LAYOUT
-   ======================================== */
-
-/* Wrapper utama admin panel */
+/*ADMIN WRAPPER & LAYOUT*/
 .admin-wrapper {
     display: flex;
     min-height: 100vh;
     background-color: var(--gray-50);
 }
-
-/* Main content area */
 .admin-content {
     margin-left: var(--sidebar-width);
     margin-top: var(--header-height);
@@ -23,15 +11,11 @@
     min-height: calc(100vh - var(--header-height));
     transition: all 0.3s ease;
 }
-
-/* Ketika sidebar collapsed */
 .admin-sidebar.collapsed ~ .admin-content {
     margin-left: 80px;
 }
 
-/* ========================================
-   PAGE HEADER
-   ======================================== */
+/* PAGE HEADER*/
 
 .page-header {
     margin-bottom: 2rem;
@@ -49,9 +33,7 @@
     font-size: 0.95rem;
 }
 
-/* ========================================
-   BREADCRUMB
-   ======================================== */
+/* BREADCRUMB*/
 
 .breadcrumb {
     background: none;
@@ -80,9 +62,7 @@
     font-weight: 600;
 }
 
-/* ========================================
-   DASHBOARD STATS CARDS
-   ======================================== */
+/* DASHBOARD STATS CARDS*/
 
 .dashboard-stat-card {
     transition: transform 0.2s ease;
@@ -97,18 +77,14 @@
     opacity: 0.8;
 }
 
-/* ========================================
-   DASHBOARD CHART
-   ======================================== */
+/* DASHBOARD CHART*/
 
 .dashboard-chart {
     min-height: 300px;
     padding: 1rem;
 }
 
-/* ========================================
-   QUICK ACTION BUTTONS
-   ======================================== */
+/* QUICK ACTION BUTTONS*/
 
 .dashboard-quick-action {
     display: flex;
@@ -137,11 +113,8 @@
     flex: 1;
 }
 
-/* ========================================
-   DASHBOARD INFO CARDS
-   ======================================== */
+/* DASHBOARD INFO CARDS*/
 
-/* Card untuk pesan baru, pending approval, dll */
 .dashboard-info-card {
     transition: box-shadow 0.2s ease;
 }
@@ -167,9 +140,7 @@
     opacity: 0.5;
 }
 
-/* ========================================
-   RESPONSIVE - DASHBOARD
-   ======================================== */
+/* RESPONSIVE - DASHBOARD */
 
 @media (max-width: 1024px) {
     .admin-content {
@@ -178,13 +149,11 @@
 }
 
 @media (max-width: 768px) {
-    /* Content full width di mobile */
     .admin-content {
         margin-left: 0;
         padding: 1rem;
     }
     
-    /* Page header smaller */
     .page-header h1 {
         font-size: 1.5rem;
     }
@@ -207,7 +176,6 @@
         font-size: 0.85rem;
     }
     
-    /* Dashboard cards stack */
     .dashboard-stat-icon {
         font-size: 2rem;
     }
@@ -217,11 +185,8 @@
     }
 }
 
-/* ========================================
-   ANIMATIONS - DASHBOARD
-   ======================================== */
+/* ANIMATIONS - DASHBOARD */
 
-/* Fade in untuk content */
 .fade-in {
     animation: fadeIn 0.3s ease;
 }
@@ -234,8 +199,6 @@
         opacity: 1;
     }
 }
-
-/* Slide up untuk cards */
 .slide-up {
     animation: slideUp 0.3s ease;
 }

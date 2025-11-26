@@ -153,8 +153,8 @@ if (!isset($page_title)) {
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <a class="dropdown-item" href="<?php echo getAdminUrl('pengaturan.php'); ?>">
-                            <i class="bi bi-gear me-2"></i> Pengaturan
+                        <a class="dropdown-item" href="<?php echo getAdminUrl('profil.php'); ?>">
+                            <i class="bi bi-gear me-2"></i> Profil
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>

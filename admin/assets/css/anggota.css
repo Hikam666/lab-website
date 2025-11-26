@@ -1,0 +1,399 @@
+/* ANGGOTA - LIST PAGE (index.php)*/
+.anggota-table-foto {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+}
+
+.anggota-table tr:hover {
+    background-color: var(--gray-50);
+    transition: background-color 0.2s ease;
+}
+
+.anggota-peran-badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: capitalize;
+}
+
+.anggota-empty-icon {
+    font-size: 4rem;
+    color: var(--gray-300);
+    opacity: 0.5;
+}
+
+/*ANGGOTA - FORM PAGE (tambah.php, edit.php)*/
+
+.anggota-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.anggota-foto-preview {
+    position: relative;
+    width: 100%;
+    max-height: 300px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.anggota-foto-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: var(--radius-lg);
+}
+
+.anggota-current-photo-container,
+.anggota-foto-preview-container {
+    text-align: center;
+}
+
+.anggota-current-photo {
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.anggota-new-photo-preview {
+    max-height: 300px;
+    object-fit: cover;
+}
+
+
+.anggota-file-input {
+    position: relative;
+}
+
+.anggota-file-input input[type="file"] {
+    cursor: pointer;
+}
+
+.anggota-file-input input[type="file"]::-webkit-file-upload-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    color: var(--gray-700);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.anggota-file-input input[type="file"]::-webkit-file-upload-button:hover {
+    background-color: var(--gray-50);
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.anggota-required-label::after {
+    content: " *";
+    color: var(--danger-red);
+}
+
+.anggota-bio-editor {
+    min-height: 400px;
+}
+
+/*ANGGOTA - DELETE PAGE (hapus.php)*/
+
+.anggota-delete-card {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.anggota-delete-foto-preview {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    border: 3px solid var(--danger-red);
+}
+
+.anggota-delete-warning {
+    background-color: #FEF3C7;
+    border-left: 4px solid var(--warning-orange);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.anggota-delete-info-table {
+    margin-top: 1.5rem;
+}
+
+.anggota-delete-info-table th {
+    font-weight: 600;
+    color: var(--gray-700);
+    background-color: var(--gray-50);
+}
+
+.anggota-delete-info-table td {
+    color: var(--gray-800);
+}
+
+.anggota-delete-btn {
+    transition: all 0.3s ease;
+}
+
+.anggota-delete-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+}
+
+/* ========================================
+   ANGGOTA - SEARCH & FILTER
+   ======================================== */
+
+.anggota-filter-card {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+}
+
+.anggota-filter-form .form-control:focus,
+.anggota-filter-form .form-select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.anggota-filter-reset {
+    background-color: var(--gray-200);
+    border-color: var(--gray-300);
+    color: var(--gray-700);
+}
+
+.anggota-filter-reset:hover {
+    background-color: var(--gray-300);
+    border-color: var(--gray-400);
+}
+
+/*ANGGOTA - STATUS BADGES*/
+
+.anggota-status-aktif {
+    background-color: var(--success-green);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.anggota-status-nonaktif {
+    background-color: var(--gray-400);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/*ANGGOTA - ACTION BUTTONS*/
+
+
+.anggota-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.anggota-action-btn {
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.anggota-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Edit button */
+.anggota-btn-edit {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+}
+
+.anggota-btn-edit:hover {
+    background-color: var(--primary-blue-dark);
+}
+
+/* Delete button */
+.anggota-btn-delete {
+    background-color: var(--danger-red);
+    color: white;
+    border: none;
+}
+
+.anggota-btn-delete:hover {
+    background-color: #DC2626;
+}
+
+/*ANGGOTA - PAGINATION*/
+
+.anggota-pagination-info {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.anggota-pagination .page-link {
+    border-radius: var(--radius-md);
+    margin: 0 0.25rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.anggota-pagination .page-item.active .page-link {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+}
+
+/*ANGGOTA - RESPONSIVE*/
+
+@media (max-width: 768px) {
+    .anggota-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .anggota-form-container .row {
+        margin: 0;
+    }
+    
+    .anggota-form-container .col-lg-8,
+    .anggota-form-container .col-lg-4 {
+        padding: 0;
+    }
+
+    .anggota-foto-preview {
+        max-height: 200px;
+    }
+    
+    .anggota-filter-form .col-md-4,
+    .anggota-filter-form .col-md-3,
+    .anggota-filter-form .col-md-2 {
+        width: 100%;
+        margin-bottom: 0.75rem;
+    }
+
+    .anggota-action-buttons {
+        flex-direction: column;
+    }
+    
+    .anggota-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+
+    .anggota-filter-card .card-body {
+        padding: 1rem;
+    }
+
+    .anggota-table th:nth-child(5),
+    .anggota-table td:nth-child(5) {
+        display: none;
+    }
+
+    .anggota-table-foto {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/*ANGGOTA - ANIMATIONS*/
+
+@keyframes anggotaFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.anggota-card-animated {
+    animation: anggotaFadeIn 0.3s ease;
+}
+
+.anggota-foto-preview img {
+    transition: transform 0.3s ease;
+}
+
+.anggota-foto-preview:hover img {
+    transform: scale(1.05);
+}
+
+.anggota-form-loading {
+    position: relative;
+}
+
+.anggota-form-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: anggotaSpin 0.8s linear infinite;
+}
+
+@keyframes anggotaSpin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/*ANGGOTA - UTILITIES*/
+
+.anggota-text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.anggota-hover-shadow {
+    transition: box-shadow 0.2s ease;
+}
+
+.anggota-hover-shadow:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+@media print {
+    .anggota-action-buttons,
+    .anggota-filter-card,
+    .page-header .btn {
+        display: none;
+    }
+    
+    .anggota-table {
+        page-break-inside: avoid;
+    }
+}

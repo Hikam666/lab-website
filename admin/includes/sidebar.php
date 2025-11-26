@@ -22,7 +22,7 @@ $current_user = getCurrentUser();
     <!-- Logo Lab -->
     <div class="sidebar-logo">
         <div class="sidebar-logo-icon">
-            <img src="assets/img/logoLab-bg.png" alt="Logo Login" class="img-fluid">
+            <img src="<?php echo getAdminUrl('assets/img/logoLab-bg.png'); ?>" alt="Logo Lab Admin" class="img-fluid">
         </div>
         <div class="sidebar-logo-text">
             <h4>Lab Admin</h4>

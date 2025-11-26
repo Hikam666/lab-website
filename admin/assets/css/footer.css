@@ -1,12 +1,4 @@
-/**
- * FOOTER.CSS
- * ==========
- * Styling khusus untuk footer admin panel
- */
-
-/* ========================================
-   FOOTER CONTAINER
-   ======================================== */
+/*FOOTER CONTAINER*/
 
 .admin-footer {
     padding: 1.5rem 2rem;
@@ -18,14 +10,11 @@
     transition: all 0.3s ease;
 }
 
-/* Ketika sidebar collapsed */
 .admin-sidebar.collapsed ~ .admin-content .admin-footer {
     margin-left: 80px;
 }
 
-/* ========================================
-   FOOTER CONTENT
-   ======================================== */
+/* FOOTER CONTENT*/
 
 .admin-footer-content {
     display: flex;
@@ -57,12 +46,9 @@
     color: var(--primary-blue);
 }
 
-/* ========================================
-   RESPONSIVE - FOOTER
-   ======================================== */
+/* RESPONSIVE - FOOTER */
 
 @media (max-width: 768px) {
-    /* Footer full width di mobile */
     .admin-footer {
         margin-left: 0;
         padding: 1rem;

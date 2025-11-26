@@ -21,6 +21,7 @@ $sql = "SELECT
             a.peran_lab,
             a.bio_html,
             a.urutan,
+            a.linkedin,
             m.lokasi_file as foto,
             m.keterangan_alt as foto_alt
         FROM anggota_lab a
@@ -172,9 +173,19 @@ include __DIR__ . '/../includes/header.php';
                         <div class="profile-page-team-img">
                             <img src="<?php echo $image_src; ?>" class="img-fluid" alt="Kepala Lab">
                             <div class="profile-page-team-social">
-                                <a href=""><i class="fab fa-linkedin-in"></i></a>
-                                <a href=""><i class="fas fa-envelope"></i></a>
-                                <a href=""><i class="fab fa-google-scholar"></i></a>
+                                <?php if (!empty($kepala_lab['linkedin'])): ?> 
+                                <a href="<?php echo htmlspecialchars($kepala_lab['linkedin']); ?>" 
+                                target="_blank" title="LinkedIn" rel="noopener noreferrer">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </a>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($kepala_lab['email'])): ?>
+                                <a href="mailto:<?php echo htmlspecialchars($kepala_lab['email']); ?>" 
+                                title="Email">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="profile-page-team-content">
@@ -201,9 +212,19 @@ include __DIR__ . '/../includes/header.php';
                         <div class="profile-page-team-img">
                             <img src="<?php echo $image_src; ?>" class="img-fluid" alt="<?php echo htmlspecialchars($anggota['nama']); ?>">
                             <div class="profile-page-team-social">
-                                <a href=""><i class="fab fa-linkedin-in"></i></a>
-                                <a href=""><i class="fas fa-envelope"></i></a>
-                                <a href=""><i class="fab fa-google-scholar"></i></a>
+                                <?php if (!empty($anggota['linkedin'])): ?>
+                                <a href="<?php echo htmlspecialchars($anggota['linkedin']); ?>" 
+                                target="_blank" title="LinkedIn" rel="noopener noreferrer">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </a>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($anggota['email'])): ?>
+                                <a href="mailto:<?php echo htmlspecialchars($anggota['email']); ?>" 
+                                title="Email">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="profile-page-team-content">

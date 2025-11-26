@@ -1,13 +1,4 @@
-/**
- * HEADER.CSS
- * ==========
- * Styling khusus untuk header top navbar admin panel
- */
-
-/* ========================================
-   HEADER CONTAINER
-   ======================================== */
-
+/* HEADER CONTAINER*/*
 .admin-header {
     position: fixed;
     top: 0;
@@ -24,14 +15,11 @@
     box-shadow: var(--shadow-sm);
 }
 
-/* Ketika sidebar collapsed */
 .admin-sidebar.collapsed ~ .admin-header {
     left: 80px;
 }
 
-/* ========================================
-   HEADER LEFT - TOGGLE & SEARCH
-   ======================================== */
+/*HEADER LEFT - TOGGLE & SEARCH */
 
 .header-left {
     display: flex;
@@ -40,7 +28,6 @@
     flex: 1;
 }
 
-/* Toggle button */
 .header-toggle {
     background: none;
     border: none;
@@ -57,7 +44,6 @@
     color: var(--gray-900);
 }
 
-/* Search bar */
 .header-search {
     position: relative;
     flex: 1;
@@ -88,9 +74,7 @@
     font-size: 1rem;
 }
 
-/* ========================================
-   HEADER RIGHT - NOTIFICATIONS & USER
-   ======================================== */
+/* HEADER RIGHT - NOTIFICATIONS & USER */
 
 .header-right {
     display: flex;
@@ -98,7 +82,6 @@
     gap: 1rem;
 }
 
-/* Notification button */
 .header-notification {
     position: relative;
     background: none;
@@ -129,9 +112,7 @@
     line-height: 1;
 }
 
-/* ========================================
-   USER DROPDOWN
-   ======================================== */
+/* USER DROPDOWN */
 
 .header-user {
     display: flex;
@@ -180,9 +161,7 @@
     color: var(--gray-500);
 }
 
-/* ========================================
-   RESPONSIVE - HEADER
-   ======================================== */
+/* RESPONSIVE - HEADER */
 
 @media (max-width: 1024px) {
     .header-search {
@@ -191,18 +170,15 @@
 }
 
 @media (max-width: 768px) {
-    /* Header full width di mobile */
     .admin-header {
         left: 0;
         padding: 0 1rem;
     }
-    
-    /* Hide search di mobile */
+
     .header-search {
         display: none;
     }
-    
-    /* Simplify user info */
+
     .header-user-info {
         display: none;
     }
