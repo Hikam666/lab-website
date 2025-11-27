@@ -1,19 +1,28 @@
-/*ADMIN WRAPPER & LAYOUT*/
+/* ADMIN WRAPPER & LAYOUT */
 .admin-wrapper {
     display: flex;
     min-height: 100vh;
     background-color: var(--gray-50);
+    width: 100%;            
 }
+
 .admin-content {
     margin-left: var(--sidebar-width);
     margin-top: var(--header-height);
     padding: 2rem;
     min-height: calc(100vh - var(--header-height));
     transition: all 0.3s ease;
+
+    flex: 1;
+    max-width: calc(100% - var(--sidebar-width));
+    box-sizing: border-box;
 }
+
 .admin-sidebar.collapsed ~ .admin-content {
     margin-left: 80px;
+    max-width: calc(100% - 80px);
 }
+
 
 /* PAGE HEADER*/
 
@@ -140,6 +149,59 @@
     opacity: 0.5;
 }
 
+/* DASHBOARD - AKTIVITAS TERBARU TABLE */
+
+.dashboard-activity-table th,
+.dashboard-activity-table td {
+    font-size: 0.875rem;
+}
+
+.dashboard-activity-table thead th {
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.dashboard-activity-table tbody tr:hover {
+    background-color: var(--gray-50);
+}
+
+/* DASHBOARD - BERITA & PENGUMUMAN TERBARU */
+
+.dashboard-news-list {
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-news-item {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.dashboard-news-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard-news-item .news-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.2rem;
+}
+
+/* Soft badges */
+
+.badge-soft-success {
+    background-color: #e8f7ee;
+    color: #198754;
+    font-weight: 500;
+}
+
+.badge-soft-warning {
+    background-color: #fff6e0;
+    color: #b58104;
+    font-weight: 500;
+}
+
 /* RESPONSIVE - DASHBOARD */
 
 @media (max-width: 1024px) {
@@ -199,6 +261,7 @@
         opacity: 1;
     }
 }
+
 .slide-up {
     animation: slideUp 0.3s ease;
 }

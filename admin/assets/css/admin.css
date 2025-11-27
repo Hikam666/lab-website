@@ -53,24 +53,27 @@ body {
 /* ADMIN LAYOUT UTAMA (Perbaikan Content Wrapper)*/
 
 .admin-wrapper {
+    display: flex;
     min-height: 100vh;
+    background-color: var(--gray-50);
+    width: 100%;            
 }
 
 .admin-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    padding: 2rem;
+    min-height: calc(100vh - var(--header-height));
+    transition: all 0.3s ease;
 
-    margin-left: var(--sidebar-width); 
-
-    padding-top: calc(var(--header-height) + 1.5rem); 
-    
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    padding-bottom: 2rem; 
-    min-height: 100vh;
-    transition: margin-left 0.3s ease; 
+    flex: 1;
+    max-width: calc(100% - var(--sidebar-width));
+    box-sizing: border-box;
 }
 
 .admin-sidebar.collapsed ~ .admin-content {
     margin-left: 80px;
+    max-width: calc(100% - 80px);
 }
 
 @media (max-width: 768px) {

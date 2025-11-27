@@ -14,7 +14,7 @@ requireLogin();
 
 // 3. Page Settings
 $active_page = 'dashboard';
-$page_title = 'Dashboard Overview';
+$page_title  = 'Dashboard Overview';
 
 // PENTING: Panggil dashboard.css di sini
 $extra_css = ['dashboard.css']; 
@@ -24,28 +24,32 @@ $conn = getDBConnection();
 
 // Initialize stats
 $stats = [
-    'anggota' => 0,
-    'fasilitas' => 0,
-    'publikasi' => 0,
-    'berita' => 0,
-    'pesan_baru' => 0,
+    'anggota'          => 0,
+    'fasilitas'        => 0,
+    'publikasi'        => 0,
+    'berita'           => 0,
+    'pesan_baru'       => 0,
     'pending_approval' => 0
 ];
+
+// NEW: penampung data untuk widget tambahan
+$recent_activities = [];
+$recent_news       = [];
 
 // 5. Query Statistik (Jika koneksi berhasil)
 if ($conn) {
     // Helper function untuk count
     function getCount($conn, $table, $condition = "TRUE") {
-        $query = "SELECT COUNT(*) as total FROM $table WHERE $condition";
+        $query  = "SELECT COUNT(*) as total FROM $table WHERE $condition";
         $result = @pg_query($conn, $query);
         return ($result) ? pg_fetch_assoc($result)['total'] : 0;
     }
 
-    $stats['anggota']   = getCount($conn, "anggota_lab", "aktif = TRUE");
-    $stats['fasilitas'] = getCount($conn, "fasilitas", "status = 'disetujui'");
-    $stats['publikasi'] = getCount($conn, "publikasi", "status = 'disetujui'");
-    $stats['berita']    = getCount($conn, "berita", "status = 'disetujui'");
-    $stats['pesan_baru']= getCount($conn, "pesan_kontak", "status = 'baru'");
+    $stats['anggota']    = getCount($conn, "anggota_lab", "aktif = TRUE");
+    $stats['fasilitas']  = getCount($conn, "fasilitas", "status = 'disetujui'");
+    $stats['publikasi']  = getCount($conn, "publikasi", "status = 'disetujui'");
+    $stats['berita']     = getCount($conn, "berita", "status = 'disetujui'");
+    $stats['pesan_baru'] = getCount($conn, "pesan_kontak", "status = 'baru'");
     
     // Khusus Admin: Hitung Pending Approval
     if (isAdmin()) {
@@ -57,6 +61,65 @@ if ($conn) {
         $res_pending = @pg_query($conn, $sql_pending);
         if ($res_pending) {
             $stats['pending_approval'] = pg_fetch_assoc($res_pending)['total'];
+        }
+    }
+
+    $sql_recent_activities = "
+        SELECT * FROM (
+            SELECT 
+                'Berita' AS tabel,
+                'Create' AS aksi,
+                COALESCE(p.nama_lengkap, 'Operator') || ' membuat berita baru' AS keterangan,
+                b.dibuat_pada AS waktu
+            FROM berita b
+            LEFT JOIN pengguna p ON p.id_pengguna = b.dibuat_oleh
+            WHERE b.dibuat_pada IS NOT NULL
+
+            UNION ALL
+
+            SELECT 
+                'Fasilitas' AS tabel,
+                'Create' AS aksi,
+                COALESCE(p2.nama_lengkap, 'Operator') || ' menambahkan fasilitas baru' AS keterangan,
+                f.dibuat_pada AS waktu
+            FROM fasilitas f
+            LEFT JOIN pengguna p2 ON p2.id_pengguna = f.dibuat_oleh
+            WHERE f.dibuat_pada IS NOT NULL
+
+            UNION ALL
+
+            SELECT 
+                'Publikasi' AS tabel,
+                'Create' AS aksi,
+                COALESCE(p3.nama_lengkap, 'Operator') || ' menambahkan publikasi baru' AS keterangan,
+                pub.dibuat_pada AS waktu
+            FROM publikasi pub
+            LEFT JOIN pengguna p3 ON p3.id_pengguna = pub.dibuat_oleh
+            WHERE pub.dibuat_pada IS NOT NULL
+        ) AS x
+        ORDER BY waktu DESC
+        LIMIT 5;
+    ";
+
+    $res_activities = @pg_query($conn, $sql_recent_activities);
+    if ($res_activities) {
+        while ($row = pg_fetch_assoc($res_activities)) {
+            $recent_activities[] = $row;
+        }
+    }
+
+    $sql_recent_news = "
+        SELECT id_berita, judul, jenis, status
+        FROM berita
+        WHERE status IN ('disetujui','diajukan')
+        ORDER BY COALESCE(tanggal_mulai, dibuat_pada) DESC
+        LIMIT 3;
+    ";
+
+    $res_news = @pg_query($conn, $sql_recent_news);
+    if ($res_news) {
+        while ($row = pg_fetch_assoc($res_news)) {
+            $recent_news[] = $row;
         }
     }
 }
@@ -224,8 +287,111 @@ include __DIR__ . '/includes/header.php';
 
 </div>
 
+<!-- Row untuk Aktivitas Terbaru & Berita Terbaru -->
+<div class="row g-4 mt-1 slide-up" style="animation-delay: 0.2s;">
+    
+    <div class="col-lg-8">
+        <div class="card dashboard-info-card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-clock-history me-2 text-primary"></i> Aktivitas Terbaru
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($recent_activities)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 dashboard-activity-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Tabel</th>
+                                    <th scope="col">Aksi</th>
+                                    <th scope="col">Keterangan</th>
+                                    <th scope="col" class="text-end">Waktu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($recent_activities as $act): ?>
+                                    <?php
+                                        $waktu = null;
+                                        if (!empty($act['waktu'])) {
+                                            try {
+                                                $dt    = new DateTime($act['waktu']);
+                                                $waktu = $dt->format('j M, H.i');
+                                            } catch (Exception $e) {
+                                                $waktu = $act['waktu'];
+                                            }
+                                        }
+                                    ?>
+                                    <tr>
+                                        <td class="fw-semibold"><?php echo htmlspecialchars($act['tabel']); ?></td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">
+                                                <?php echo htmlspecialchars($act['aksi']); ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($act['keterangan']); ?></td>
+                                        <td class="text-end text-muted small">
+                                            <?php echo htmlspecialchars($waktu ?? '-'); ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p class="mt-2 mb-0">Belum ada aktivitas terbaru.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card dashboard-info-card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-megaphone me-2 text-success"></i> Berita &amp; Pengumuman Terbaru
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($recent_news)): ?>
+                    <ul class="list-unstyled mb-0 dashboard-news-list">
+                        <?php foreach ($recent_news as $news): ?>
+                            <?php
+                                $status     = $news['status'];
+                                $jenis      = $news['jenis'];
+                                $badgeClass = ($status === 'disetujui') ? 'badge-soft-success' : 'badge-soft-warning';
+                            ?>
+                            <li class="dashboard-news-item">
+                                <div class="news-title">
+                                    <?php echo htmlspecialchars($news['judul']); ?>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 small">
+                                    <span class="badge <?php echo $badgeClass; ?>">
+                                        <?php echo ucfirst($status); ?>
+                                    </span>
+                                    <span class="text-muted">
+                                        <?php echo ucfirst($jenis); ?>
+                                    </span>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="bi bi-newspaper"></i>
+                        <p class="mt-2 mb-0">Belum ada berita atau pengumuman.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 <?php
 // 7. Include Footer
 include __DIR__ . '/includes/footer.php';
-
 ?>
