@@ -12,14 +12,14 @@ $extra_css = ['profil.css'];
 // Mengambil koneksi database
 $conn = getDBConnection();
 
-// Get team members
+// Get team members - Updated query to use 'keahlian' instead of 'bio_html'
 $sql = "SELECT 
             a.id_anggota,
             a.nama,
             a.slug,
             a.email,
             a.peran_lab,
-            a.bio_html,
+            a.keahlian,
             a.urutan,
             a.linkedin,
             m.lokasi_file as foto,
@@ -169,10 +169,10 @@ include __DIR__ . '/../includes/header.php';
             <!-- Kepala Lab - Center Top -->
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="profile-page-team-card profile-page-team-head">
+                    <div class="profile-page-team-card profile-page-team-head" style="cursor: pointer;" onclick="window.location.href='profil-anggota-detail.php?slug=<?php echo $kepala_lab['slug']; ?>'">
                         <div class="profile-page-team-img">
                             <img src="<?php echo $image_src; ?>" class="img-fluid" alt="Kepala Lab">
-                            <div class="profile-page-team-social">
+                            <div class="profile-page-team-social" onclick="event.stopPropagation();">
                                 <?php if (!empty($kepala_lab['linkedin'])): ?> 
                                 <a href="<?php echo htmlspecialchars($kepala_lab['linkedin']); ?>" 
                                 target="_blank" title="LinkedIn" rel="noopener noreferrer">
@@ -191,9 +191,12 @@ include __DIR__ . '/../includes/header.php';
                         <div class="profile-page-team-content">
                             <h5><?php echo htmlspecialchars($kepala_lab['nama']); ?></h5>
                             <span class="profile-page-team-position kepala-lab"><?php echo htmlspecialchars($kepala_lab['peran_lab']); ?></span>
-                            <?php if ($kepala_lab['bio_html']): ?>
-                            <p class="profile-page-team-expertise"><?php echo strip_tags($kepala_lab['bio_html']); ?></p>
+                            <?php if ($kepala_lab['keahlian']): ?>
+                            <p class="profile-page-team-expertise"><?php echo truncateText($kepala_lab['keahlian'], 80); ?></p>
                             <?php endif; ?>
+                            <div class="mt-2">
+                                <small class="text-primary"><i class="bi bi-arrow-right-circle me-1"></i>Lihat Profil Lengkap</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -208,10 +211,10 @@ include __DIR__ . '/../includes/header.php';
                     $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE_URL . '/assets/img/default-avatar.jpg';
                 ?>
                 <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="<?php echo $delay; ?>s">
-                    <div class="profile-page-team-card">
+                    <div class="profile-page-team-card" style="cursor: pointer;" onclick="window.location.href='profil-anggota-detail.php?slug=<?php echo $anggota['slug']; ?>'">
                         <div class="profile-page-team-img">
                             <img src="<?php echo $image_src; ?>" class="img-fluid" alt="<?php echo htmlspecialchars($anggota['nama']); ?>">
-                            <div class="profile-page-team-social">
+                            <div class="profile-page-team-social" onclick="event.stopPropagation();">
                                 <?php if (!empty($anggota['linkedin'])): ?>
                                 <a href="<?php echo htmlspecialchars($anggota['linkedin']); ?>" 
                                 target="_blank" title="LinkedIn" rel="noopener noreferrer">
@@ -230,9 +233,12 @@ include __DIR__ . '/../includes/header.php';
                         <div class="profile-page-team-content">
                             <h5><?php echo htmlspecialchars($anggota['nama']); ?></h5>
                             <span class="profile-page-team-position"><?php echo htmlspecialchars($anggota['peran_lab']); ?></span>
-                            <?php if ($anggota['bio_html']): ?>
-                            <p class="profile-page-team-expertise"><?php echo strip_tags($anggota['bio_html']); ?></p>
+                            <?php if ($anggota['keahlian']): ?>
+                            <p class="profile-page-team-expertise"><?php echo truncateText($anggota['keahlian'], 80); ?></p>
                             <?php endif; ?>
+                            <div class="mt-2">
+                                <small class="text-primary"><i class="bi bi-arrow-right-circle me-1"></i>Lihat Profil Lengkap</small>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -32,6 +32,110 @@
     margin: 0 auto;
 }
 
+/* Dynamic Form Items - Pendidikan */
+.pendidikan-item {
+    background-color: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.pendidikan-item:hover {
+    border-color: var(--primary-blue);
+    background-color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Dynamic Form Items - Sertifikasi */
+.sertifikasi-item {
+    background-color: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.sertifikasi-item:hover {
+    border-color: var(--success-green);
+    background-color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Dynamic Add Buttons */
+.btn-add-dynamic {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.btn-add-dynamic:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Dynamic Remove Buttons */
+.btn-remove-dynamic {
+    transition: all 0.2s ease;
+}
+
+.btn-remove-dynamic:hover {
+    transform: scale(1.1);
+}
+
+/* Mata Kuliah Input Groups */
+.matakuliah-input-group {
+    margin-bottom: 0.75rem;
+}
+
+.matakuliah-input-group .input-group {
+    transition: all 0.2s ease;
+}
+
+.matakuliah-input-group .input-group:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* Keahlian Textarea */
+#keahlian {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* CV File Display */
+.cv-file-info {
+    background-color: var(--gray-100);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-blue);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.cv-file-info i {
+    color: var(--primary-blue);
+    font-size: 1.5rem;
+}
+
+.cv-file-name {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+/* Form Section Headers */
+.form-section-header {
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin: -1rem -1rem 1rem -1rem;
+}
+
 .anggota-foto-preview {
     position: relative;
     width: 100%;
@@ -301,6 +405,22 @@
     .anggota-action-btn {
         width: 100%;
         justify-content: center;
+    }
+    
+    /* Dynamic Forms Responsive */
+    .pendidikan-item .row .col-md-3,
+    .pendidikan-item .row .col-md-4,
+    .pendidikan-item .row .col-md-5,
+    .pendidikan-item .row .col-md-6 {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sertifikasi-item .row .col-md-2,
+    .sertifikasi-item .row .col-md-4,
+    .sertifikasi-item .row .col-md-5 {
+        width: 100%;
+        margin-bottom: 0.5rem;
     }
 }
 
