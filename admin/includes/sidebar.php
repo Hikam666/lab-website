@@ -1,13 +1,4 @@
 <?php
-/**
- * SIDEBAR.PHP
- * ===========
- * Sidebar menu navigasi untuk admin panel
- * 
- * Catatan: File ini di-include di setiap halaman admin
- */
-
-// Pastikan sudah ada session dan auth
 if (!isset($active_page)) {
     $active_page = '';
 }

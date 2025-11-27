@@ -1,12 +1,4 @@
 <?php
-/**
- * HEADER.PHP
- * ==========
- * Header top navbar & struktur awal halaman admin
- */
-
-// Pastikan sudah login
-// (Diasumsikan functions.php & auth.php sudah di-load oleh halaman induk seperti index.php)
 if (function_exists('isLoggedIn') && !isLoggedIn()) {
     redirectAdmin('login.php');
 }

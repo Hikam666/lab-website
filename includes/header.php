@@ -60,8 +60,8 @@
 
                 <!-- Center: Title -->
                 <div class="col-lg-6 col-md-4 col-4 text-center px-3">
-                    <h5 class="mb-0 fw-bold text-primary">JURUSAN TEKNOLOGI INFORMASI</h5>
-                    <small class="text-muted fw-semibold">Politeknik Negeri Malang</small>
+                    <h5 class="mb-0 fw-bold text-primary">LABORATORIUM DATA TEKNOLOGI</h5>
+                    <small class="text-muted fw-semibold">Jurusan Teknologi Informasi</small>
                 </div>
 
                 <!-- Right: Lab Logo -->
@@ -113,7 +113,7 @@
                         <li class="nav-item">
                             <a href="<?php echo SITE_URL; ?>/public/berita.php" 
                                class="nav-link px-3 <?php echo ($active_page == 'berita') ? 'active' : ''; ?>">
-                                Berita & Agenda
+                                Berita, Agenda & Pengumuman
                             </a>
                         </li>
                         <li class="nav-item">

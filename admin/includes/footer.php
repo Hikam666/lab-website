@@ -1,11 +1,4 @@
 <?php
-/**
- * FOOTER.PHP
- * ==========
- * Footer untuk admin panel
- * 
- * Catatan: File ini di-include di setiap halaman admin
- */
 ?>
 
     </main>
@@ -21,11 +14,6 @@
             &copy; <?php echo date('Y'); ?> 
             <strong><?php echo SITE_NAME; ?></strong>. 
             All rights reserved.
-        </div>
-        <div class="admin-footer-links">
-            <a href="#">
-                <i class="bi bi-question-circle me-1"></i> Bantuan
-            </a>
         </div>
     </div>
 </footer>

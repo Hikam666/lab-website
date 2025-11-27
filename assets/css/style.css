@@ -156,6 +156,18 @@
 
 
 /*** Header Carousel / Hero ***/
+
+.hero-carousel-main .carousel-inner,
+.hero-carousel-main .carousel-item {
+    /* Ganti nilai 600px sesuai keinginan Anda untuk tinggi desktop */
+    height: 600px; 
+}
+
+.hero-carousel-main .carousel-item img {
+    height: 100%;
+    object-fit: cover; /* Memastikan gambar tetap menutupi area meskipun ukurannya berubah */
+}
+
 @media (min-width: 992px) {
     .hero-carousel-main,
     .page-header-banner {
@@ -170,22 +182,8 @@
     bottom: 0;
     display: flex;
     align-items: center;
-    background: rgba(3, 27, 78, .3);
+    background: rgba(3, 27, 78, .5); 
     z-index: 1;
-}
-
-.carousel-control-prev,
-.carousel-control-next {
-    width: 15%;
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 3.5rem;
-    background-color: var(--bs-primary);
-    border: 15px solid var(--bs-primary);
 }
 
 @media (max-width: 767.98px) {

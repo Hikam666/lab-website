@@ -1,12 +1,5 @@
 <?php
 /**
- * FUNCTIONS.PHP
- * =============
- * Fungsi-fungsi pembantu untuk panel admin
- */
-
-/**
- * Bersihkan string input (Sanitasi)
  * @param string $input
  * @return string
  */
