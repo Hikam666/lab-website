@@ -1,335 +1,38 @@
-/* ==========================================
-   PROFIL DETAIL PAGE - ANGGOTA LAB
-   CSS for profil-anggota-detail.php
-   ========================================== */
-
 /* Profile Header Card */
-.profile-detail-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 3rem 2rem;
-    border-radius: 15px;
-    margin-bottom: 2rem;
+.profile-header-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.profile-detail-avatar {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border: 5px solid white;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.profile-header-card .table td {
+    padding: 0.5rem 0;
+    vertical-align: top;
 }
 
-.profile-detail-name {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.profile-detail-title {
-    font-size: 1.25rem;
-    opacity: 0.9;
-    margin-bottom: 1rem;
-}
-
-.profile-detail-contact {
-    font-size: 0.95rem;
-}
-
-.profile-detail-contact i {
-    width: 20px;
-    text-align: center;
-}
-
-/* Social Media Buttons */
-.profile-social-links .btn {
-    border-radius: 25px;
-    padding: 0.5rem 1.25rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.profile-social-links .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Keahlian Tags */
-.keahlian-tags .badge {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    border-radius: 20px;
-}
-
-/* Education & Certification Cards */
-.education-card,
-.certification-card {
-    transition: transform 0.2s ease;
-}
-
-.education-card:hover,
-.certification-card:hover {
-    transform: translateY(-5px);
-}
-
-.education-item,
-.certification-item {
-    padding: 1rem;
-    border-radius: 10px;
-    transition: background 0.2s ease;
-}
-
-.education-item:hover,
-.certification-item:hover {
-    background: #f8f9fa;
-}
-
-.education-icon,
-.certification-icon {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 1.5rem;
-}
-
-.education-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.certification-icon {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-}
-
-/* Mata Kuliah Lists */
-.matakuliah-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.matakuliah-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.matakuliah-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.matakuliah-list::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-
-.matakuliah-list::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.matakuliah-item {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e9ecef;
-    transition: background 0.2s ease;
-}
-
-.matakuliah-item:last-child {
-    border-bottom: none;
-}
-
-.matakuliah-item:hover {
-    background: #f8f9fa;
-}
-
-/* Publikasi Cards */
-.publikasi-card {
-    transition: all 0.3s ease;
-    height: 100%;
-}
-
-.publikasi-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.publikasi-filter-tabs {
-    margin-bottom: 2rem;
-}
-
-.publikasi-filter-tabs .btn {
-    border-radius: 25px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 600;
-}
-
-/* Pagination */
-.pagination-publikasi .page-link {
+/* Section Cards */
+.card {
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    margin: 0 0.25rem;
+}
+
+.card-header {
+    background: white;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.card-header h5 {
+    font-size: 1.125rem;
     font-weight: 600;
-    transition: all 0.2s ease;
+    color: #1f2937;
 }
 
-.pagination-publikasi .page-item.active .page-link {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
-}
-
-/* Back Button */
-.back-to-profile {
-    transition: all 0.3s ease;
-}
-
-.back-to-profile:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 3rem 2rem;
-    color: #6c757d;
-}
-
-.empty-state i {
-    font-size: 4rem;
-    opacity: 0.3;
-    margin-bottom: 1rem;
-}
-
-/* Responsive Design */
-@media (max-width: 992px) {
-    .profile-detail-header {
-        padding: 2rem 1.5rem;
-    }
-    
-    .profile-detail-avatar {
-        width: 150px;
-        height: 150px;
-    }
-    
-    .profile-detail-name {
-        font-size: 1.75rem;
-    }
-    
-    .profile-detail-title {
-        font-size: 1.1rem;
-    }
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-    .profile-detail-avatar {
-        width: 120px;
-        height: 120px;
-        margin-bottom: 1rem;
+    .profile-header-card .table {
+        font-size: 0.9rem;
     }
     
-    .profile-detail-name {
-        font-size: 1.5rem;
-    }
-    
-    .profile-detail-title {
+    .card-header h5 {
         font-size: 1rem;
     }
-    
-    .profile-social-links .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-    
-    .keahlian-tags {
-        text-align: center;
-    }
-    
-    .education-item,
-    .certification-item {
-        padding: 0.75rem;
-    }
-    
-    .education-icon,
-    .certification-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.25rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .profile-detail-header {
-        padding: 1.5rem 1rem;
-    }
-    
-    .profile-detail-avatar {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .profile-detail-name {
-        font-size: 1.25rem;
-    }
-    
-    .profile-detail-contact {
-        font-size: 0.85rem;
-    }
-    
-    .publikasi-filter-tabs .btn {
-        padding: 0.4rem 1rem;
-        font-size: 0.85rem;
-    }
-}
-
-/* Animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-in {
-    animation: fadeInUp 0.6s ease;
-}
-
-/* Card Header Styles */
-.card-header.bg-primary,
-.card-header.bg-success,
-.card-header.bg-info,
-.card-header.bg-dark {
-    border-radius: 15px 15px 0 0 !important;
-}
-
-.card {
-    border-radius: 15px;
-    overflow: hidden;
-}
-
-/* List Group Styles */
-.list-group-item {
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    padding: 0.75rem 1rem;
-}
-
-.list-group-item:first-child {
-    border-top: none;
-}
-
-.list-group-item:last-child {
-    border-bottom: none;
-}
-
-/* Badge Styles Override */
-.badge.bg-light {
-    color: #495057 !important;
-    background-color: #f8f9fa !important;
-    border: 1px solid #dee2e6;
 }
