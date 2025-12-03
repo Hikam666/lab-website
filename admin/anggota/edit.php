@@ -358,22 +358,22 @@ include __DIR__ . '/../includes/header.php';
                 <div class="card-body">
                     <div class="mb-3">
                         <label for="linkedin" class="form-label">LinkedIn URL</label>
-                        <input type="url" class="form-control" id="linkedin" name="linkedin" value="<?php echo htmlspecialchars($anggota['linkedin']??''); ?>" placeholder="https://linkedin.com/in/...">
+                        <input type="text" class="form-control" id="linkedin" name="linkedin" value="<?php echo htmlspecialchars($anggota['linkedin']??''); ?>" placeholder="https://linkedin.com/in/...">
                     </div>
                     
                     <div class="mb-3">
                         <label for="website" class="form-label">Website Pribadi</label>
-                        <input type="url" class="form-control" id="website" name="website" value="<?php echo htmlspecialchars($anggota['website']??''); ?>" placeholder="https://...">
+                        <input type="text" class="form-control" id="website" name="website" value="<?php echo htmlspecialchars($anggota['website']??''); ?>" placeholder="https://...">
                     </div>
                     
                     <div class="mb-3">
                         <label for="google_scholar" class="form-label">Google Scholar URL</label>
-                        <input type="url" class="form-control" id="google_scholar" name="google_scholar" value="<?php echo htmlspecialchars($anggota['google_scholar']??''); ?>" placeholder="https://scholar.google.com/...">
+                        <input type="text" class="form-control" id="google_scholar" name="google_scholar" value="<?php echo htmlspecialchars($anggota['google_scholar']??''); ?>" placeholder="https://scholar.google.com/...">
                     </div>
                     
                     <div class="mb-3">
                         <label for="sinta" class="form-label">SINTA URL</label>
-                        <input type="url" class="form-control" id="sinta" name="sinta" value="<?php echo htmlspecialchars($anggota['sinta']??''); ?>" placeholder="https://sinta.kemdikbud.go.id/...">
+                        <input type="text" class="form-control" id="sinta" name="sinta" value="<?php echo htmlspecialchars($anggota['sinta']??''); ?>" placeholder="https://sinta.kemdikbud.go.id/...">
                     </div>
                 </div>
             </div>
