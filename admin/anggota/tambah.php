@@ -213,10 +213,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             pg_query($conn, "COMMIT");
+            // Catat ke log_aktivitas
+            $keterangan_log = 'Menambahkan anggota: ' . $nama . ' (ID ' . $id_anggota . ')';
+            log_aktivitas($conn, 'create', 'anggota_lab', $id_anggota, $keterangan_log);
+
             setFlashMessage('Anggota berhasil ditambahkan', 'success');
             header('Location: ' . getAdminUrl('anggota/index.php'));
             exit;
-            
+
         } catch (Exception $e) {
             pg_query($conn, "ROLLBACK");
             $errors[] = $e->getMessage();

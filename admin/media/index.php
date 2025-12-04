@@ -1,6 +1,5 @@
 <?php
 session_start();
-// Pastikan path ini benar
 require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php'; 
 require_once __DIR__ . '/../includes/auth.php';
@@ -12,36 +11,49 @@ if (!isset($conn)) $conn = getDBConnection();
 
 $active_page = 'media';
 $page_title = 'Media Library';
+$extra_css = ['../assets/css/media.css'];  
 
 
-// --- HAPUS ALBUM ---
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    // Karena ON DELETE CASCADE sudah ada di database, kita cukup hapus albumnya
-    // Item galeri akan terhapus otomatis oleh PostgreSQL
-    $res = pg_query_params($conn, "DELETE FROM galeri_album WHERE id_album = $1", [$id]);
-    
-    if ($res) {
-        $_SESSION['message'] = "Album berhasil dihapus!";
-        $_SESSION['msg_type'] = "success";
-    } else {
-        $_SESSION['message'] = "Gagal menghapus: " . pg_last_error($conn);
-        $_SESSION['msg_type'] = "danger";
-    }
-    header("Location: index.php");
-    exit();
-}
-
-// --- QUERY DATA ---
-// Mengambil album + menghitung item + mengambil URL foto cover dari tabel media
-$query = "SELECT g.*, 
-          (SELECT COUNT(*) FROM galeri_item WHERE id_album = g.id_album) as jumlah_foto,
-          m.lokasi_file as cover_path
-          FROM galeri_album g
-          LEFT JOIN media m ON g.id_cover = m.id_media
-          ORDER BY g.dibuat_pada DESC";
+// --- QUERY MEDIA FILES ---
+// Mengambil semua file dari tabel media
+$query = "SELECT id_media, lokasi_file, tipe_file, keterangan_alt, ukuran_file, dibuat_pada 
+          FROM media 
+          ORDER BY dibuat_pada DESC";
 
 $result = pg_query($conn, $query);
+
+// Helper function untuk format ukuran file (jika belum ada)
+if (!function_exists('formatFileSize')) {
+    function formatFileSize($bytes) {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= (1 << (10 * $pow));
+        return round($bytes, 2) . ' ' . $units[$pow];
+    }
+}
+
+// Helper function untuk mendapatkan icon berdasarkan tipe file (jika belum ada)
+if (!function_exists('getFileIcon')) {
+    function getFileIcon($tipe_file) {
+        $tipe_file = strtolower($tipe_file);
+        
+        if (strpos($tipe_file, 'image') !== false) {
+            return 'fa-image text-primary';
+        } elseif (strpos($tipe_file, 'pdf') !== false) {
+            return 'fa-file-pdf text-danger';
+        } elseif (strpos($tipe_file, 'word') !== false) {
+            return 'fa-file-word text-info';
+        } elseif (strpos($tipe_file, 'sheet') !== false || strpos($tipe_file, 'excel') !== false) {
+            return 'fa-file-excel text-success';
+        } elseif (strpos($tipe_file, 'presentation') !== false) {
+            return 'fa-file-powerpoint text-warning';
+        } else {
+            return 'fa-file text-secondary';
+        }
+    }
+}
 
 include __DIR__ . '/../includes/header.php'; 
 ?>
@@ -49,10 +61,10 @@ include __DIR__ . '/../includes/header.php';
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center my-4">
         <div>
-            <h1 class="mt-4">Media</h1>
+            <h1 class="mt-4">Media Library</h1>
             <p class="text-muted">Kelola file gambar dan dokumen</p>
         </div>
-        <a href="tambah.php" class="btn btn-primary"><i class="fas fa-plus me-2"></i> Tambah Album</a>
+        <a href="upload.php" class="btn btn-primary"><i class="fas fa-cloud-upload-alt me-2"></i> Upload File</a>
     </div>
 
     <?php if (isset($_SESSION['message'])): ?>
@@ -62,58 +74,141 @@ include __DIR__ . '/../includes/header.php';
         </div>
     <?php endif; ?>
 
+    <!-- Search & Filter -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari file...">
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select" id="filterType">
+                        <option value="">Semua File</option>
+                        <option value="image">Gambar</option>
+                        <option value="pdf">PDF</option>
+                        <option value="word">Dokumen Word</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Grid -->
     <div class="row g-4">
         <?php if ($result && pg_num_rows($result) > 0): ?>
-            <?php while ($row = pg_fetch_assoc($result)): ?>
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="position-relative" style="height: 200px; overflow: hidden; bg-light">
-                            <?php 
-                                // Sesuaikan path uploads dengan struktur folder Anda
-                                $cover = !empty($row['cover_path']) ? '../../uploads/' . $row['cover_path'] : ''; 
-                            ?>
-                            <?php if ($cover && file_exists(__DIR__ . '/../../uploads/' . $row['cover_path'])): ?>
-                                <img src="<?php echo $cover; ?>" class="w-100 h-100" style="object-fit:cover;">
+            <?php while ($row = pg_fetch_assoc($result)): 
+                $file_path = __DIR__ . '/../../uploads/' . $row['lokasi_file'];
+                $file_exists = file_exists($file_path);
+                $is_image = strpos($row['tipe_file'], 'image') !== false;
+                $icon_class = getFileIcon($row['tipe_file']);
+                // Extract filename dari path
+                $nama_file = basename($row['lokasi_file']);
+            ?>
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="card h-100 shadow-sm border-0 media-card" 
+                         data-filename="<?php echo strtolower($nama_file); ?>" 
+                         data-filetype="<?php echo strtolower($row['tipe_file']); ?>">
+                        <!-- Thumbnail -->
+                        <div class="position-relative" style="height: 180px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                            <?php if ($file_exists && $is_image): ?>
+                                <img src="../../uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
+                                     class="w-100 h-100" 
+                                     style="object-fit: cover;"
+                                     alt="<?php echo htmlspecialchars($row['keterangan_alt'] ?? $nama_file); ?>">
                             <?php else: ?>
-                                <div class="d-flex align-items-center justify-content-center h-100 bg-secondary text-white">
-                                    <i class="fas fa-images fa-3x"></i>
+                                <div class="text-center">
+                                    <i class="fas <?php echo $icon_class; ?> fa-3x opacity-75"></i>
                                 </div>
                             <?php endif; ?>
-                            
-                            <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
-                                <?php echo $row['jumlah_foto']; ?> Foto
-                            </span>
                         </div>
 
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold"><?php echo htmlspecialchars($row['judul']); ?></h5>
-                            <p class="card-text text-muted small">
-                                <?php echo htmlspecialchars(substr($row['deskripsi'], 0, 100)); ?>
+                        <!-- File Info -->
+                        <div class="card-body pb-2">
+                            <h6 class="card-title fw-bold mb-2 text-truncate" title="<?php echo htmlspecialchars($nama_file); ?>">
+                                <?php echo htmlspecialchars($nama_file); ?>
+                            </h6>
+
+                            <?php if (!empty($row['keterangan_alt'])): ?>
+                                <p class="card-text text-muted small mb-1">
+                                    <?php echo htmlspecialchars(truncate($row['keterangan_alt'], 100)); ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <p class="card-text text-muted small mb-0">
+                                <?php echo formatFileSize($row['ukuran_file']); ?>
                             </p>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar"></i> <?php echo date('d M Y', strtotime($row['dibuat_pada'])); ?>
-                            </small>
                         </div>
 
-                        <div class="card-footer bg-white d-flex justify-content-between">
-                            <a href="foto.php?id=<?php echo $row['id_album']; ?>" class="btn btn-sm btn-outline-primary flex-grow-1 me-1">
-                                <i class="fas fa-folder-open"></i> Buka Album
-                            </a>
-                            <a href="index.php?delete=<?php echo $row['id_album']; ?>" 
-                               class="btn btn-sm btn-outline-danger"
-                               onclick="return confirm('Yakin hapus album ini?');">
-                                <i class="fas fa-trash"></i>
-                            </a>
+                        <!-- Actions -->
+                        <div class="card-footer bg-white border-top">
+                            <div class="btn-group w-100" role="group">
+                                <?php if ($file_exists): ?>
+                                    <a href="../../uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
+                                       class="btn btn-sm btn-outline-secondary" 
+                                       target="_blank" 
+                                       title="Buka file">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <button class="btn btn-sm btn-outline-secondary" disabled title="File tidak ditemukan">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                <?php endif; ?>
+                                
+                                <a href="hapus.php?id=<?php echo $row['id_media']; ?>" 
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Yakin ingin menghapus media ini?');">
+                                <i class="bi bi-trash"></i> Hapus
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             <?php endwhile; ?>
         <?php else: ?>
-            <div class="col-12 text-center py-5">
-                <div class="alert alert-light border">Belum ada album.</div>
+            <div class="col-12">
+                <div class="alert alert-light border text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+                    <p class="text-muted mb-0">Belum ada file media. <a href="upload.php">Upload file sekarang</a></p>
+                </div>
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Info Section -->
+    <div class="card border-0 shadow-sm mt-5 bg-light">
+        <div class="card-body">
+            <h6 class="card-title fw-bold mb-3">Informasi</h6>
+            <ul class="small text-muted mb-0">
+                <li>Ukuran maksimal gambar: 5MB</li>
+                <li>Ukuran maksimal dokumen: 10MB</li>
+                <li>Format gambar yang didukung: JPG, PNG, WebP</li>
+                <li>Format dokumen yang didukung: PDF</li>
+            </ul>
+        </div>
+    </div>
 </div>
+
+<script>
+    // Search & Filter functionality
+    document.getElementById('searchInput').addEventListener('keyup', filterMedia);
+    document.getElementById('filterType').addEventListener('change', filterMedia);
+    
+    function filterMedia() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filterType = document.getElementById('filterType').value.toLowerCase();
+        const cards = document.querySelectorAll('.media-card');
+        
+        cards.forEach(card => {
+            const filename = card.getAttribute('data-filename');
+            const filetype = card.getAttribute('data-filetype');
+            
+            const matchesSearch = filename.includes(searchTerm);
+            const matchesFilter = !filterType || filetype.includes(filterType);
+            
+            card.parentElement.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+        });
+    }
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

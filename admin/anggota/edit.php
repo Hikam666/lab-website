@@ -256,9 +256,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             pg_query($conn, "COMMIT");
+
+            // Catat ke log_aktivitas
+            $keterangan_log = 'Mengubah data anggota: ' . $nama . ' (ID ' . $id_anggota . ')';
+            log_aktivitas($conn, 'update', 'anggota_lab', $id_anggota, $keterangan_log);
+
             setFlashMessage('Anggota berhasil diperbarui', 'success');
             header('Location: ' . getAdminUrl('anggota/index.php'));
             exit;
+
+            
         } catch (Exception $e) {
             pg_query($conn, "ROLLBACK");
             $errors[] = $e->getMessage();

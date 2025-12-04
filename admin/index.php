@@ -64,40 +64,20 @@ if ($conn) {
         }
     }
 
+    // =========================================================================
+    // PERUBAHAN UTAMA: Mengambil data Aktivitas dari LOG_AKTIVITAS
+    // =========================================================================
     $sql_recent_activities = "
-        SELECT * FROM (
-            SELECT 
-                'Berita' AS tabel,
-                'Create' AS aksi,
-                COALESCE(p.nama_lengkap, 'Operator') || ' membuat berita baru' AS keterangan,
-                b.dibuat_pada AS waktu
-            FROM berita b
-            LEFT JOIN pengguna p ON p.id_pengguna = b.dibuat_oleh
-            WHERE b.dibuat_pada IS NOT NULL
-
-            UNION ALL
-
-            SELECT 
-                'Fasilitas' AS tabel,
-                'Create' AS aksi,
-                COALESCE(p2.nama_lengkap, 'Operator') || ' menambahkan fasilitas baru' AS keterangan,
-                f.dibuat_pada AS waktu
-            FROM fasilitas f
-            LEFT JOIN pengguna p2 ON p2.id_pengguna = f.dibuat_oleh
-            WHERE f.dibuat_pada IS NOT NULL
-
-            UNION ALL
-
-            SELECT 
-                'Publikasi' AS tabel,
-                'Create' AS aksi,
-                COALESCE(p3.nama_lengkap, 'Operator') || ' menambahkan publikasi baru' AS keterangan,
-                pub.dibuat_pada AS waktu
-            FROM publikasi pub
-            LEFT JOIN pengguna p3 ON p3.id_pengguna = pub.dibuat_oleh
-            WHERE pub.dibuat_pada IS NOT NULL
-        ) AS x
-        ORDER BY waktu DESC
+        SELECT 
+            la.tabel_terpengaruh AS tabel,
+            la.aksi AS aksi,
+            COALESCE(p.nama_lengkap, 'Sistem') AS nama_user,
+            la.keterangan_log AS keterangan,
+            la.waktu_aksi AS waktu,
+            la.id_entitas_terpengaruh AS id_entitas
+        FROM log_aktivitas la
+        LEFT JOIN pengguna p ON p.id_pengguna = la.id_pengguna
+        ORDER BY la.waktu_aksi DESC
         LIMIT 5;
     ";
 
@@ -107,6 +87,7 @@ if ($conn) {
             $recent_activities[] = $row;
         }
     }
+    // =========================================================================
 
     $sql_recent_news = "
         SELECT id_berita, judul, jenis, status
@@ -312,6 +293,22 @@ include __DIR__ . '/includes/header.php';
                             <tbody>
                                 <?php foreach ($recent_activities as $act): ?>
                                     <?php
+                                        // Tentukan kelas badge berdasarkan Aksi (CRUD)
+                                        $badge_class = 'bg-secondary';
+                                        $aksi_upper = strtoupper($act['aksi']);
+
+                                        if ($aksi_upper === 'CREATE') {
+                                            $badge_class = 'bg-success';
+                                        } elseif ($aksi_upper === 'UPDATE') {
+                                            $badge_class = 'bg-primary';
+                                        } elseif ($aksi_upper === 'DELETE') {
+                                            $badge_class = 'bg-danger';
+                                        } elseif ($aksi_upper === 'APPROVE') {
+                                            $badge_class = 'bg-info';
+                                        } elseif ($aksi_upper === 'LOGIN') {
+                                            $badge_class = 'bg-warning text-dark';
+                                        }
+                                        
                                         $waktu = null;
                                         if (!empty($act['waktu'])) {
                                             try {
@@ -321,15 +318,56 @@ include __DIR__ . '/includes/header.php';
                                                 $waktu = $act['waktu'];
                                             }
                                         }
+
+                                        // Keterangan Log yang lebih informatif
+                                        $keterangan_tampil = htmlspecialchars($act['keterangan']);
+
+                                        // Jika keterangan kosong, buat keterangan default (Ini hanya jika Anda tidak mengisi kolom keterangan_log saat INSERT)
+                                        if (empty($keterangan_tampil)) {
+                                            $keterangan_tampil = htmlspecialchars($act['nama_user']) . ' melakukan ' . htmlspecialchars($act['aksi']) . ' pada tabel ' . htmlspecialchars($act['tabel']);
+                                        }
                                     ?>
                                     <tr>
-                                        <td class="fw-semibold"><?php echo htmlspecialchars($act['tabel']); ?></td>
+                                        <td class="fw-semibold small"><?php echo htmlspecialchars($act['tabel']); ?></td>
                                         <td>
-                                            <span class="badge bg-light text-dark">
+                                            <span class="badge <?php echo $badge_class; ?>">
                                                 <?php echo htmlspecialchars($act['aksi']); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo htmlspecialchars($act['keterangan']); ?></td>
+                                        <td>
+                                            <?php echo $keterangan_tampil; ?>
+                                            <?php 
+                                                // Logika untuk menambahkan tautan jika ID entitas tersedia
+                                                if (!empty($act['id_entitas']) && $act['tabel'] !== 'pengguna'):
+                                                    $entity_id = $act['id_entitas'];
+                                                    $admin_url = getAdminUrl(''); 
+                                                    $target_url = '#';
+
+                                                    // Menentukan URL berdasarkan tabel yang terpengaruh
+                                                    switch ($act['tabel']) {
+                                                        case 'berita':
+                                                            $target_url = $admin_url . 'berita/edit.php?id=' . $entity_id;
+                                                            break;
+                                                        case 'fasilitas':
+                                                            $target_url = $admin_url . 'fasilitas/edit.php?id=' . $entity_id;
+                                                            break;
+                                                        case 'publikasi':
+                                                            $target_url = $admin_url . 'publikasi/edit.php?id=' . $entity_id;
+                                                            break;
+                                                        case 'anggota_lab':
+                                                            $target_url = $admin_url . 'anggota/edit.php?id=' . $entity_id;
+                                                            break;
+                                                        case 'galeri_album':
+                                                            $target_url = $admin_url . 'galeri/edit.php?id=' . $entity_id;
+                                                            break;
+                                                        // Tambahkan logika untuk tabel lain jika perlu
+                                                    }
+                                            ?>
+                                                <small>
+                                                    (<a href="<?php echo $target_url; ?>" class="text-primary text-decoration-none">ID: <?php echo $entity_id; ?></a>)
+                                                </small>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-end text-muted small">
                                             <?php echo htmlspecialchars($waktu ?? '-'); ?>
                                         </td>

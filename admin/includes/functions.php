@@ -236,4 +236,41 @@ function truncate($text, $length = 100, $suffix = '...') {
     }
     return mb_substr($text, 0, $length) . $suffix;
 }
+/**
+ * Catat aktivitas ke tabel log_aktivitas
+ *
+ * @param \PgSql\Connection $conn Koneksi PostgreSQL (pg_connect)
+ * @param string $aksi  'create', 'update', 'delete', 'approve', 'login', dll.
+ * @param string $tabel Nama tabel yang terpengaruh, misal: 'anggota_lab'
+ * @param int|null $id_entitas ID baris yang terpengaruh (boleh null)
+ * @param string|null $keterangan Keterangan tambahan yang lebih deskriptif
+ * @return void
+ */
+function log_aktivitas(\PgSql\Connection $conn, $aksi, $tabel, $id_entitas = null, $keterangan = null) {
+    if (!$conn) {
+        return;
+    }
+
+    // Ambil user yang sedang login (dari auth.php)
+    if (function_exists('getCurrentUser')) {
+        $user = getCurrentUser();
+        $id_pengguna = $user['id'] ?? null;
+    } else {
+        $id_pengguna = null;
+    }
+
+    $sql = "INSERT INTO log_aktivitas 
+                (id_pengguna, aksi, tabel_terpengaruh, id_entitas_terpengaruh, keterangan_log, waktu_aksi)
+            VALUES ($1, $2, $3, $4, $5, NOW())";
+
+    // Pakai @ supaya kalau gagal log tidak merusak flow utama
+    @pg_query_params($conn, $sql, [
+        $id_pengguna,
+        strtolower($aksi),
+        $tabel,
+        $id_entitas,
+        $keterangan
+    ]);
+}
+
 ?>

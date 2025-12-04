@@ -30,15 +30,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
         $delete_result = pg_query_params($conn, $delete_sql, [$id_anggota]);
         
         if ($delete_result) {
-            if ($anggota['foto']) {
-                $foto_path = __DIR__ . '/../../uploads/' . $anggota['foto'];
-                if (file_exists($foto_path)) @unlink($foto_path);
-            }
-            pg_query($conn, "COMMIT");
-            setFlashMessage('Anggota berhasil dihapus', 'success');
-            header('Location: ' . getAdminUrl('anggota/index.php'));
-            exit;
-        }
+    if ($anggota['foto']) {
+        $foto_path = __DIR__ . '/../../uploads/' . $anggota['foto'];
+        if (file_exists($foto_path)) @unlink($foto_path);
+    }
+
+    pg_query($conn, "COMMIT");
+
+    // Catat ke log_aktivitas
+    $keterangan_log = 'Menghapus anggota: ' . $anggota['nama'] . ' (ID ' . $id_anggota . ')';
+    log_aktivitas($conn, 'delete', 'anggota_lab', $id_anggota, $keterangan_log);
+
+    setFlashMessage('Anggota berhasil dihapus', 'success');
+    header('Location: ' . getAdminUrl('anggota/index.php'));
+    exit;
+}
+
+
     } catch (Exception $e) {
         pg_query($conn, "ROLLBACK");
         setFlashMessage('Gagal menghapus: ' . $e->getMessage(), 'error');

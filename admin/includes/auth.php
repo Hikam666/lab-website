@@ -180,6 +180,10 @@ function loginUser($email, $password) {
     $_SESSION['admin_peran'] = $user['peran'];
     $_SESSION['admin_aktif'] = $user['aktif'];
     $_SESSION['admin_login_time'] = time();
+
+    $_SESSION['user_id']   = $user['id_pengguna'];
+    $_SESSION['user_name'] = $user['nama_lengkap'];
+    $_SESSION['user_role'] = $user['peran'];
     
     // Regenerasi ID sesi untuk keamanan
     session_regenerate_id(true);
