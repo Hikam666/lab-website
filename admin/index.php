@@ -16,7 +16,6 @@ requireLogin();
 $active_page = 'dashboard';
 $page_title  = 'Dashboard Overview';
 
-// PENTING: Panggil dashboard.css di sini
 $extra_css = ['dashboard.css']; 
 
 // 4. Buka Koneksi Database Utama
@@ -32,7 +31,6 @@ $stats = [
     'pending_approval' => 0
 ];
 
-// NEW: penampung data untuk widget tambahan
 $recent_activities = [];
 $recent_news       = [];
 
@@ -54,10 +52,12 @@ if ($conn) {
     // Khusus Admin: Hitung Pending Approval
     if (isAdmin()) {
         $sql_pending = "SELECT 
-            (SELECT COUNT(*) FROM berita WHERE status = 'diajukan') +
-            (SELECT COUNT(*) FROM galeri_album WHERE status = 'diajukan') +
-            (SELECT COUNT(*) FROM publikasi WHERE status = 'diajukan') +
-            (SELECT COUNT(*) FROM fasilitas WHERE status = 'diajukan') as total";
+            (SELECT COUNT(*) FROM berita        WHERE status = 'diajukan') +
+            (SELECT COUNT(*) FROM galeri_album  WHERE status = 'diajukan') +
+            (SELECT COUNT(*) FROM publikasi     WHERE status = 'diajukan') +
+            (SELECT COUNT(*) FROM fasilitas     WHERE status = 'diajukan') +
+            (SELECT COUNT(*) FROM anggota_lab   WHERE status = 'diajukan') +
+            (SELECT COUNT(*) FROM galeri_item   WHERE status = 'diajukan') as total";
         $res_pending = @pg_query($conn, $sql_pending);
         if ($res_pending) {
             $stats['pending_approval'] = pg_fetch_assoc($res_pending)['total'];
@@ -65,7 +65,7 @@ if ($conn) {
     }
 
     // =========================================================================
-    // PERUBAHAN UTAMA: Mengambil data Aktivitas dari LOG_AKTIVITAS
+    // Mengambil data Aktivitas dari LOG_AKTIVITAS
     // =========================================================================
     $sql_recent_activities = "
         SELECT 
@@ -87,7 +87,6 @@ if ($conn) {
             $recent_activities[] = $row;
         }
     }
-    // =========================================================================
 
     $sql_recent_news = "
         SELECT id_berita, judul, jenis, status
@@ -322,7 +321,7 @@ include __DIR__ . '/includes/header.php';
                                         // Keterangan Log yang lebih informatif
                                         $keterangan_tampil = htmlspecialchars($act['keterangan']);
 
-                                        // Jika keterangan kosong, buat keterangan default (Ini hanya jika Anda tidak mengisi kolom keterangan_log saat INSERT)
+                                        // Jika keterangan kosong, buat keterangan default
                                         if (empty($keterangan_tampil)) {
                                             $keterangan_tampil = htmlspecialchars($act['nama_user']) . ' melakukan ' . htmlspecialchars($act['aksi']) . ' pada tabel ' . htmlspecialchars($act['tabel']);
                                         }
@@ -360,7 +359,6 @@ include __DIR__ . '/includes/header.php';
                                                         case 'galeri_album':
                                                             $target_url = $admin_url . 'galeri/edit.php?id=' . $entity_id;
                                                             break;
-                                                        // Tambahkan logika untuk tabel lain jika perlu
                                                     }
                                             ?>
                                                 <small>

@@ -52,11 +52,6 @@ if (!isset($page_title)) {
             <button class="header-toggle" id="sidebarToggle" title="Toggle Sidebar">
                 <i class="bi bi-list"></i>
             </button>
-            
-            <div class="header-search">
-                <i class="bi bi-search"></i>
-                <input type="text" placeholder="Cari..." id="globalSearch">
-            </div>
         </div>
         
         <div class="header-right">
@@ -78,39 +73,6 @@ if (!isset($page_title)) {
                 pg_close($conn_header);
             }
             ?>
-            <div class="dropdown">
-                <button class="header-notification" 
-                        type="button" 
-                        id="notificationDropdown" 
-                        data-bs-toggle="dropdown" 
-                        aria-expanded="false"
-                        title="Notifikasi">
-                    <i class="bi bi-bell"></i>
-                    <?php if ($notif_count > 0): ?>
-                    <span class="header-notification-badge"><?php echo $notif_count; ?></span>
-                    <?php endif; ?>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                    <li class="dropdown-header">
-                        <strong>Notifikasi</strong>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <?php if ($notif_count > 0): ?>
-                    <li>
-                        <a class="dropdown-item" href="<?php echo getAdminUrl('pesan/index.php'); ?>">
-                            <i class="bi bi-envelope me-2"></i>
-                            <?php echo $notif_count; ?> pesan baru
-                        </a>
-                    </li>
-                    <?php else: ?>
-                    <li>
-                        <span class="dropdown-item text-muted small py-3 text-center">
-                            Tidak ada notifikasi baru
-                        </span>
-                    </li>
-                    <?php endif; ?>
-                </ul>
-            </div>
             
             <div class="dropdown">
                 <div class="header-user" 

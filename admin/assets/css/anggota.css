@@ -517,3 +517,17 @@
         page-break-inside: avoid;
     }
 }
+
+.anggota-list-avatar {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+}
+
+.anggota-list-row {
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.anggota-list-table tbody tr:last-child {
+    border-bottom: none;
+}

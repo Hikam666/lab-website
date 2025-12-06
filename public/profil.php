@@ -26,7 +26,7 @@ $sql = "SELECT
             m.keterangan_alt as foto_alt
         FROM anggota_lab a
         LEFT JOIN media m ON a.id_foto = m.id_media
-        WHERE a.aktif = TRUE
+        WHERE a.status = 'disetujui'
         ORDER BY a.urutan ASC, a.nama ASC";
 
 $result = pg_query($conn, $sql);

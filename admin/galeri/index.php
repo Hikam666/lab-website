@@ -4,32 +4,32 @@ require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-if (function_exists('requireLogin')) {
-    requireLogin();
-} elseif (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
-}
-
-if (!isset($conn)) {
-    $conn = getDBConnection();
-}
+requireLogin();
+$conn = getDBConnection();
 
 $active_page = 'galeri';
-$page_title  = 'Galeri Album';
+$page_title  = 'Manajemen Galeri Album';
 
-
-// --- QUERY DATA ALBUM + JUMLAH FOTO + COVER ---
-$query = "
-    SELECT g.*,
-           (SELECT COUNT(*) FROM galeri_item WHERE id_album = g.id_album) AS jumlah_foto,
-           m.lokasi_file AS cover_path
-    FROM galeri_album g
-    LEFT JOIN media m ON g.id_cover = m.id_media
-    ORDER BY g.dibuat_pada DESC
+// Ambil daftar album + jumlah foto
+$sql = "
+    SELECT 
+        ga.id_album,
+        ga.judul,
+        ga.slug,
+        ga.deskripsi,
+        ga.status,
+        ga.dibuat_pada,
+        ga.diperbarui_pada,
+        m.lokasi_file AS cover_image,
+        COUNT(gi.id_item) AS total_foto
+    FROM galeri_album ga
+    LEFT JOIN media m ON ga.id_cover = m.id_media
+    LEFT JOIN galeri_item gi ON gi.id_album = ga.id_album
+    GROUP BY ga.id_album, m.lokasi_file
+    ORDER BY ga.dibuat_pada DESC
 ";
 
-$result = pg_query($conn, $query);
+$res_album = pg_query($conn, $sql);
 
 include __DIR__ . '/../includes/header.php';
 ?>
@@ -37,86 +37,101 @@ include __DIR__ . '/../includes/header.php';
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center my-4">
         <div>
-            <h1 class="mt-4">Galeri</h1>
-            <p class="text-muted">Kelola Album Foto</p>
+            <h1 class="mt-4">Galeri Album</h1>
+            <p class="text-muted mb-0">Kelola album galeri dan foto-foto di dalamnya.</p>
         </div>
         <a href="tambah.php" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i> Tambah Album
+            <i class="bi bi-plus-circle me-1"></i> Tambah Album
         </a>
     </div>
 
-    <?php if (isset($_SESSION['message'])): ?>
-        <div class="alert alert-<?php echo $_SESSION['msg_type'] ?? 'info'; ?> alert-dismissible fade show">
-            <?php
-                echo $_SESSION['message'];
-                unset($_SESSION['message'], $_SESSION['msg_type']);
-            ?>
+    <?php if (hasFlashMessage()): ?>
+        <?php $flash = getFlashMessage(); ?>
+        <div class="alert alert-<?php echo $flash['type']; ?> alert-dismissible fade show" role="alert">
+            <?php echo htmlspecialchars($flash['message']); ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
 
-    <div class="row g-4">
-        <?php if ($result && pg_num_rows($result) > 0): ?>
-            <?php while ($row = pg_fetch_assoc($result)): ?>
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-0 galeri-admin-album-card">
-                        <div class="galeri-admin-album-cover position-relative">
-                            <?php
-                                $cover = !empty($row['cover_path'])
-                                    ? '../../uploads/' . $row['cover_path']
-                                    : '';
-                            ?>
-                            <?php if ($cover && file_exists(__DIR__ . '/../../uploads/' . $row['cover_path'])): ?>
-                                <img src="<?php echo $cover; ?>"
-                                     alt="<?php echo htmlspecialchars($row['judul']); ?>"
-                                     class="galeri-admin-album-img">
-                            <?php else: ?>
-                                <div class="galeri-admin-album-placeholder">
-                                    <i class="fas fa-images fa-3x text-muted"></i>
-                                </div>
-                            <?php endif; ?>
-
-                            <span class="badge bg-dark galeri-admin-album-count">
-                                <?php echo (int)$row['jumlah_foto']; ?> Foto
-                            </span>
-                        </div>
-
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold galeri-admin-album-title">
-                                <?php echo htmlspecialchars($row['judul']); ?>
-                            </h5>
-                            <p class="card-text text-muted small galeri-admin-album-desc">
-                                <?php echo htmlspecialchars(substr($row['deskripsi'] ?? '', 0, 100)); ?>
-                            </p>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar"></i>
-                                <?php echo date('d M Y', strtotime($row['dibuat_pada'])); ?>
-                            </small>
-                        </div>
-
-                        <div class="card-footer bg-white d-flex justify-content-between">
-                            <a href="foto.php?id=<?php echo $row['id_album']; ?>"
-                               class="btn btn-sm btn-outline-primary flex-grow-1 me-1">
-                                <i class="fas fa-folder-open"></i> Buka Album
-                            </a>
-                            <a href="edit.php?id=<?php echo $row['id_album']; ?>"
-                               class="btn btn-sm btn-outline-secondary me-1">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="hapus.php?id=<?php echo $row['id_album']; ?>" class="btn btn-sm btn-danger">
-                                <i class="fas fa-trash"></i> Hapus
-                            </a>
-
-                        </div>
-                    </div>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <?php if ($res_album && pg_num_rows($res_album) > 0): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="60">ID</th>
+                                <th>Album</th>
+                                <th width="120">Status</th>
+                                <th width="120">Jumlah Foto</th>
+                                <th width="180">Dibuat</th>
+                                <th width="220" class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php while ($row = pg_fetch_assoc($res_album)): ?>
+                            <tr>
+                                <td><?php echo (int)$row['id_album']; ?></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <?php if (!empty($row['cover_image'])): ?>
+                                            <img src="../../uploads/<?php echo htmlspecialchars($row['cover_image']); ?>"
+                                                 alt=""
+                                                 class="rounded me-3"
+                                                 style="width: 60px; height: 40px; object-fit: cover;">
+                                        <?php else: ?>
+                                            <div class="bg-light border rounded me-3 d-flex align-items-center justify-content-center"
+                                                 style="width: 60px; height: 40px;">
+                                                <i class="bi bi-image text-muted"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div>
+                                            <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
+                                            <small class="text-muted">Slug: <?php echo htmlspecialchars($row['slug']); ?></small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php echo getStatusBadge($row['status']); ?>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <?php echo (int)$row['total_foto']; ?> foto
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        <?php echo formatTanggalWaktu($row['dibuat_pada']); ?>
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <a href="edit.php?id=<?php echo (int)$row['id_album']; ?>" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </a>
+                                    <a href="foto.php?id=<?php echo (int)$row['id_album']; ?>" class="btn btn-sm btn-outline-secondary me-1">
+                                        <i class="bi bi-images"></i> Foto
+                                    </a>
+                                    <?php if (isAdmin()): ?>
+                                        <a href="hapus.php?id=<?php echo (int)$row['id_album']; ?>"
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Yakin ingin menghapus album ini beserta semua fotonya?');">
+                                            <i class="bi bi-trash"></i> Hapus
+                                        </a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                        </tbody>
+                    </table>
                 </div>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <div class="col-12 text-center py-5">
-                <div class="alert alert-light border">Belum ada album.</div>
-            </div>
-        <?php endif; ?>
+            <?php else: ?>
+                <div class="p-4 text-center text-muted">
+                    Belum ada album galeri.
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php
+include __DIR__ . '/../includes/footer.php';

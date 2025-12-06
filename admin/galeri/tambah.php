@@ -4,154 +4,191 @@ require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-if (function_exists('requireLogin')) { requireLogin(); }
-if (!isset($conn)) $conn = getDBConnection();
+requireLogin();
+$conn = getDBConnection();
 
-// Helper slug
-function makeSlug($string) {
-    return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $string)));
-}
+$active_page = 'galeri';
+$page_title  = 'Tambah Album Galeri';
 
-$error = '';
-
-// ambil user login
 $currentUser = getCurrentUser();
-$user_id     = $currentUser['id'] ?? ($_SESSION['user_id'] ?? null);
+$id_pengguna = $currentUser['id'] ?? ($_SESSION['user_id'] ?? null);
+
+$judul      = '';
+$deskripsi  = '';
+$errors     = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $judul     = trim($_POST['judul'] ?? '');
     $deskripsi = trim($_POST['deskripsi'] ?? '');
 
     if ($judul === '') {
-        $error = 'Judul tidak boleh kosong.';
-    } else {
-        // status tergantung role
+        $errors[] = 'Judul album wajib diisi.';
+    }
+
+    // Generate slug otomatis dari judul
+    $slug = '';
+    if ($judul !== '') {
+        $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $judul));
+        $slug = trim($slug, '-');
+    }
+
+    if ($slug === '') {
+        $errors[] = 'Slug album tidak valid (gagal dibuat dari judul).';
+    }
+
+    // Cek slug unik
+    if ($slug !== '') {
+        $check = pg_query_params(
+            $conn,
+            "SELECT id_album FROM galeri_album WHERE slug = $1",
+            [$slug]
+        );
+        if ($check && pg_num_rows($check) > 0) {
+            $errors[] = 'Slug otomatis dari judul sudah digunakan oleh album lain. Coba ubah judul sedikit.';
+        }
+    }
+
+    // Siapkan variabel untuk id_cover (media)
+    $id_cover = null;
+
+    // Jika tidak ada error sejauh ini → boleh proses cover
+    if (empty($errors) && isset($_FILES['cover']) && $_FILES['cover']['error'] !== UPLOAD_ERR_NO_FILE) {
+
+        if ($_FILES['cover']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Terjadi kesalahan saat upload cover album.';
+        } else {
+            // Upload cover sebagai media
+            $upload_dir_fs = __DIR__ . '/../../uploads';
+            $allowed_types = ['image/jpeg','image/png','image/webp','image/gif'];
+            $max_size      = 5 * 1024 * 1024;
+
+            $uploadResult = uploadFile($_FILES['cover'], $upload_dir_fs, $allowed_types, $max_size);
+            if (!$uploadResult['success']) {
+                $errors[] = 'Upload cover gagal: ' . $uploadResult['message'];
+            } else {
+                $filename = $uploadResult['filename'];
+                $filepath = $upload_dir_fs . '/' . $filename;
+
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime  = finfo_file($finfo, $filepath);
+                finfo_close($finfo);
+
+                $size = file_exists($filepath) ? filesize($filepath) : 0;
+
+                // Insert ke media
+                $sql_media = "INSERT INTO media (lokasi_file, tipe_file, keterangan_alt, dibuat_oleh, ukuran_file)
+                              VALUES ($1, $2, $3, $4, $5)
+                              RETURNING id_media";
+                $res_media = pg_query_params($conn, $sql_media, [
+                    $filename,
+                    $mime,
+                    $judul,
+                    $id_pengguna,
+                    $size
+                ]);
+
+                if ($res_media && ($m = pg_fetch_assoc($res_media))) {
+                    $id_cover = (int)$m['id_media'];
+                } else {
+                    $errors[] = 'Gagal menyimpan data cover album ke tabel media.';
+                }
+            }
+        }
+    }
+
+    if (empty($errors)) {
         $status = isAdmin() ? 'disetujui' : 'diajukan';
 
-        $slug = makeSlug($judul) . '-' . time(); // unik
-        pg_query($conn, "BEGIN");
+        $sql = "INSERT INTO galeri_album (judul, slug, deskripsi, id_cover, status, dibuat_oleh)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id_album";
+        $res = pg_query_params($conn, $sql, [
+            $judul,
+            $slug,
+            $deskripsi !== '' ? $deskripsi : null,
+            $id_cover,
+            $status,
+            $id_pengguna
+        ]);
 
-        try {
-            // 1. Insert album dulu (tanpa cover)
-            $sql = "INSERT INTO galeri_album (judul, slug, deskripsi, dibuat_oleh, status)
-                    VALUES ($1, $2, $3, $4, $5)
-                    RETURNING id_album";
-            $res = pg_query_params($conn, $sql, [$judul, $slug, $deskripsi, $user_id, $status]);
-
-            if (!$res) {
-                throw new Exception(pg_last_error($conn));
-            }
-
-            $row          = pg_fetch_assoc($res);
-            $new_album_id = (int)$row['id_album'];
-
-            // 2. Jika ada upload cover
-            if (isset($_FILES['cover']) && $_FILES['cover']['error'] === 0) {
-                $ext       = strtolower(pathinfo($_FILES['cover']['name'], PATHINFO_EXTENSION));
-                $filename  = 'cover_' . time() . '.' . $ext;
-                $target    = __DIR__ . '/../../uploads/' . $filename;
-                $filesize  = (int)$_FILES['cover']['size'];
-
-                if (!move_uploaded_file($_FILES['cover']['tmp_name'], $target)) {
-                    throw new Exception('Gagal memindahkan file cover.');
-                }
-
-                // Insert ke tabel media
-                $media_sql = "
-                    INSERT INTO media (lokasi_file, tipe_file, keterangan_alt, dibuat_oleh, ukuran_file)
-                    VALUES ($1, $2, $3, $4, $5)
-                    RETURNING id_media
-                ";
-                $media_res = pg_query_params(
-                    $conn,
-                    $media_sql,
-                    [$filename, $ext, $judul, $user_id, $filesize]
-                );
-
-                if (!$media_res) {
-                    throw new Exception(pg_last_error($conn));
-                }
-
-                $media_row = pg_fetch_assoc($media_res);
-                $id_cover  = (int)$media_row['id_media'];
-
-                // Update album dengan id_cover
-                pg_query_params(
-                    $conn,
-                    "UPDATE galeri_album SET id_cover = $1 WHERE id_album = $2",
-                    [$id_cover, $new_album_id]
-                );
-            }
-
-            // LOG AKTIVITAS
-            $keterangan = 'Membuat album galeri: "' . $judul . '" dengan status ' . $status;
-            log_aktivitas(
-                $conn,
-                'CREATE',
-                'galeri_album',
-                $new_album_id,
-                $keterangan
-            );
-
-            pg_query($conn, "COMMIT");
+        if ($res && ($row = pg_fetch_assoc($res))) {
+            $id_album = (int)$row['id_album'];
 
             if (isAdmin()) {
-                $_SESSION['message']  = "Album berhasil dibuat dan langsung dipublikasikan.";
+                $ket = 'Admin membuat album galeri baru: "' . $judul . '" (ID=' . $id_album . ')';
+                log_aktivitas($conn, 'CREATE', 'galeri_album', $id_album, $ket);
+                setFlashMessage('Album berhasil dibuat.', 'success');
             } else {
-                $_SESSION['message']  = "Album berhasil diajukan dan menunggu persetujuan admin.";
+                $ket = 'Operator mengajukan pembuatan album galeri baru: "' . $judul . '" (ID=' . $id_album . ')';
+                log_aktivitas($conn, 'REQUEST_CREATE', 'galeri_album', $id_album, $ket);
+                setFlashMessage('Album berhasil diajukan dan menunggu persetujuan admin.', 'warning');
             }
-            $_SESSION['msg_type'] = "success";
-            header("Location: index.php");
-            exit();
 
-        } catch (Exception $e) {
-            pg_query($conn, "ROLLBACK");
-            $error = "Gagal membuat album: " . $e->getMessage();
+            header('Location: index.php');
+            exit;
+        } else {
+            $errors[] = 'Gagal menyimpan data album ke database.';
         }
     }
 }
 
-$page_title  = "Tambah Album";
-$active_page = "galeri";
-
 include __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container mt-4">
-    <div class="card shadow-sm col-md-8 mx-auto">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Buat Album Baru</h5>
-            <a href="index.php" class="btn btn-sm btn-light">Kembali</a>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <div>
+            <h1 class="mt-4">Tambah Album Galeri</h1>
+            <p class="text-muted mb-0">Buat album baru untuk menampung foto-foto kegiatan.</p>
         </div>
+        <a href="index.php" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
+    </div>
+
+    <?php if (!empty($errors)): ?>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <?php foreach ($errors as $err): ?>
+                    <li><?php echo htmlspecialchars($err); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
+    <div class="card shadow-sm">
         <div class="card-body">
-            <?php if($error): ?>
-                <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
-
-            <form method="POST" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <label class="form-label">Judul Album <span class="text-danger">*</span></label>
-                    <input type="text" name="judul" class="form-control" required>
+                    <label for="judul" class="form-label">Judul Album</label>
+                    <input type="text" name="judul" id="judul" class="form-control"
+                           value="<?php echo htmlspecialchars($judul); ?>" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Deskripsi</label>
-                    <textarea name="deskripsi" class="form-control" rows="3"></textarea>
+                    <label for="cover" class="form-label">
+                        Cover Album (opsional)
+                    </label>
+                    <input type="file" name="cover" id="cover" class="form-control" accept="image/*">
+                    <div class="form-text">
+                        Gambar cover yang akan ditampilkan sebagai thumbnail album. Format: JPG, PNG, WebP, GIF. Maks 5MB.
+                    </div>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Cover Album (Opsional)</label>
-                    <input type="file" name="cover" class="form-control" accept="image/*">
-                    <small class="text-muted">Cover akan disimpan di tabel media.</small>
+                    <label for="deskripsi" class="form-label">Deskripsi</label>
+                    <textarea name="deskripsi" id="deskripsi" rows="4" class="form-control"
+                              placeholder="Deskripsi singkat album"><?php echo htmlspecialchars($deskripsi); ?></textarea>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2">
-                    <a href="index.php" class="btn btn-secondary">Batal</a>
-                    <button type="submit" class="btn btn-primary">Simpan Album</button>
-                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Simpan Album
+                </button>
+                <a href="index.php" class="btn btn-link">Batal</a>
             </form>
         </div>
     </div>
 </div>
 
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+<?php
+include __DIR__ . '/../includes/footer.php';

@@ -84,6 +84,17 @@ function formatDateTime($timestamp, $format = 'd M Y, H:i') {
 }
 
 /**
+ * Alias untuk formatDateTime
+ * @param string $timestamp
+ * @param string $format
+ * @return string
+ */
+function formatTanggalWaktu($timestamp, $format = 'd M Y, H:i') {
+    return formatDateTime($timestamp, $format);
+}
+
+
+/**
  * Ambil waktu relatif (misal: "2 jam yang lalu")
  * @param string $timestamp
  * @return string
@@ -246,6 +257,11 @@ function truncate($text, $length = 100, $suffix = '...') {
  * @param string|null $keterangan Keterangan tambahan yang lebih deskriptif
  * @return void
  */
+
+function hasFlashMessage() {
+    return isset($_SESSION['flash_message']);
+}
+
 function log_aktivitas(\PgSql\Connection $conn, $aksi, $tabel, $id_entitas = null, $keterangan = null) {
     if (!$conn) {
         return;

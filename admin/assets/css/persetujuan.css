@@ -1,0 +1,29 @@
+/* =======================================
+   File: persetujuan.css
+   Gaya kustom untuk halaman Persetujuan Konten
+   ======================================= */
+
+.tabel-persetujuan th:nth-child(1),
+.tabel-persetujuan td:nth-child(1) {
+    /* Kolom ID */
+    width: 60px;
+    /* Tambahkan gaya lain jika diperlukan */
+}
+
+.tabel-persetujuan th:nth-child(3),
+.tabel-persetujuan td:nth-child(3) {
+    /* Kolom Diajukan Pada */
+    width: 180px;
+}
+
+/* Lebar kolom Aksi untuk tabel yang hanya memiliki 2 tombol (Galeri, Publikasi, Fasilitas) */
+.tabel-persetujuan.aksi-lebar-standar th:nth-child(4),
+.tabel-persetujuan.aksi-lebar-standar td:nth-child(4) {
+    width: 200px;
+}
+
+/* Lebar kolom Aksi untuk tabel yang memiliki 3 tombol (Berita, Aktivitas) */
+.tabel-persetujuan.aksi-lebar-panjang th:nth-child(4),
+.tabel-persetujuan.aksi-lebar-panjang td:nth-child(4) {
+    width: 260px;
+}

@@ -14,7 +14,7 @@ $conn = getDBConnection();
 
 $sql = "SELECT a.*, m.lokasi_file as foto FROM anggota_lab a
         LEFT JOIN media m ON a.id_foto = m.id_media
-        WHERE a.slug = $1 AND a.aktif = TRUE";
+        WHERE a.slug = $1 AND a.status = 'disetujui'";
 $result = pg_query_params($conn, $sql, array($slug));
 
 if (!$result || pg_num_rows($result) == 0) {

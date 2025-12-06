@@ -140,16 +140,6 @@ $flash = getFlashMessage();
                     </div>
                 </div>
                 
-                <!-- Remember Me (Optional) -->
-                <div class="mb-4">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                        <label class="form-check-label" for="remember">
-                            Ingat saya
-                        </label>
-                    </div>
-                </div>
-                
                 <!-- Submit Button -->
                 <div class="d-grid">
                     <button type="submit" class="btn btn-primary btn-lg">

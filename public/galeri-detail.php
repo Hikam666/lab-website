@@ -41,35 +41,45 @@ $album = pg_fetch_assoc($result);
 
 // Pagination settings for photos
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+
 $per_page = 12; // 3 baris x 4 kolom
-$offset = ($page - 1) * $per_page;
+$offset   = ($page - 1) * $per_page;
 
-// Get total photo count
-$sql_count = "SELECT COUNT(*) as total FROM galeri_item WHERE id_album = $1";
+// Get total photo count (hanya yang disetujui)
+$sql_count = "SELECT COUNT(*) as total 
+              FROM galeri_item 
+              WHERE id_album = $1
+                AND status = 'disetujui'";
 $result_count = pg_query_params($conn, $sql_count, array($album['id_album']));
-$total_photos = pg_fetch_assoc($result_count)['total'];
-$total_pages = ceil($total_photos / $per_page);
+$row_count    = pg_fetch_assoc($result_count);
+$total_photos = (int)($row_count['total'] ?? 0);
 
-// Get photos in album with pagination
+// Hitung total halaman
+$total_pages = $total_photos > 0 ? (int)ceil($total_photos / $per_page) : 1;
+
+// Get foto (hanya yang disetujui) dengan pagination
 $sql_items = "SELECT 
                 gi.id_item,
                 gi.caption,
                 gi.urutan,
+                gi.dibuat_pada,
                 m.lokasi_file,
                 m.keterangan_alt
             FROM galeri_item gi
             JOIN media m ON gi.id_media = m.id_media
             WHERE gi.id_album = $1
+              AND gi.status = 'disetujui'
             ORDER BY gi.urutan ASC, gi.dibuat_pada ASC
             LIMIT $per_page OFFSET $offset";
 
 $result_items = pg_query_params($conn, $sql_items, array($album['id_album']));
 
 // Set page meta
-$page_title = $album['judul'] . ' - Galeri';
+$page_title       = $album['judul'] . ' - Galeri';
 $page_description = $album['deskripsi'] ? $album['deskripsi'] : 'Album foto ' . $album['judul'];
-$page_keywords = 'galeri, foto, ' . $album['judul'];
-$extra_css = ['galeri.css'];
+$page_keywords    = 'galeri, foto, ' . $album['judul'];
+$extra_css        = ['galeri.css'];
 
 // Include header
 include __DIR__ . '/../includes/header.php';
@@ -78,12 +88,16 @@ include __DIR__ . '/../includes/header.php';
     <!-- Page Header Start -->
     <div class="container-fluid page-header-banner py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container text-center py-5">
-            <h1 class="display-3 text-white mb-4 animated slideInDown"><?php echo htmlspecialchars($album['judul']); ?></h1>
+            <h1 class="display-3 text-white mb-4 animated slideInDown">
+                <?php echo htmlspecialchars($album['judul']); ?>
+            </h1>
             <nav aria-label="breadcrumb animated slideInDown">
                 <ol class="breadcrumb justify-content-center mb-0">
                     <li class="breadcrumb-item"><a href="index.php">Home</a></li>
                     <li class="breadcrumb-item"><a href="galeri.php">Galeri</a></li>
-                    <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($album['judul']); ?></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <?php echo htmlspecialchars($album['judul']); ?>
+                    </li>
                 </ol>
             </nav>
         </div>
@@ -97,8 +111,11 @@ include __DIR__ . '/../includes/header.php';
             <!-- Album Info -->
             <div class="row mb-5">
                 <div class="col-lg-8 mx-auto">
+
                     <?php if ($album['deskripsi']): ?>
-                    <p class="lead text-center"><?php echo nl2br(htmlspecialchars($album['deskripsi'])); ?></p>
+                        <p class="lead text-center">
+                            <?php echo nl2br(htmlspecialchars($album['deskripsi'])); ?>
+                        </p>
                     <?php endif; ?>
                     
                     <div class="text-center text-muted">
@@ -118,11 +135,13 @@ include __DIR__ . '/../includes/header.php';
                         </span>
                     </div>
 
-                    <?php if ($total_pages > 1): ?>
-                    <p class="text-center text-muted mt-2">
-                        Menampilkan foto <?php echo $offset + 1; ?>-<?php echo min($offset + $per_page, $total_photos); ?>
-                        (Halaman <?php echo $page; ?> dari <?php echo $total_pages; ?>)
-                    </p>
+                    <?php if ($total_photos > 0 && $total_pages > 1): ?>
+                        <p class="text-center text-muted mt-2">
+                            Menampilkan foto 
+                            <?php echo $offset + 1; ?> - 
+                            <?php echo min($offset + $per_page, $total_photos); ?>
+                            (Halaman <?php echo $page; ?> dari <?php echo $total_pages; ?>)
+                        </p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -174,14 +193,14 @@ include __DIR__ . '/../includes/header.php';
             </div>
 
             <!-- Pagination Start -->
-            <?php if ($total_pages > 1): ?>
+            <?php if ($total_photos > 0 && $total_pages > 1): ?>
             <div class="row mt-5">
                 <div class="col-12">
                     <nav aria-label="Photo pagination">
                         <ul class="pagination justify-content-center">
                             <!-- Previous Button -->
                             <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                                <a class="page-link" href="?slug=<?php echo $slug; ?>&page=<?php echo $page - 1; ?>" aria-label="Previous">
+                                <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $page - 1; ?>" aria-label="Previous">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
@@ -189,13 +208,13 @@ include __DIR__ . '/../includes/header.php';
                             <?php
                             // Smart pagination
                             $start_page = max(1, $page - 3);
-                            $end_page = min($total_pages, $page + 3);
+                            $end_page   = min($total_pages, $page + 3);
                             
                             // First page
                             if ($start_page > 1):
                             ?>
                             <li class="page-item">
-                                <a class="page-link" href="?slug=<?php echo $slug; ?>&page=1">1</a>
+                                <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=1">1</a>
                             </li>
                             <?php if ($start_page > 2): ?>
                             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -205,7 +224,7 @@ include __DIR__ . '/../includes/header.php';
                             <!-- Page Numbers -->
                             <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
                             <li class="page-item <?php echo ($page == $i) ? 'active' : ''; ?>">
-                                <a class="page-link" href="?slug=<?php echo $slug; ?>&page=<?php echo $i; ?>">
+                                <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $i; ?>">
                                     <?php echo $i; ?>
                                 </a>
                             </li>
@@ -217,7 +236,7 @@ include __DIR__ . '/../includes/header.php';
                             <li class="page-item disabled"><span class="page-link">...</span></li>
                             <?php endif; ?>
                             <li class="page-item">
-                                <a class="page-link" href="?slug=<?php echo $slug; ?>&page=<?php echo $total_pages; ?>">
+                                <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $total_pages; ?>">
                                     <?php echo $total_pages; ?>
                                 </a>
                             </li>
@@ -225,7 +244,7 @@ include __DIR__ . '/../includes/header.php';
                             
                             <!-- Next Button -->
                             <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                                <a class="page-link" href="?slug=<?php echo $slug; ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
+                                <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
