@@ -288,5 +288,13 @@ function log_aktivitas(\PgSql\Connection $conn, $aksi, $tabel, $id_entitas = nul
         $keterangan
     ]);
 }
+/**
+ * Ambil URL publik untuk file yang diupload
+ */
+function getPublicUploadUrl($path) {
+    return "/lab-website/public/uploads/" . $path;
+}
+
+
 
 ?>
