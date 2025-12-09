@@ -1,0 +1,151 @@
+.pesan-wrapper {
+    padding: 20px 30px;
+}
+
+.judul-halaman {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.subjudul {
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.pesan-container {
+    display: flex;
+    gap: 20px;
+}
+
+/* ========== LEFT PANEL ========== */
+.left-panel {
+    width: 320px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 75vh;
+}
+
+.pesan-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #111827;
+    border: 1px solid transparent;
+    margin-bottom: 8px;
+}
+
+.pesan-item:hover {
+    background: #f3f4f6;
+}
+
+.pesan-item.aktif {
+    background: #eef6ff;
+    border-color: #3b82f6;
+}
+
+.ikon {
+    width: 10px;
+}
+
+.dot-baru {
+    width: 10px;
+    height: 10px;
+    background: #ef4444;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.info .pengirim {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.info .email {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e0f2fe;
+    color: #0284c7;
+    border-radius: 6px;
+    margin: 4px 0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.tanggal {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* ========== RIGHT PANEL ========== */
+
+.right-panel {
+    flex: 1;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    padding: 25px;
+    min-height: 75vh;
+}
+
+.detail-subjek {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.detail-meta p {
+    margin: 3px 0;
+    color: #374151;
+}
+
+.isi-pesan {
+    margin-top: 20px;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* Placeholder ketika belum memilih pesan */
+.no-pesan {
+    text-align: center;
+    padding-top: 120px;
+    color: #9ca3af;
+}
+
+.mail-icon {
+    width: 80px;
+    opacity: 0.5;
+    margin-bottom: 15px;
+}
+
+.detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.btn-hapus-pesan {
+    background: #2F80ED;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.2s;
+}
+
+.btn-hapus-pesan:hover {
+    background: #1d6ad8;
+}
+

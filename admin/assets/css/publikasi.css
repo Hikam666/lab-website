@@ -1,0 +1,344 @@
+/* ============================
+   WRAPPER HALAMAN
+============================ */
+.publikasi-page-wrap {
+    width: 100%;
+    padding: 10px 0;
+}
+
+/* ============================
+   HEADER TITLE + BUTTON
+============================ */
+.pub-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.pub-top h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 4px 0;
+}
+
+.pub-top p {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0;
+}
+
+.pub-top a {
+    background: #2563EB;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.pub-top a:hover {
+    background: #1F4FD6;
+}
+
+/* ============================
+   SEARCH BAR
+============================ */
+.pub-search {
+    position: relative;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.pub-search svg {
+    position: absolute;
+    left: 14px;
+    top: 11px;
+}
+
+.pub-search input {
+    width: 100%;
+    padding: 10px 14px 10px 42px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* ============================
+   TABEL
+============================ */
+.pub-tabel {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pub-tabel thead {
+    background: #F9FAFB;
+}
+
+.pub-tabel th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.pub-tabel td {
+    padding: 16px;
+    font-size: 14px;
+    color: #111827;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.pub-tabel tr:last-child td {
+    border-bottom: none;
+}
+
+.pub-tabel tr:hover {
+    background: #F9FAFB;
+}
+
+/* ============================
+   TEXT STYLE
+============================ */
+.judul-utama {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.judul-venue {
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.author-name {
+    font-size: 13px;
+    color: #374151;
+}
+
+/* ============================
+   STATUS BADGE
+============================ */
+.badge-status {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.badge-green {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-yellow {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-gray {
+    background: #F3F4F6;
+    color: #4B5563;
+}
+
+/* ============================
+   AKSI BUTTON
+============================ */
+.aksi-btn {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-right: 4px;
+    font-size: 16px;
+}
+
+.aksi-btn:hover {
+    background: #F3F4F6;
+}
+
+/* ============================
+   EMPTY TABLE TEXT
+============================ */
+.empty-txt {
+    text-align: center;
+    padding: 40px;
+    color: #9CA3AF;
+}
+
+/* --- Tambah Publikasi --- */
+
+.pub-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.pub-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 20px;
+}
+
+.pub-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.pub-sub {
+    margin: 2px 0 20px;
+    color: #6B7280;
+    font-size: 14px;
+}
+
+.pub-form .pub-group {
+    margin-bottom: 18px;
+}
+
+.pub-form label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+.pub-form input,
+.pub-form select,
+.pub-form textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.pub-btn-save {
+    background: #2563EB;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.pub-btn-save:hover {
+    opacity: .9;
+}
+
+.pub-btn-back {
+    padding: 10px 20px;
+    background: #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+    color: #111827;
+}
+
+/* DELETE Container umum */
+.pub-container,
+.delete-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 3px 20px rgba(0,0,0,0.08);
+}
+
+/* Judul */
+.pub-title,
+.delete-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.delete-title {
+    color: #d9534f;
+}
+
+/* Subjudul */
+.pub-sub {
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 25px;
+}
+
+/* Group form */
+.pub-group {
+    margin-bottom: 18px;
+}
+
+.pub-group label {
+    font-weight: 600;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* Input */
+.pub-group input,
+.pub-group textarea,
+.pub-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Tombol */
+.pub-btn-save,
+.delete-btn-danger {
+    padding: 10px 18px;
+    background: #007bff;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.delete-btn-danger {
+    background: #d9534f;
+}
+
+.pub-btn-back,
+.delete-btn-cancel {
+    padding: 10px 18px;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-left: 10px;
+}
+
+/* Delete description */
+.delete-desc {
+    font-size: 15px;
+    text-align: center;
+    color: #444;
+    margin-bottom: 25px;
+}
