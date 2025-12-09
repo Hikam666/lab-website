@@ -9,9 +9,6 @@ $page_title  = "Edit Publikasi";
 $active_page = "publikasi";
 $extra_css   = ['publikasi.css'];
 
-/**
- * Helper slug lokal (sama spirit dengan tambah.php)
- */
 function generateSlugLocal($text) {
     $text = trim($text);
     if ($text === '') return 'publikasi-' . time();
@@ -174,16 +171,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ========================================
     // SIMPAN PERUBAHAN
     // ========================================
+      // ========================================
+    // SIMPAN PERUBAHAN
+    // ========================================
     if (empty($errors)) {
 
-        $slug   = generateSlugLocal($form['judul']);
-        $tahun  = $form['tahun'] !== '' ? (int)$form['tahun'] : null;
-        $judul  = $form['judul'];
-        $abstrak= $form['abstrak'] === '' ? null : $form['abstrak'];
-        $jenis  = $form['jenis']   === '' ? null : $form['jenis'];
-        $tempat = $form['tempat']  === '' ? null : $form['tempat'];
-        $doi    = $form['doi']     === '' ? null : $form['doi'];
-        $id_cover = $id_cover; 
+        $slug      = generateSlugLocal($form['judul']);
+        $tahun     = $form['tahun'] !== '' ? (int)$form['tahun'] : null;
+        $judul     = $form['judul'];
+        $abstrak   = $form['abstrak'] === '' ? null : $form['abstrak'];
+        $jenis     = $form['jenis']   === '' ? null : $form['jenis'];
+        $tempat    = $form['tempat']  === '' ? null : $form['tempat'];
+        $doi       = $form['doi']     === '' ? null : $form['doi'];
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
 
         // === LOGIKA STATUS ADMIN vs OPERATOR ===
@@ -202,12 +201,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 tempat          = $5,
                 tahun           = $6,
                 doi             = $7,
-                id_cover        = $8,
-                status          = $9,
+                url_sinta       = $8,
+                id_cover        = $9,
+                status          = $10,
                 diperbarui_pada = NOW()
-            WHERE id_publikasi  = $10,
-                url_sinta       = $11
-
+            WHERE id_publikasi  = $11
         ";
 
         $params = [
@@ -218,17 +216,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tempat,
             $tahun,
             $doi,
+            $url_sinta,
             $id_cover,
             $status_baru,
             $id
-            ,$url_sinta
         ];
 
         $result = pg_query_params($conn, $sqlUpdate, $params);
 
         if ($result) {
 
-            // log aktivitas
             if (function_exists('log_aktivitas')) {
                 $ket = "Mengubah publikasi: {$judul} (status: {$status_baru})";
                 log_aktivitas($conn, 'update', 'publikasi', $id, $ket);
@@ -246,6 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Gagal memperbarui data: " . pg_last_error($conn);
         }
     }
+
 }
 
 include __DIR__ . '/../includes/header.php';
@@ -323,7 +321,9 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>Cover Saat Ini</label><br>
                 <?php if (!empty($data['cover_file'])): ?>
-                    <img src="<?= SITE_URL . '/uploads/' . htmlspecialchars($data['cover_file']) ?>" class="cover-thumb">
+                    <img src="<?= SITE_URL . '/uploads/' . htmlspecialchars($data['cover_file']) ?>"
+     style="max-width:220px; max-height:300px; object-fit:contain; border:1px solid #ddd; border-radius:8px; display:block;">
+
                 <?php else: ?>
                     <div class="cover-null">Tidak Ada</div>
                 <?php endif; ?>
