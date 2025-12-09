@@ -162,10 +162,36 @@ function uploadFile($file, $destination, $allowed_types = [], $max_size = 524288
         return ['success' => false, 'message' => 'Tipe file tidak diperbolehkan.', 'filename' => null];
     }
     
-    // Buat nama file unik
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $filename = uniqid() . '_' . time() . '.' . $ext;
+    // 🔹 Gunakan nama file asli tapi tetap unik
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $name_without_ext = pathinfo($file['name'], PATHINFO_FILENAME);
+    
+    // Sanitasi nama file (hapus karakter khusus)
+    $name_sanitized = preg_replace('/[^a-zA-Z0-9\-_]/', '_', $name_without_ext);
+    $name_sanitized = preg_replace('/_+/', '_', $name_sanitized);
+    $name_sanitized = trim($name_sanitized, '_');
+    
+    // Jika nama terlalu panjang, potong
+    if (strlen($name_sanitized) > 50) {
+        $name_sanitized = substr($name_sanitized, 0, 50);
+    }
+    
+    // Jika nama kosong, gunakan default
+    if (empty($name_sanitized)) {
+        $name_sanitized = 'file';
+    }
+    
+    // Tambahkan timestamp untuk membuat unik
+    $timestamp = time();
+    $filename = $name_sanitized . '_' . $timestamp . '.' . $ext;
     $filepath = rtrim($destination, '/') . '/' . $filename;
+    
+    // Jika file sudah ada, tambahkan random number
+    if (file_exists($filepath)) {
+        $random = rand(10000, 99999);
+        $filename = $name_sanitized . '_' . $timestamp . '_' . $random . '.' . $ext;
+        $filepath = rtrim($destination, '/') . '/' . $filename;
+    }
     
     // Buat direktori jika belum ada
     if (!is_dir($destination)) {
@@ -288,13 +314,4 @@ function log_aktivitas(\PgSql\Connection $conn, $aksi, $tabel, $id_entitas = nul
         $keterangan
     ]);
 }
-/**
- * Ambil URL publik untuk file yang diupload
- */
-function getPublicUploadUrl($path) {
-    return "/lab-website/public/uploads/" . $path;
-}
-
-
-
 ?>

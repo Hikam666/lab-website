@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Nama file yang disimpan (unik) dikembalikan oleh uploadFile()
-    $filename = $uploadResult['filename'];
+    $filename = $uploadResult['filename']; // ✅ Gunakan langsung dari uploadFile()
 
     // Deteksi mime type dari file hasil upload (lebih akurat)
     $finfo     = finfo_open(FILEINFO_MIME_TYPE);
