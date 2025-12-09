@@ -165,83 +165,70 @@ include __DIR__ . '/../includes/header.php';
     </div>
     <!-- Riset & Publikasi End -->
 
+<!-- Kontak & Kerja Sama / Alamat, Jam, lalu Tombol -->
+<div class="container-fluid py-5" id="kontak">
+    <div class="container">
+        <div class="row g-4 contact-information-section">
 
-    <!-- Kontak & Kerja Sama / Form Start -->
-    <div class="container-fluid py-5" id="kontak">
-        <div class="container">
-            <div class="row g-5">
+            <!-- Judul & deskripsi full width -->
+            <div class="col-12 wow fadeInUp" data-wow-delay="0.1s">
+                <h1 class="display-6 mb-3">Kontak & Kerja Sama</h1>
+                <p class="mb-4">
+                    Ingin mengajukan kolaborasi riset, undangan pelatihan, magang industri,
+                    atau membutuhkan dukungan teknis lab? Silakan hubungi kami melalui halaman kontak.
+                </p>
+            </div>
 
-                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.1s">
-                    <h1 class="display-6 mb-4">Kontak & Kerja Sama</h1>
-                    <p>
-                        Ingin mengajukan kolaborasi riset, undangan pelatihan, magang industri,
-                        atau membutuhkan dukungan teknis lab? Hubungi kami.
-                    </p>
-
-                    <div class="d-flex align-items-start wow fadeIn" data-wow-delay="0.3s">
-                        <div class="icon-box-primary">
-                            <i class="bi bi-geo-alt text-dark fs-1"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h5>Alamat Laboratorium</h5>
-                            <span>Gedung Jurusan Teknologi Informasi — Lantai 8 Barat</span>
-                        </div>
+            <!-- Kolom 1: Alamat -->
+            <div class="col-md-6 wow fadeInUp" data-wow-delay="0.2s">
+                <div class="d-flex align-items-start">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-geo-alt text-dark fs-1"></i>
                     </div>
-                    <hr>
-                    <div class="d-flex align-items-start wow fadeIn" data-wow-delay="0.4s">
-                        <div class="icon-box-primary">
-                            <i class="bi bi-clock text-dark fs-1"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h5>Jam Operasional</h5>
-                            <span>Senin—Jumat 08.00—16.00</span>
-                        </div>
+                    <div class="ms-3">
+                        <h5>Alamat Laboratorium</h5>
+                        <span>Gedung Jurusan Teknologi Informasi — Lantai 8 Barat</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
-                    <h2 class="mb-4">Form Pertanyaan / Permintaan Kerja Sama</h2>
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="name" placeholder="Nama Anda">
-                                <label for="name">Nama Anda</label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="form-floating">
-                                <input type="email" class="form-control" id="mail" placeholder="Email Institusi">
-                                <label for="mail">Email Institusi</label>
-                            </div>
-                        </div>
-                        <div class="col-sm-12">
-                            <div class="form-floating">
-                                <select class="form-select" id="service">
-                                    <option selected>Kolaborasi Riset</option>
-                                    <option value="">Magang / Kunjungan Industri</option>
-                                    <option value="">Permintaan Narasumber / Pelatihan</option>
-                                    <option value="">Konsultasi Teknis</option>
-                                </select>
-                                <label for="service">Keperluan</label>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-floating">
-                                <textarea class="form-control" placeholder="Tuliskan pesan Anda" id="message"
-                                    style="height: 130px"></textarea>
-                                <label for="message">Pesan</label>
-                            </div>
-                        </div>
-                        <div class="col-12 text-center">
-                            <button class="btn btn-primary w-100 py-3" type="submit">Kirim</button>
-                        </div>
+            <!-- Kolom 2: Jam Operasional -->
+            <div class="col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                <div class="d-flex align-items-start">
+                    <div class="icon-box-primary">
+                        <i class="bi bi-clock text-dark fs-1"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h5>Jam Operasional</h5>
+                        <span>Senin—Jumat 08.00—16.00</span>
                     </div>
                 </div>
+            </div>
 
-            </div> <!-- row -->
-        </div> <!-- container -->
-    </div>
-    <!-- Kontak End -->
+            <!-- Baris bawah: Tombol Kontak & Kerja Sama -->
+            <div class="col-12 wow fadeInUp" data-wow-delay="0.4s">
+                <div class="card contact-cta-box shadow-sm border-0">
+                    <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                        <div class="mb-3 mb-md-0">
+                            <h5 class="mb-1">Form Kontak & Kerja Sama</h5>
+                            <p class="text-muted mb-0">
+                                Kirim pertanyaan, proposal kerja sama, atau permintaan resmi lainnya
+                                melalui halaman kontak berikut.
+                            </p>
+                        </div>
+                        <a href="kontak.php" class="btn btn-primary mt-3 mt-md-0">
+                            <i class="bi bi-envelope-paper me-2"></i>
+                            Buka Halaman Kontak
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- row -->
+    </div> <!-- container -->
+</div>
+<!-- Kontak End -->
+
 
 <?php
 // Close database connection
