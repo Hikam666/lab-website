@@ -19,8 +19,15 @@ if ($id <= 0) {
     exit;
 }
 
-// Ambil detail publikasi
-$q    = pg_query_params($conn, "SELECT * FROM publikasi WHERE id_publikasi = $1", [$id]);
+// Ambil detail publikasi + cover
+$q = pg_query_params(
+    $conn,
+    "SELECT p.*, m.lokasi_file AS cover_file 
+     FROM publikasi p
+     LEFT JOIN media m ON p.id_cover = m.id_media
+     WHERE p.id_publikasi = $1",
+    [$id]
+);
 $data = pg_fetch_assoc($q);
 
 if (!$data) {
@@ -34,16 +41,41 @@ if (!$data) {
 // ============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $delete = pg_query_params($conn, "DELETE FROM publikasi WHERE id_publikasi = $1", [$id]);
+    pg_query($conn, "BEGIN");
 
-    if ($delete) {
-        if (function_exists('log_aktivitas')) {
-            log_aktivitas($conn, 'delete', 'publikasi', $id, "Menghapus publikasi: " . $data['judul']);
+    try {
+        // Hapus publikasi
+        $delete = pg_query_params($conn, "DELETE FROM publikasi WHERE id_publikasi = $1", [$id]);
+
+        if (!$delete) {
+            throw new Exception(pg_last_error($conn));
         }
+
+        // Optional: hapus file cover di filesystem jika ada
+        if (!empty($data['cover_file'])) {
+            $file_path = __DIR__ . '/../../uploads/' . $data['cover_file'];
+            if (file_exists($file_path)) {
+                @unlink($file_path);
+            }
+        }
+
+        // Log aktivitas
+        if (function_exists('log_aktivitas')) {
+            log_aktivitas(
+                $conn,
+                'delete',
+                'publikasi',
+                $id,
+                "Menghapus publikasi: " . $data['judul']
+            );
+        }
+
+        pg_query($conn, "COMMIT");
         setFlashMessage("Publikasi berhasil dihapus.", "success");
-    } else {
-        $err = pg_last_error($conn);
-        setFlashMessage("Gagal menghapus: $err", "danger");
+
+    } catch (Exception $e) {
+        pg_query($conn, "ROLLBACK");
+        setFlashMessage("Gagal menghapus: " . $e->getMessage(), "danger");
     }
 
     redirectAdmin("publikasi/index.php");

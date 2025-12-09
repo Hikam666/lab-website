@@ -26,6 +26,7 @@ $sql = "SELECT
             p.tempat,
             p.tahun,
             p.doi,
+            p.url_sinta,             -- ✅ TAMBAH: ambil url_sinta
             m.lokasi_file as cover_image,
             m.keterangan_alt as cover_alt
         FROM publikasi p
@@ -129,6 +130,16 @@ include __DIR__ . '/../includes/header.php';
                                 </a>
                             </div>
                             <?php endif; ?>
+
+                            <?php if (!empty($publikasi['url_sinta'])): ?>
+                            <div class="meta-item">
+                                <i class="bi bi-journal-bookmark me-2"></i>
+                                <strong>URL Sinta:</strong> 
+                                <a href="<?php echo htmlspecialchars($publikasi['url_sinta']); ?>" target="_blank">
+                                    <?php echo htmlspecialchars($publikasi['url_sinta']); ?>
+                                </a>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -152,12 +163,20 @@ include __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
 
                     <!-- Actions -->
-                    <div class="d-flex gap-2 mb-4">
+                    <div class="d-flex flex-wrap gap-2 mb-4">
                         <?php if ($publikasi['doi']): ?>
                         <a href="https://doi.org/<?php echo htmlspecialchars($publikasi['doi']); ?>" 
                            target="_blank" 
                            class="btn btn-primary">
-                            <i class="bi bi-box-arrow-up-right me-2"></i>Lihat Full Text
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Buka DOI
+                        </a>
+                        <?php endif; ?>
+
+                        <?php if (!empty($publikasi['url_sinta'])): ?>
+                        <a href="<?php echo htmlspecialchars($publikasi['url_sinta']); ?>" 
+                           target="_blank" 
+                           class="btn btn-success">
+                            <i class="bi bi-journal-bookmark me-2"></i>Buka di Sinta
                         </a>
                         <?php endif; ?>
                         

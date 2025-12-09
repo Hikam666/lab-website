@@ -11,37 +11,40 @@ $extra_css   = ['publikasi.css'];
 
 /**
  * Helper lokal: buat slug dari teks.
- * Tidak mengubah functions.php
  */
 function generateSlugLocal($text) {
     $text = trim($text);
     if ($text === '') return 'publikasi-' . time();
+
     // ganti non-alnum jadi '-'
     $text = preg_replace('/[^\p{L}\p{N}]+/u', '-', $text);
-    // normalisasi
-    $text = iconv('UTF-8', 'ASCII//TRANSLIT', $text);
+
+    // normalisasi ke ASCII (kalau iconv ada)
+    if (function_exists('iconv')) {
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT', $text);
+    }
+
     $text = preg_replace('/[^A-Za-z0-9\-]+/', '', $text);
     $text = trim($text, '-');
     $text = preg_replace('/-+/', '-', $text);
     $text = strtolower($text);
+
     return $text ?: 'publikasi-' . time();
 }
 
 /**
  * Ambil user id yang login tanpa mengubah auth.php
- * Cek beberapa kemungkinan helper/session
  */
 function getLoggedUserIdFallback() {
-    // 1) kalau ada fungsi getCurrentUser
     if (function_exists('getCurrentUser')) {
         $u = getCurrentUser();
-        if (is_array($u) && !empty($u['id'])) return $u['id'];
-        if (is_array($u) && !empty($u['id_pengguna'])) return $u['id_pengguna'];
+        if (is_array($u)) {
+            if (!empty($u['id']))          return $u['id'];
+            if (!empty($u['id_pengguna'])) return $u['id_pengguna'];
+        }
     }
-    // 2) cek session standar
-    if (isset($_SESSION['user_id'])) return $_SESSION['user_id'];
-    if (isset($_SESSION['id_pengguna'])) return $_SESSION['id_pengguna'];
-    // 3) fallback null
+    if (isset($_SESSION['user_id']))      return $_SESSION['user_id'];
+    if (isset($_SESSION['id_pengguna']))  return $_SESSION['id_pengguna'];
     return null;
 }
 
@@ -54,11 +57,12 @@ $form = [
     'tempat'    => '',
     'tahun'     => date('Y'),
     'doi'       => '',
-    'url_sinta' => ''
+    'url_sinta' => '' 
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // ambil input dengan safe fallback
+
+    // ambil input
     $form['judul']     = trim($_POST['judul'] ?? '');
     $form['abstrak']   = trim($_POST['abstrak'] ?? '');
     $form['jenis']     = trim($_POST['jenis'] ?? '');
@@ -66,8 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['tahun']     = trim($_POST['tahun'] ?? '');
     $form['doi']       = trim($_POST['doi'] ?? '');
     $form['url_sinta'] = trim($_POST['url_sinta'] ?? '');
-    // status default (kamu minta kolom status dihapus sebelumnya — kalau tetap ingin pakai, aktifkan)
-    $status = 'draft'; // tetap simpan 'draft' sebagai nilai default di DB jika kolom ada
+
+    // === LOGIKA STATUS: ADMIN vs OPERATOR ===
+    if (function_exists('isAdmin') && isAdmin()) {
+        $status = 'disetujui';    // langsung publish
+    } else {
+        // operator atau selain admin
+        $status = 'diajukan';     // masuk antrean persetujuan
+    }
 
     // validasi
     if ($form['judul'] === '') {
@@ -84,9 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_cover = null;
     if (!empty($_FILES['cover']['name'])) {
         $file = $_FILES['cover'];
-        // valid extension
+
         $allowed_ext = ['jpg','jpeg','png','webp'];
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
         if (!in_array($ext, $allowed_ext, true)) {
             $errors[] = "Format cover tidak didukung. Gunakan JPG/PNG/WEBP.";
         } elseif ($file['error'] !== UPLOAD_ERR_OK) {
@@ -98,26 +109,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errors[] = "Gagal membuat folder upload.";
                 }
             }
+
             if (empty($errors)) {
                 $basename = 'cover_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
-                $target = $uploads_dir . '/' . $basename;
+                $target   = $uploads_dir . '/' . $basename;
+
                 if (!move_uploaded_file($file['tmp_name'], $target)) {
                     $errors[] = "Gagal memindahkan file cover.";
                 } else {
                     // simpan metadata ke tabel media
-                    $lokasi_db = 'publikasi/' . $basename;
-                    $tipe_file = $file['type'] ?? null;
+                    $lokasi_db  = 'publikasi/' . $basename;
+                    $tipe_file  = $file['type'] ?? null;
                     $keterangan = 'Cover publikasi';
                     $dibuat_oleh = getLoggedUserIdFallback();
 
-                    $sqlMedia = "INSERT INTO media (lokasi_file, tipe_file, keterangan_alt, dibuat_oleh) VALUES ($1,$2,$3,$4) RETURNING id_media";
+                    $sqlMedia = "
+                        INSERT INTO media (lokasi_file, tipe_file, keterangan_alt, dibuat_oleh) 
+                        VALUES ($1,$2,$3,$4) 
+                        RETURNING id_media
+                    ";
+
                     $mediaParams = [$lokasi_db, $tipe_file, $keterangan, $dibuat_oleh];
                     $r = pg_query_params($conn, $sqlMedia, $mediaParams);
                     if ($r && pg_num_rows($r) > 0) {
-                        $m = pg_fetch_assoc($r);
+                        $m        = pg_fetch_assoc($r);
                         $id_cover = $m['id_media'];
                     } else {
-                        // jika gagal simpan media, hapus file yang sudah diupload
                         @unlink($target);
                         $errors[] = "Gagal menyimpan metadata cover: " . pg_last_error($conn);
                     }
@@ -130,21 +147,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Simpan publikasi
     // =========================
     if (empty($errors)) {
-        $judul = $form['judul'];
-        $slug  = generateSlugLocal($judul);
+        $judul   = $form['judul'];
+        $slug    = generateSlugLocal($judul);
         $abstrak = $form['abstrak'] === '' ? null : $form['abstrak'];
-        $jenis   = $form['jenis'] === '' ? null : $form['jenis'];
-        $tempat  = $form['tempat'] === '' ? null : $form['tempat'];
-        $tahun   = $form['tahun'] === '' ? null : (int)$form['tahun'];
-        $doi     = $form['doi'] === '' ? null : $form['doi'];
+        $jenis   = $form['jenis']   === '' ? null : $form['jenis'];
+        $tempat  = $form['tempat']  === '' ? null : $form['tempat'];
+        $tahun   = $form['tahun']   === '' ? null : (int)$form['tahun'];
+        $doi     = $form['doi']     === '' ? null : $form['doi'];
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
         $dibuat_oleh = getLoggedUserIdFallback();
 
-        // Pastikan kolom id_cover / url_sinta/dibuat_oleh ada di DB sesuai schema kamu
-        $sql = "INSERT INTO publikasi
-                (judul, slug, abstrak, jenis, tempat, tahun, doi, url_sinta, id_cover, dibuat_oleh)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-                RETURNING id_publikasi";
+        // sesuai struktur tabel:
+        // id_publikasi, judul, slug, abstrak, jenis, tempat, tahun, doi,
+        // id_cover, status, dibuat_oleh, dibuat_pada, diperbarui_pada
+        $sql = "
+            INSERT INTO publikasi
+                (judul, slug, abstrak, jenis, tempat, tahun, doi, id_cover, status, dibuat_oleh, dibuat_pada, diperbarui_pada, url_sinta)
+            VALUES
+                ($1,    $2,   $3,      $4,    $5,     $6,    $7,  $8,       $9,     $10,        NOW(),       NOW(),       $11)
+            RETURNING id_publikasi
+        ";
 
         $params = [
             $judul,
@@ -154,21 +176,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tempat,
             $tahun,
             $doi,
-            $url_sinta,
             $id_cover,
-            $dibuat_oleh
+            $status,
+            $dibuat_oleh,
+            $url_sinta
+
         ];
 
         $res = pg_query_params($conn, $sql, $params);
+
         if ($res) {
-            // opsional log aktivitas bila fungsi tersedia
+            $row   = pg_fetch_assoc($res);
+            $newId = $row['id_publikasi'] ?? null;
+
+            // log aktivitas (jika fungsi tersedia)
             if (function_exists('log_aktivitas')) {
-                $new = pg_fetch_assoc($res);
-                $newId = $new['id_publikasi'] ?? null;
-                log_aktivitas($conn, 'create', 'publikasi', $newId, 'Menambahkan publikasi: ' . $judul);
+                $ket = 'Menambahkan publikasi: ' . $judul . ' (status: ' . $status . ')';
+                log_aktivitas($conn, 'create', 'publikasi', $newId, $ket);
             }
-            // flash + redirect
-            setFlashMessage("Publikasi berhasil ditambahkan.", "success");
+
+            // pesan + redirect
+            if ($status === 'disetujui') {
+                setFlashMessage("Publikasi berhasil ditambahkan dan langsung disetujui.", "success");
+            } else {
+                setFlashMessage("Publikasi berhasil diajukan dan menunggu persetujuan admin.", "success");
+            }
+
             redirectAdmin("publikasi/index.php");
             exit;
         } else {
@@ -211,10 +244,10 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>Jenis</label>
                 <select name="jenis">
-                    <option value="Jurnal">Jurnal</option>
-                    <option value="Prosiding">Prosiding</option>
-                    <option value="Buku">Buku</option>
-                    <option value="Lainnya">Lainnya</option>
+                    <option value="Jurnal"    <?= $form['jenis'] === 'Jurnal'    ? 'selected' : '' ?>>Jurnal</option>
+                    <option value="Prosiding" <?= $form['jenis'] === 'Prosiding' ? 'selected' : '' ?>>Prosiding</option>
+                    <option value="Buku"      <?= $form['jenis'] === 'Buku'      ? 'selected' : '' ?>>Buku</option>
+                    <option value="Lainnya"   <?= $form['jenis'] === 'Lainnya'   ? 'selected' : '' ?>>Lainnya</option>
                 </select>
             </div>
 
@@ -236,6 +269,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>URL Publikasi</label>
                 <input type="text" name="url_sinta" placeholder="https://sinta.kemdikbud.go.id/..." value="<?= htmlspecialchars($form['url_sinta']) ?>">
+                <small class="text-muted">Catatan: kolom ini belum disimpan ke database karena struktur tabel belum menyediakan field URL.</small>
             </div>
 
             <div class="pub-group">
