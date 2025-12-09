@@ -122,9 +122,9 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                     <div class="alert alert-info mb-4">
                         <h5><i class="bi bi-calendar-event me-2"></i>Informasi Waktu</h5>
                         <p class="mb-0">
-                            <strong>Tanggal Mulai:</strong> <?php echo formatTanggalIndo($berita['tanggal_mulai']); ?>
+                            <strong>Tanggal:</strong> <?php echo formatTanggalIndo($berita['tanggal_mulai']); ?>
                             <?php if ($berita['tanggal_selesai']): ?>
-                            <br><strong>Tanggal Selesai:</strong> <?php echo formatTanggalIndo($berita['tanggal_selesai']); ?>
+                            <br><strong>Tanggal :</strong> <?php echo formatTanggalIndo($berita['tanggal_selesai']); ?>
                             <?php endif; ?>
                         </p>
                     </div>

@@ -61,11 +61,11 @@ include __DIR__ . '/../includes/header.php';
     <!-- Page Header Start -->
     <div class="container-fluid page-header-banner py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container text-center py-5">
-            <h1 class="display-3 text-white mb-4 animated slideInDown">Berita, Agenda & Pengumuman</h1>
+            <h1 class="display-3 text-white mb-4 animated slideInDown">Berita & Pengumuman</h1>
             <nav aria-label="breadcrumb animated slideInDown">
                 <ol class="breadcrumb justify-content-center mb-0">
                     <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Berita, Agenda & Pengumuman</li>
+                    <li class="breadcrumb-item active" aria-current="page">Berita & Pengumuman</li>
                 </ol>
             </nav>
         </div>
@@ -84,9 +84,6 @@ include __DIR__ . '/../includes/header.php';
                             </a>
                             <a href="?filter=berita" class="news-filter-btn <?php echo ($filter == 'berita') ? 'active' : ''; ?>">
                                 <i class="bi bi-newspaper me-2"></i>Berita
-                            </a>
-                            <a href="?filter=agenda" class="news-filter-btn <?php echo ($filter == 'agenda') ? 'active' : ''; ?>">
-                                <i class="bi bi-calendar-event me-2"></i>Agenda
                             </a>
                             <a href="?filter=pengumuman" class="news-filter-btn <?php echo ($filter == 'pengumuman') ? 'active' : ''; ?>">
                                 <i class="bi bi-megaphone me-2"></i>Pengumuman

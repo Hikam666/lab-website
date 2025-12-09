@@ -72,7 +72,7 @@ include __DIR__ . '/../includes/header.php';
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h1><i class="bi bi-newspaper me-2"></i>Berita & Agenda</h1>
-            <p class="text-muted mb-0">Kelola daftar berita, agenda, dan pengumuman</p>
+            <p class="text-muted mb-0">Kelola daftar berita dan pengumuman</p>
         </div>
         <div>
             <a href="<?php echo getAdminUrl('berita/tambah.php'); ?>" class="btn btn-primary">
@@ -96,11 +96,9 @@ include __DIR__ . '/../includes/header.php';
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Semua</option>
-                    <option value="draft"      <?= $filter_status==='draft'?'selected':'' ?>>Draft</option>
                     <option value="diajukan"   <?= $filter_status==='diajukan'?'selected':'' ?>>Diajukan</option>
                     <option value="disetujui"  <?= $filter_status==='disetujui'?'selected':'' ?>>Disetujui</option>
                     <option value="ditolak"    <?= $filter_status==='ditolak'?'selected':'' ?>>Ditolak</option>
-                    <option value="arsip"      <?= $filter_status==='arsip'?'selected':'' ?>>Arsip</option>
                 </select>
             </div>
 

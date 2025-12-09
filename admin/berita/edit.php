@@ -182,7 +182,6 @@ include __DIR__ . '/../includes/header.php';
                         <label class="form-label">Jenis</label>
                         <select name="jenis" class="form-control">
                             <option value="berita"     <?= $berita['jenis']=='berita'?'selected':'' ?>>Berita</option>
-                            <option value="agenda"     <?= $berita['jenis']=='agenda'?'selected':'' ?>>Agenda</option>
                             <option value="pengumuman" <?= $berita['jenis']=='pengumuman'?'selected':'' ?>>Pengumuman</option>
                         </select>
                     </div>

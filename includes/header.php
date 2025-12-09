@@ -113,7 +113,7 @@
                         <li class="nav-item">
                             <a href="<?php echo SITE_URL; ?>/public/berita.php" 
                                class="nav-link px-3 <?php echo ($active_page == 'berita') ? 'active' : ''; ?>">
-                                Berita, Agenda & Pengumuman
+                                Berita & Pengumuman
                             </a>
                         </li>
                         <li class="nav-item">

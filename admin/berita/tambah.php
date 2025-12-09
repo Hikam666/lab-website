@@ -270,7 +270,6 @@ include __DIR__ . '/../includes/header.php';
                         </label>
                         <select class="form-control" name="jenis">
                             <option value="berita"     <?php echo $jenis==='berita'?'selected':''; ?>>Berita</option>
-                            <option value="agenda"     <?php echo $jenis==='agenda'?'selected':''; ?>>Agenda</option>
                             <option value="pengumuman" <?php echo $jenis==='pengumuman'?'selected':''; ?>>Pengumuman</option>
                         </select>
                     </div>

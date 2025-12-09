@@ -33,7 +33,7 @@
                             <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/profil.php">Profil Lab</a>
                             <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/fasilitas.php">Fasilitas</a>
                             <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/publikasi.php">Publikasi & Jurnal</a>
-                            <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/berita.php">Berita & Agenda</a>
+                            <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/berita.php">Berita & Pengumuman</a>
                             <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/galeri.php">Galeri Kegiatan</a>
                             <a class="btn btn-link" href="<?php echo SITE_URL; ?>/public/kontak.php">Kontak & Kerja Sama</a>
                         </div>
