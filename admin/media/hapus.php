@@ -7,6 +7,9 @@ require_once __DIR__ . '/../includes/auth.php';
 requireLogin();
 $conn = getDBConnection();
 
+$active_page = 'media';
+$page_title  = 'Hapus Media';
+
 $currentUser = getCurrentUser();
 $id_pengguna = $currentUser['id'] ?? null;
 
@@ -71,9 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
         setFlashMessage('Gagal menghapus media: ' . $e->getMessage(), 'error');
     }
 }
-
-$active_page = 'media';
-$page_title  = 'Hapus Media';
 
 include __DIR__ . '/../includes/header.php';
 ?>

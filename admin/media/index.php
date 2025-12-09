@@ -11,7 +11,7 @@ if (!isset($conn)) $conn = getDBConnection();
 
 $active_page = 'media';
 $page_title = 'Media Library';
-$extra_css = ['../assets/css/media.css'];  
+$extra_css = ['media.css'];  
 
 
 // --- QUERY MEDIA FILES ---
@@ -34,23 +34,23 @@ if (!function_exists('formatFileSize')) {
     }
 }
 
-// Helper function untuk mendapatkan icon berdasarkan tipe file (jika belum ada)
+// Helper function untuk mendapatkan icon berdasarkan tipe file
 if (!function_exists('getFileIcon')) {
     function getFileIcon($tipe_file) {
         $tipe_file = strtolower($tipe_file);
         
         if (strpos($tipe_file, 'image') !== false) {
-            return 'fa-image text-primary';
+            return 'bi-image text-primary';
         } elseif (strpos($tipe_file, 'pdf') !== false) {
-            return 'fa-file-pdf text-danger';
+            return 'bi-file-pdf text-danger';
         } elseif (strpos($tipe_file, 'word') !== false) {
-            return 'fa-file-word text-info';
+            return 'bi-file-word text-info';
         } elseif (strpos($tipe_file, 'sheet') !== false || strpos($tipe_file, 'excel') !== false) {
-            return 'fa-file-excel text-success';
+            return 'bi-file-spreadsheet text-success';
         } elseif (strpos($tipe_file, 'presentation') !== false) {
-            return 'fa-file-powerpoint text-warning';
+            return 'bi-file-slides text-warning';
         } else {
-            return 'fa-file text-secondary';
+            return 'bi-file-earmark text-secondary';
         }
     }
 }
@@ -64,7 +64,9 @@ include __DIR__ . '/../includes/header.php';
             <h1 class="mt-4">Media Library</h1>
             <p class="text-muted">Kelola file gambar dan dokumen</p>
         </div>
-        <a href="upload.php" class="btn btn-primary"><i class="fas fa-cloud-upload-alt me-2"></i> Upload File</a>
+        <a href="upload.php" class="btn btn-primary">
+            <i class="bi bi-cloud-upload me-2"></i> Upload File
+        </a>
     </div>
 
     <?php if (isset($_SESSION['message'])): ?>
@@ -97,12 +99,16 @@ include __DIR__ . '/../includes/header.php';
     <div class="row g-4">
         <?php if ($result && pg_num_rows($result) > 0): ?>
             <?php while ($row = pg_fetch_assoc($result)): 
+                // Cek file existence dengan path yang benar
                 $file_path = __DIR__ . '/../../uploads/' . $row['lokasi_file'];
                 $file_exists = file_exists($file_path);
                 $is_image = strpos($row['tipe_file'], 'image') !== false;
                 $icon_class = getFileIcon($row['tipe_file']);
                 // Extract filename dari path
                 $nama_file = basename($row['lokasi_file']);
+                
+                // Debug: Log file path (hapus setelah debugging)
+                // error_log("Checking file: " . $file_path . " - Exists: " . ($file_exists ? 'YES' : 'NO'));
             ?>
                 <div class="col-md-6 col-lg-4 col-xl-3">
                     <div class="card h-100 shadow-sm border-0 media-card" 
@@ -110,14 +116,21 @@ include __DIR__ . '/../includes/header.php';
                          data-filetype="<?php echo strtolower($row['tipe_file']); ?>">
                         <!-- Thumbnail -->
                         <div class="position-relative" style="height: 180px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
-                            <?php if ($file_exists && $is_image): ?>
+                            <?php if ($is_image): ?>
                                 <img src="../../uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
                                      class="w-100 h-100" 
                                      style="object-fit: cover;"
-                                     alt="<?php echo htmlspecialchars($row['keterangan_alt'] ?? $nama_file); ?>">
+                                     alt="<?php echo htmlspecialchars($row['keterangan_alt'] ?? $nama_file); ?>"
+                                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-center\'><i class=\'bi bi-image-alt\' style=\'font-size: 3rem; color: white; opacity: 0.5;\'></i><br><small style=\'color: white;\'>Gambar tidak ditemukan</small></div>';">
                             <?php else: ?>
                                 <div class="text-center">
-                                    <i class="fas <?php echo $icon_class; ?> fa-3x opacity-75"></i>
+                                    <i class="<?php echo $icon_class; ?>" style="font-size: 3rem; opacity: 0.75;"></i>
+                                    <div class="mt-2" style="color: white; font-size: 0.85rem;">
+                                        <?php 
+                                        $ext = strtoupper(pathinfo($nama_file, PATHINFO_EXTENSION));
+                                        echo $ext ? $ext : 'FILE';
+                                        ?>
+                                    </div>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -135,30 +148,26 @@ include __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
 
                             <p class="card-text text-muted small mb-0">
+                                <i class="bi bi-file-earmark me-1"></i>
                                 <?php echo formatFileSize($row['ukuran_file']); ?>
                             </p>
                         </div>
 
                         <!-- Actions -->
                         <div class="card-footer bg-white border-top">
-                            <div class="btn-group w-100" role="group">
-                                <?php if ($file_exists): ?>
-                                    <a href="../../uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
-                                       class="btn btn-sm btn-outline-secondary" 
-                                       target="_blank" 
-                                       title="Buka file">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                <?php else: ?>
-                                    <button class="btn btn-sm btn-outline-secondary" disabled title="File tidak ditemukan">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                <?php endif; ?>
+                            <div class="d-flex gap-2">
+                                <a href="<?php echo SITE_URL; ?>/uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
+                                   class="btn btn-sm btn-outline-primary flex-fill" 
+                                   target="_blank" 
+                                   title="Buka file">
+                                    <i class="bi bi-eye me-1"></i> Lihat
+                                </a>
                                 
                                 <a href="hapus.php?id=<?php echo $row['id_media']; ?>" 
-                                class="btn btn-sm btn-danger"
-                                onclick="return confirm('Yakin ingin menghapus media ini?');">
-                                <i class="bi bi-trash"></i> Hapus
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Yakin ingin menghapus media ini?');"
+                                   title="Hapus file">
+                                    <i class="bi bi-trash"></i>
                                 </a>
                             </div>
                         </div>
@@ -168,8 +177,8 @@ include __DIR__ . '/../includes/header.php';
         <?php else: ?>
             <div class="col-12">
                 <div class="alert alert-light border text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
-                    <p class="text-muted mb-0">Belum ada file media. <a href="upload.php">Upload file sekarang</a></p>
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #adb5bd;"></i>
+                    <p class="text-muted mb-0 mt-3">Belum ada file media. <a href="upload.php">Upload file sekarang</a></p>
                 </div>
             </div>
         <?php endif; ?>
@@ -178,12 +187,26 @@ include __DIR__ . '/../includes/header.php';
     <!-- Info Section -->
     <div class="card border-0 shadow-sm mt-5 bg-light">
         <div class="card-body">
-            <h6 class="card-title fw-bold mb-3">Informasi</h6>
-            <ul class="small text-muted mb-0">
-                <li>Ukuran maksimal gambar: 5MB</li>
-                <li>Ukuran maksimal dokumen: 10MB</li>
-                <li>Format gambar yang didukung: JPG, PNG, WebP</li>
-                <li>Format dokumen yang didukung: PDF</li>
+            <h6 class="card-title fw-bold mb-3">
+                <i class="bi bi-info-circle me-2"></i>Informasi
+            </h6>
+            <ul class="small text-muted mb-0 list-unstyled">
+                <li class="mb-2">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Ukuran maksimal gambar: 5MB
+                </li>
+                <li class="mb-2">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Ukuran maksimal dokumen: 10MB
+                </li>
+                <li class="mb-2">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Format gambar yang didukung: JPG, PNG, WebP, GIF
+                </li>
+                <li>
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Format dokumen yang didukung: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
+                </li>
             </ul>
         </div>
     </div>
