@@ -55,7 +55,7 @@ $current_user = getCurrentUser();
             <div class="sidebar-menu-item">
                 <a href="<?php echo getAdminUrl('fasilitas/index.php'); ?>" 
                    class="sidebar-menu-link <?php echo ($active_page == 'fasilitas') ? 'active' : ''; ?>">
-                    <i class="bi bi-wrench"></i>
+                    <i class="bi bi-building"></i>
                     <span>Fasilitas</span>
                 </a>
             </div>
