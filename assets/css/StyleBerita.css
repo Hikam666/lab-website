@@ -536,3 +536,32 @@
         font-size: 0.9rem;
     }
 }
+/* ===================================================
+   BERITA DETAIL CONTENT STYLES
+   Memastikan konten berita (terutama teks panjang tanpa spasi) 
+   membungkus (wrap) ke baris baru
+   =================================================== */
+
+.berita-content {
+    /* Mencegah teks yang sangat panjang (tanpa spasi) melebihi batas container */
+    word-wrap: break-word; /* Properti lama untuk kompatibilitas */
+    overflow-wrap: break-word; /* Properti standar modern */
+    /* Opsional: Membuat gambar dan elemen lebar di dalam konten menyesuaikan */
+    max-width: 100%;
+    /* Mencegah overflow pada elemen turunan seperti gambar atau tabel */
+    overflow-x: hidden; 
+}
+
+/* Jika konten berita mengandung gambar yang terlalu besar, tambahkan ini: */
+.berita-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Jika konten berita mengandung tabel yang terlalu lebar, tambahkan ini: */
+.berita-content table {
+    display: block; /* Memungkinkan overflow di dalam tabel jika perlu */
+    width: 100%;
+    overflow-x: auto; /* Memungkinkan scroll horizontal hanya pada tabel */
+    border-collapse: collapse;
+}

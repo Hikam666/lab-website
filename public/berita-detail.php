@@ -130,11 +130,7 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                     </div>
                     <?php endif; ?>
 
-                    <!-- Share Buttons -->
                     <div class="d-flex gap-2 mb-4">
-                        <a href="#" class="btn btn-primary btn-sm">
-                            <i class="bi bi-share"></i> Bagikan
-                        </a>
                         <a href="berita.php" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-arrow-left"></i> Kembali ke Daftar
                         </a>

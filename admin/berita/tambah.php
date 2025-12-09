@@ -2,161 +2,204 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-if (function_exists('isLoggedIn') && !isLoggedIn()) {
-    redirectAdmin('login.php');
-}
-
 requireLogin();
-$user = function_exists('getCurrentUser') ? getCurrentUser() : null;
-
-
-
-$active_page = 'anggota';
-$page_title = 'Tambah Anggota';
-$extra_css = [];
+$user = getCurrentUser();
 
 $conn = getDBConnection();
 
+$active_page = 'berita';
+$page_title  = 'Tambah Berita';
+$extra_css   = []; // kalau punya css khusus, tambahkan di array ini
+
+$errors     = [];
+$form_data  = $_SESSION['form_data']  ?? [];
+$form_errors= $_SESSION['form_errors']?? [];
+unset($_SESSION['form_data'], $_SESSION['form_errors']);
+
+// Inisialisasi default form kalau belum ada data lama
+$judul        = $form_data['judul']        ?? '';
+$jenis        = $form_data['jenis']        ?? 'berita';
+$status_form  = $form_data['status']       ?? 'draft'; 
+$ringkasan    = $form_data['ringkasan']    ?? '';
+$isi_html     = $form_data['isiberita']    ?? '';
+$catatan_rev  = $form_data['catatan_review'] ?? '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $errors = [];
-    
-    $nama = trim($_POST['judul'] ?? '');
-    $email = trim($_POST['jenis'] ?? '');
-    $linkedin = trim($_POST['ringkasan'] ?? '');
-    $peran_lab = trim($_POST['isiberita'] ?? '');
-    $bio_html = trim($_POST['catatan_review'] ?? '');
-    $aktif = trim($_POST['status'] ?? '');
-    
-    // Validation
-   
-   
-    
-    // Validate foto upload
+
+    $judul       = trim($_POST['judul']   ?? '');
+    $jenis       = trim($_POST['jenis']   ?? 'berita');
+    $status_form = trim($_POST['status']  ?? 'draft');    
+    $ringkasan   = trim($_POST['ringkasan'] ?? '');
+    $isi_html    = trim($_POST['isiberita'] ?? '');
+    $catatan_rev = trim($_POST['catatan_review'] ?? '');
+
+    // ===== VALIDASI DASAR =====
+    if ($judul === '') {
+        $errors[] = "Judul wajib diisi.";
+    }
+    if (!in_array($jenis, ['berita','agenda','pengumuman'], true)) {
+        $errors[] = "Jenis berita tidak valid.";
+    }
+
+    // ===== STATUS BERDASARKAN ROLE =====
+    // Admin  -> disetujui
+    // Operator -> diajukan
+    if (isAdmin()) {
+        $status = 'disetujui';
+    } else {
+        $status = 'diajukan';
+    }
+
+    // ===== VALIDASI FOTO =====
     $id_foto = null;
-    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-        $foto = $_FILES['foto'];
-        
-        // Validate file type
-        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime_type = finfo_file($finfo, $foto['tmp_name']);
-        finfo_close($finfo);
-        
-        if (!in_array($mime_type, $allowed_types)) {
-            $errors[] = "Format foto harus JPG, PNG, atau WebP";
+    if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
+        if ($_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = "Terjadi kesalahan saat upload cover.";
+        } else {
+            $foto = $_FILES['foto'];
+
+            // cek mime
+            $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = finfo_file($finfo, $foto['tmp_name']);
+            finfo_close($finfo);
+
+            if (!in_array($mime_type, $allowed_types, true)) {
+                $errors[] = "Format cover harus JPG, PNG, atau WebP.";
+            }
+
+            // cek ukuran max 5MB
+            if ($foto['size'] > 5 * 1024 * 1024) {
+                $errors[] = "Ukuran cover maksimal 5MB.";
+            }
         }
-        
-        // Validate file size (5MB)
-        if ($foto['size'] > 5 * 1024 * 1024) {
-            $errors[] = "Ukuran foto maksimal 5MB";
-        }
-    } elseif (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $errors[] = "Foto wajib diupload";
+    } else {
+        $errors[] = "Cover wajib diupload.";
     }
 
     if (empty($errors)) {
         pg_query($conn, "BEGIN");
-        
+
         try {
-            $slug = generateSlug($nama);
-            $check_slug = pg_query_params($conn, "SELECT id_anggota FROM anggota_lab WHERE slug = $1", [$slug]);
+            // SLUG unik
+            $slug = generateSlug($judul);
+            $check_slug = pg_query_params($conn, "SELECT id_berita FROM berita WHERE slug = $1", [$slug]);
             if (pg_num_rows($check_slug) > 0) {
                 $counter = 1;
                 $original_slug = $slug;
                 while (pg_num_rows($check_slug) > 0) {
                     $slug = $original_slug . '-' . $counter;
-                    $check_slug = pg_query_params($conn, "SELECT id_anggota FROM anggota_lab WHERE slug = $1", [$slug]);
+                    $check_slug = pg_query_params($conn, "SELECT id_berita FROM berita WHERE slug = $1", [$slug]);
                     $counter++;
                 }
             }
 
+            // ===== SIMPAN COVER KE /uploads/berita & TABEL MEDIA =====
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
                 $foto = $_FILES['foto'];
-                
-                $ext = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
-                $filename = 'anggota-' . time() . '-' . uniqid() . '.' . $ext;
+                $ext  = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
+                $filename = 'berita-' . time() . '-' . uniqid() . '.' . $ext;
                 $upload_path = __DIR__ . '/../../uploads/berita/';
-                
+
                 if (!file_exists($upload_path)) {
                     mkdir($upload_path, 0755, true);
                 }
 
-                if (move_uploaded_file($foto['tmp_name'], $upload_path . $filename)) {
-                    $lokasi_file = 'berita/' . $filename;
-                    $ukuran_file = $foto['size'];
-                    $tipe_file = $mime_type;
-                    $keterangan_alt = $nama;
-                    
-                    $media_sql = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
-                                  VALUES ($1, $2, $3, $4, $5, NOW()) 
-                                  RETURNING id_media";
-                    $media_result = pg_query_params($conn, $media_sql, [
-                        $lokasi_file,
-                        $ukuran_file,
-                        $tipe_file,
-                        $keterangan_alt,
-                        $_SESSION['user_id']
-                    ]);
-                    
-                    if ($media_result) {
-                        $id_foto = pg_fetch_assoc($media_result)['id_media'];
-                    } else {
-                        var_dump('data anda');
-                        throw new Exception("Gagal menyimpan foto ke media");
-                    }
-                } else {
-                    var_dump('data anda');
-                    throw new Exception("Gagal mengupload foto");
+                if (!move_uploaded_file($foto['tmp_name'], $upload_path . $filename)) {
+                    throw new Exception("Gagal mengupload cover berita.");
                 }
+
+                $lokasi_file   = 'berita/' . $filename;
+                $ukuran_file   = $foto['size'];
+                $tipe_file     = $mime_type;
+                $keterangan_alt= $judul;
+
+                $media_sql = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
+                              VALUES ($1, $2, $3, $4, $5, NOW()) 
+                              RETURNING id_media";
+
+                $media_result = pg_query_params($conn, $media_sql, [
+                    $lokasi_file,
+                    $ukuran_file,
+                    $tipe_file,
+                    $keterangan_alt,
+                    $user['id'] ?? null
+                ]);
+
+                if (!$media_result) {
+                    throw new Exception("Gagal menyimpan data cover ke tabel media.");
+                }
+
+                $id_foto = pg_fetch_assoc($media_result)['id_media'];
             }
-            
-           
-            $tanggal = date('Y-m-d H:i:s');
-            $dibuatOleh = $user['id'];
+
+            // ===== INSERT BERITA =====
+            $tanggal_mulai = date('Y-m-d H:i:s'); 
+            $dibuatOleh    = $user['id'] ?? null;
 
             $sql = "INSERT INTO berita (
                         judul, slug, jenis, ringkasan, isi_html, catatan_review, 
-                        id_cover, status, tanggal_mulai, dibuat_oleh, dibuat_pada 
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())";
-            
+                        id_cover, status, tanggal_mulai, dibuat_oleh, dibuat_pada, diperbarui_pada
+                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())
+                    RETURNING id_berita";
+
             $result = pg_query_params($conn, $sql, [
-                $nama, //done
-                $slug, //done
-                $email, //done
-                $linkedin ?: null, //done
-                $peran_lab ?: null, //done
-                $bio_html ?: null, //done
+                $judul,
+                $slug,
+                $jenis,
+                $ringkasan ?: null,
+                $isi_html ?: null,
+                $catatan_rev ?: null,
                 $id_foto,
-                $aktif,
-                $tanggal,
+                $status,
+                $tanggal_mulai,
                 $dibuatOleh
             ]);
-            
-            if ($result) {
-                pg_query($conn, "COMMIT");
-                setFlashMessage('Anggota berhasil ditambahkan', 'success');
-                header('Location: ' . getAdminUrl('berita/index.php'));
-                exit;
-            } else {
-              
-                throw new Exception("Gagal menyimpan data anggota");
+
+            if (!$result) {
+                throw new Exception("Gagal menyimpan data berita.");
             }
-            
+
+            $row        = pg_fetch_assoc($result);
+            $id_berita  = $row['id_berita'] ?? null;
+
+            // ===== LOG AKTIVITAS =====
+            if ($id_berita) {
+                log_aktivitas(
+                    $conn,
+                    'create',
+                    'berita',
+                    $id_berita,
+                    'Menambahkan berita: ' . $judul . ' (status: ' . $status . ')'
+                );
+            }
+
+            pg_query($conn, "COMMIT");
+
+            if (isAdmin()) {
+                setFlashMessage('Berita berhasil ditambahkan dan langsung dipublikasikan.', 'success');
+            } else {
+                setFlashMessage('Berita berhasil diajukan dan menunggu persetujuan admin.', 'success');
+            }
+
+            header('Location: ' . getAdminUrl('berita/index.php'));
+            exit;
+
         } catch (Exception $e) {
             pg_query($conn, "ROLLBACK");
             $errors[] = $e->getMessage();
         }
     }
 
-    if (!empty($errors)) {
-        $_SESSION['form_errors'] = $errors;
-        $_SESSION['form_data'] = $_POST;
-    }
-}
+    // simpan error & data ke session supaya form tidak hilang
+    $_SESSION['form_errors'] = $errors;
+    $_SESSION['form_data']   = $_POST;
 
-$form_data = $_SESSION['form_data'] ?? [];
-$form_errors = $_SESSION['form_errors'] ?? [];
-unset($_SESSION['form_data'], $_SESSION['form_errors']);
+    header('Location: ' . getAdminUrl('berita/tambah.php'));
+    exit;
+}
 
 include __DIR__ . '/../includes/header.php';
 ?>
@@ -164,8 +207,14 @@ include __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-newspaper"></i>Tambah Berita</h1>
-            <p class="text-muted mb-0">Tambah Berita Baru</p>
+            <h1><i class="bi bi-newspaper"></i> Tambah Berita</h1>
+            <p class="text-muted mb-0">
+                <?php if (isAdmin()): ?>
+                    Berita yang Anda buat akan langsung berstatus <strong>Disetujui</strong>.
+                <?php else: ?>
+                    Berita yang Anda buat akan berstatus <strong>Diajukan</strong> dan menunggu persetujuan admin.
+                <?php endif; ?>
+            </p>
         </div>
         <div>
             <a href="<?php echo getAdminUrl('berita/index.php'); ?>" class="btn btn-secondary">
@@ -191,7 +240,7 @@ include __DIR__ . '/../includes/header.php';
 </div>
 <?php endif; ?>
 
-<form method="POST" action="" enctype="multipart/form-data" id="formAnggota">
+<form method="POST" action="" enctype="multipart/form-data" id="formBerita">
     
     <div class="row">
         
@@ -199,64 +248,58 @@ include __DIR__ . '/../includes/header.php';
             
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-newspaper"></i></i>Berita Utama</h5>
+                    <h5 class="mb-0"><i class="bi bi-newspaper"></i> Berita Utama</h5>
                 </div>
                 <div class="card-body">
                     
                     <div class="mb-3">
-                        <label for="nama" class="form-label">
+                        <label class="form-label">
                             Judul <span class="text-danger">*</span>
                         </label>
                         <input type="text" 
                                class="form-control" 
-                               id="nama" 
                                name="judul" 
                                maxlength="255"
-                               value="" 
+                               value="<?php echo htmlspecialchars($judul); ?>" 
                                required>
-                        <div class="form-text">Maksimal 255 karakter.</div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="jenis" class="form-label">
+                        <label class="form-label">
                             Jenis <span class="text-danger">*</span>
                         </label>
-                        <select class="form-control" name="jenis" placeholder="jenis berita">
-                            <option value="berita">Berita</option>
-                            <option value="agenda">Agenda</option>
-                            <option value="pengumuman">Pengumuman</option>
+                        <select class="form-control" name="jenis">
+                            <option value="berita"     <?php echo $jenis==='berita'?'selected':''; ?>>Berita</option>
+                            <option value="agenda"     <?php echo $jenis==='agenda'?'selected':''; ?>>Agenda</option>
+                            <option value="pengumuman" <?php echo $jenis==='pengumuman'?'selected':''; ?>>Pengumuman</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                       <label for="status" class="form-label">
-                            Status <span class="text-danger">*</span>
+                        <label class="form-label">
+                            Status (info)
                         </label>
-                        <select class="form-control" name="status" placeholder="jenis berita">
-                            <option value="draft">ditunda</option>
-                            <option value="disetujui">disetujui</option>
-                            <option value="diajukan">diajukan</option>
-                            <option value="ditolak">ditolak</option>
-                        </select>
+                        <input type="text" class="form-control" 
+                               value="<?php echo isAdmin() ? 'disetujui (otomatis)' : 'diajukan (otomatis)'; ?>" 
+                               disabled>
+                        <!-- status sebenarnya di-set di server -->
                     </div>
                     
                     <div class="mb-3">
-                        <label for="linkedin" class="form-label">
+                        <label class="form-label">
                             Ringkasan 
                         </label>
                         <input type="text" 
                                class="form-control" 
-                               id="linkedin" 
                                name="ringkasan" 
-                               >
-                        <div class="form-text">Contoh: https://linkedin.com/in/username (opsional)</div>
+                               value="<?php echo htmlspecialchars($ringkasan); ?>">
                     </div>
                     
                     <div class="mb-3">
-                        <label for="peran_lab" class="form-label">
+                        <label class="form-label">
                             Isi Berita
                         </label>
-                        <textarea name="isiberita" id="editor"></textarea>
+                        <textarea name="isiberita" id="editor"><?php echo htmlspecialchars($isi_html); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -264,12 +307,10 @@ include __DIR__ . '/../includes/header.php';
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="bio_html" class="form-label">Catatan Review</label>
+                        <label class="form-label">Catatan Review (opsional)</label>
                         <textarea class="form-control" 
-                                  id="bio_html" 
                                   name="catatan_review" 
-                                  rows="10"></textarea>
-                        <div class="form-text">Maksimal 5000 karakter. Gunakan spasi dan baris baru untuk memisahkan paragraf.</div>
+                                  rows="5"><?php echo htmlspecialchars($catatan_rev); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -284,12 +325,11 @@ include __DIR__ . '/../includes/header.php';
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="foto" class="form-label">
+                        <label class="form-label">
                             Upload Cover <span class="text-danger">*</span>
                         </label>
                         <input type="file" 
                                class="form-control" 
-                               id="foto" 
                                name="foto" 
                                accept="image/jpeg,image/jpg,image/png,image/webp"
                                required>
@@ -305,10 +345,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>         
             
-            <div class="card mb-4">
-                
-            </div>
-            
             <div class="card">
                 <div class="card-body">
                     <div class="d-grid gap-2">
@@ -316,7 +352,7 @@ include __DIR__ . '/../includes/header.php';
                             <i class="bi bi-save me-2"></i>
                             Simpan Berita
                         </button>
-                        <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary">
+                        <a href="<?php echo getAdminUrl('berita/index.php'); ?>" class="btn btn-secondary">
                             <i class="bi bi-x-circle me-2"></i>
                             Batal
                         </a>
@@ -329,6 +365,7 @@ include __DIR__ . '/../includes/header.php';
     </div>
     
 </form>
+
 <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
 
 <script>
@@ -346,21 +383,6 @@ include __DIR__ . '/../includes/header.php';
                 'blockQuote', 'insertTable', 'link', 'mediaEmbed', 'uploadImage', '|',
                 'horizontalLine', 'codeBlock'
             ]
-        },
-        image: {
-            toolbar: [
-                'imageTextAlternative',
-                'imageStyle:inline',
-                'imageStyle:block',
-                'imageStyle:side'
-            ]
-        },
-        table: {
-            contentToolbar: [
-                'tableColumn',
-                'tableRow',
-                'mergeTableCells'
-            ]
         }
     })
     .then(editor => {
@@ -369,56 +391,44 @@ include __DIR__ . '/../includes/header.php';
     .catch(error => {
         console.error(error);
     });
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Preview foto
-    const fotoInput = document.getElementById('foto');
-    const fotoPreview = document.getElementById('fotoPreview');
-    
-    if (fotoInput) {
-        fotoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validate file size
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('Ukuran file maksimal 5MB');
-                    this.value = '';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const fotoInput = document.querySelector('input[name="foto"]');
+        const fotoPreview = document.getElementById('fotoPreview');
+        
+        if (fotoInput) {
+            fotoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Ukuran file maksimal 5MB');
+                        this.value = '';
+                        fotoPreview.style.display = 'none';
+                        return;
+                    }
+                    
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Format file harus JPG, PNG, atau WebP');
+                        this.value = '';
+                        fotoPreview.style.display = 'none';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotoPreview.querySelector('img').src = e.target.result;
+                        fotoPreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
                     fotoPreview.style.display = 'none';
-                    return;
                 }
-                
-                // Validate file type
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Format file harus JPG, PNG, atau WebP');
-                    this.value = '';
-                    fotoPreview.style.display = 'none';
-                    return;
-                }
-                
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    fotoPreview.querySelector('img').src = e.target.result;
-                    fotoPreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                fotoPreview.style.display = 'none';
-            }
-        });
-    }
-    
-    // Form validation (tanpa tinymce.triggerSave)
-    const form = document.getElementById('formAnggota');
-    
-    
-});
+            });
+        }
+    });
 </script>
 
 <?php
-
 include __DIR__ . '/../includes/footer.php';
 ?>

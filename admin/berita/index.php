@@ -5,85 +5,64 @@ require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
 
 $active_page = 'berita';
-$page_title = 'Berita & Agenda';
+$page_title  = 'Berita & Agenda';
+$is_admin    = function_exists('isAdmin') ? isAdmin() : false;
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
-
-// Get database connection
 $conn = getDBConnection();
 
-// Pagination settings
+// Pagination
 $items_per_page = 20;
-$current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$current_page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($current_page < 1) $current_page = 1;
 $offset = ($current_page - 1) * $items_per_page;
 
 // Search & Filter
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$filter_peran = isset($_GET['peran']) ? trim($_GET['peran']) : '';
-$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
+$search        = isset($_GET['search']) ? trim($_GET['search']) : '';
+$filter_status = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-// Build WHERE clause
+// WHERE builder
 $where_conditions = [];
 $params = [];
 $param_count = 1;
 
 if (!empty($search)) {
-   
-    $where_conditions[] = "(a.judul ILIKE $" . $param_count  .")";
+    $where_conditions[] = "(b.judul ILIKE $" . $param_count . ")";
     $params[] = "%$search%";
     $param_count++;
 }
 
-// if (!empty($filter_peran)) {
-//     $where_conditions[] = "a.peran_lab ILIKE $" . $param_count;
-//     $params[] = "%$filter_peran%";
-//     $param_count++;
-// }
-
-// if ($filter_status !== '') {
-//     $where_conditions[] = "a.aktif = $" . $param_count;
-//     $params[] = $filter_status === '1' ? 't' : 'f';
-//     $param_count++;
-// }
+if (!empty($filter_status)) {
+    $where_conditions[] = "b.status = $" . $param_count;
+    $params[] = $filter_status;
+    $param_count++;
+}
 
 $where_sql = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
-// Get total count
-$count_sql = "SELECT COUNT(*) as total FROM anggota_lab a $where_sql";
-$count_result = pg_query_params($conn, $count_sql, $params);
-$total_items = $count_result ? pg_fetch_assoc($count_result)['total'] : 0;
-$total_pages = ceil($total_items / $items_per_page);
+// === COUNT total data ===
+$count_sql = "SELECT COUNT(*) as total FROM berita b $where_sql";
+$count_res = pg_query_params($conn, $count_sql, $params);
+$total_items = $count_res ? (int) pg_fetch_assoc($count_res)['total'] : 0;
+$total_pages = $total_items > 0 ? ceil($total_items / $items_per_page) : 1;
 
-// Get anggota data
+// === Ambil data berita ===
 $sql = "SELECT 
-            a.id_berita,
-            a.judul,
-            a.slug,
-            a.dibuat_pada,
-            a.status,
-            a.jenis,
-            m.lokasi_file as foto,
-            m.keterangan_alt as foto_alt,
-            s.nama_lengkap as creator_berita
-        FROM berita a
-        LEFT JOIN media m ON a.id_cover = m.id_media
-        LEFT JOIN pengguna s ON a.dibuat_oleh = s.id_pengguna
+            b.id_berita,
+            b.judul,
+            b.slug,
+            b.dibuat_pada,
+            b.status,
+            b.jenis,
+            m.lokasi_file AS foto,
+            u.nama_lengkap AS creator
+        FROM berita b
+        LEFT JOIN media m ON b.id_cover = m.id_media
+        LEFT JOIN pengguna u ON b.dibuat_oleh = u.id_pengguna
         $where_sql
-        ORDER BY a.id_berita ASC, a.judul ASC";
+        ORDER BY b.dibuat_pada DESC
+        LIMIT $items_per_page OFFSET $offset";
 
 $result = pg_query_params($conn, $sql, $params);
-
-
-// Get unique peran for filter dropdown
-$peran_sql = "SELECT DISTINCT peran_lab FROM anggota_lab WHERE peran_lab IS NOT NULL AND peran_lab != '' ORDER BY peran_lab";
-$peran_result = pg_query($conn, $peran_sql);
-$peran_list = [];
-if ($peran_result) {
-    while ($row = pg_fetch_assoc($peran_result)) {
-        $peran_list[] = $row['peran_lab'];
-    }
-}
 
 $extra_css = ['/assets/css/anggota.css'];
 include __DIR__ . '/../includes/header.php';
@@ -92,13 +71,12 @@ include __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-newspaper"></i>Berita dan Agenda</h1>
-            <p class="text-muted mb-0">filter berita</p>
+            <h1><i class="bi bi-newspaper me-2"></i>Berita & Agenda</h1>
+            <p class="text-muted mb-0">Kelola daftar berita, agenda, dan pengumuman</p>
         </div>
         <div>
             <a href="<?php echo getAdminUrl('berita/tambah.php'); ?>" class="btn btn-primary">
-                 <i class="bi bi-newspaper"></i>
-                Tambah Berita
+                <i class="bi bi-plus-circle me-2"></i> Tambah Berita
             </a>
         </div>
     </div>
@@ -107,212 +85,156 @@ include __DIR__ . '/../includes/header.php';
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="" class="row g-3">
-            
+
             <div class="col-md-4">
-                <label class="form-label">Judul</label>
-                <input type="text" 
-                       name="search" 
-                       class="form-control" 
-                       placeholder="Judul Berita" 
-                       value="<?php echo htmlspecialchars($search); ?>">
+                <label class="form-label">Cari Judul</label>
+                <input type="text" name="search" class="form-control" placeholder="Judul..." 
+                       value="<?= htmlspecialchars($search); ?>">
             </div>
-            
-            <!-- <div class="col-md-3">
-                <label class="form-label">Peran Lab</label>
-                <select name="peran" class="form-select">
-                    <option value="">Semua Peran</option>
-                    <?php //foreach ($peran_list as $peran): ?>
-                    <option value="<?php //echo htmlspecialchars($peran); ?>" 
-                            <?php //echo $filter_peran === $peran ? 'selected' : ''; ?>>
-                        <?php //echo htmlspecialchars($peran); ?>
-                    </option>
-                    <?php //endforeach; ?>
-                </select>
-            </div> -->
-            
+
             <div class="col-md-3">
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
-                    <option value="">Semua Status</option>
-                    <option value="1" <?php echo $filter_status === '1' ? 'selected' : ''; ?>>Aktif</option>
-                    <option value="0" <?php echo $filter_status === '0' ? 'selected' : ''; ?>>Non-aktif</option>
+                    <option value="">Semua</option>
+                    <option value="draft"      <?= $filter_status==='draft'?'selected':'' ?>>Draft</option>
+                    <option value="diajukan"   <?= $filter_status==='diajukan'?'selected':'' ?>>Diajukan</option>
+                    <option value="disetujui"  <?= $filter_status==='disetujui'?'selected':'' ?>>Disetujui</option>
+                    <option value="ditolak"    <?= $filter_status==='ditolak'?'selected':'' ?>>Ditolak</option>
+                    <option value="arsip"      <?= $filter_status==='arsip'?'selected':'' ?>>Arsip</option>
                 </select>
             </div>
-            
+
             <div class="col-md-2 d-flex align-items-end gap-2">
                 <button type="submit" class="btn btn-primary flex-fill">
                     <i class="bi bi-search"></i> Filter
                 </button>
-                <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary">
+                <a href="<?php echo getAdminUrl('berita/index.php'); ?>" class="btn btn-secondary">
                     <i class="bi bi-x-circle"></i>
                 </a>
             </div>
-            
+
         </form>
     </div>
 </div>
 
 <div class="card">
     <div class="card-body">
-        
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="text-muted">
-                Menampilkan <?php echo min($offset + 1, $total_items); ?> - <?php echo min($offset + $items_per_page, $total_items); ?> 
-                dari <?php echo $total_items; ?> anggota
-            </div>
-        </div>
-        
-        <?php if ($result && pg_num_rows($result) > 0): ?>
-        
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th width="80">Foto</th>
-                        <th>Judul</th>
-                        <th>Creator Berita</th>
-                        <th>Tanggal Dibuat</th>
-                        <th width="80" class="text-center">Status</th>
-                        <th width="100" class="text-center">Jenis</th>
-                        <th width="150" class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = pg_fetch_assoc($result)): 
-                        $foto_url = $row['foto'] ? SITE_URL . '/uploads/' . $row['foto'] : SITE_URL . '/assets/img/default-avatar.jpg';
-                    ?>
-                    <tr>
-                        <td>
-                           <img src="<?php echo $foto_url; ?>" class="anggota-table-foto">
-                        </td>
-                        
-                        <td>
-                            <strong><?php echo htmlspecialchars($row['judul']); ?></strong>
-                            <br>
-                            <small class="text-muted">
-                                <i class="bi bi-link-45deg"></i>
-                                <?php echo htmlspecialchars($row['slug']); ?>
-                            </small>
-                        </td>
-                        
-                        <td>
-                            <?php if ($row['creator_berita']): ?>
-                            <a href="mailto:<?php echo htmlspecialchars($row['creator_berita']); ?>">
-                                <i class="bi bi-envelope me-1"></i>
-                                <?php echo htmlspecialchars($row['creator_berita']); ?>
-                            </a>
-                            <?php else: ?>
-                            <span class="text-muted">-</span>
-                            <?php endif; ?>
-                        </td>
-                        
-                        <td>
-                            <?php if ($row['dibuat_pada']): ?>
-                            <span class="badge bg-info">
-                            <?php echo date('d F Y', strtotime($row['dibuat_pada'])); ?>
-                            </span>
-                            <?php else: ?>
-                            <span class="text-muted">-</span>
-                            <?php endif; ?>
-                        </td>
-                        
-                        <td class="text-center">
-                            <span class="badge bg-success">
-                                <i class="bi bi-check-circle"></i> <?php echo $row['status'] ?>
-                            </span>
-                        </td>
 
-                        <td class="text-center">
-                            <span class="badge bg-success">
-                                <?php echo $row['jenis'] ?>
-                            </span>
-                        </td>
-                        
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="<?php echo getAdminUrl('berita/edit.php?id=' . $row['id_berita']); ?>" 
-                                   class="btn btn-outline-primary"
-                                   title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="<?php echo getAdminUrl('berita/hapus.php?id=' . $row['id_berita']); ?>" 
-                                   class="btn btn-outline-danger"
-                                   title="Hapus">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-        
-        <?php if ($total_pages > 1): ?>
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center">
-                
-                <li class="page-item <?php echo $current_page <= 1 ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $current_page - 1; ?>&search=<?php echo urlencode($search); ?>&peran=<?php echo urlencode($filter_peran); ?>&status=<?php echo urlencode($filter_status); ?>">
-                        <i class="bi bi-chevron-left"></i> Previous
-                    </a>
-                </li>
-                
-                <?php
-                $start_page = max(1, $current_page - 2);
-                $end_page = min($total_pages, $current_page + 2);
-                
-                for ($i = $start_page; $i <= $end_page; $i++):
-                ?>
-                <li class="page-item <?php echo $i === $current_page ? 'active' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&peran=<?php echo urlencode($filter_peran); ?>&status=<?php echo urlencode($filter_status); ?>">
-                        <?php echo $i; ?>
-                    </a>
-                </li>
-                <?php endfor; ?>
-                
-                <li class="page-item <?php echo $current_page >= $total_pages ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $current_page + 1; ?>&search=<?php echo urlencode($search); ?>&peran=<?php echo urlencode($filter_peran); ?>&status=<?php echo urlencode($filter_status); ?>">
-                        Next <i class="bi bi-chevron-right"></i>
-                    </a>
-                </li>
-                
-            </ul>
-        </nav>
-        <?php endif; ?>
-        
-        <?php else: ?>
-        
-        <div class="text-center py-5">
-            <i class="bi bi-people anggota-empty-icon"></i>
-            <h5 class="mt-3 text-muted">Tidak ada data anggota</h5>
-            <p class="text-muted mb-4">
-                <?php if (!empty($search) || !empty($filter_peran) || $filter_status !== ''): ?>
-                    Tidak ada anggota yang sesuai dengan filter
-                <?php else: ?>
-                    Belum ada anggota yang ditambahkan
-                <?php endif; ?>
-            </p>
-            <?php if (empty($search) && empty($filter_peran) && $filter_status === ''): ?>
-            <a href="<?php echo getAdminUrl('anggota/tambah.php'); ?>" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>
-                Tambah Anggota Pertama
-            </a>
+        <div class="text-muted mb-3">
+            <?php if ($total_items > 0): ?>
+                Menampilkan <?= min($offset + 1, $total_items); ?> - <?= min($offset + $items_per_page, $total_items); ?> dari <?= $total_items; ?> berita
             <?php else: ?>
-            <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary">
-                <i class="bi bi-x-circle me-2"></i>
-                Reset Filter
-            </a>
+                Tidak ada data
             <?php endif; ?>
         </div>
-        
+
+        <?php if ($result && pg_num_rows($result) > 0): ?>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>BERITA</th>
+                            <th class="text-center" width="160">STATUS</th>
+                            <th class="text-center" width="130">JENIS</th>
+                            <th class="text-center" width="200">CREATOR</th>
+                            <th class="text-center" width="150">DIBUAT</th>
+                            <th class="text-center" width="180">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <?php while ($row = pg_fetch_assoc($result)): 
+                            $foto = $row['foto'] 
+                                ? SITE_URL.'/uploads/'.$row['foto']
+                                : SITE_URL.'/assets/img/default-avatar.jpg';
+                        ?>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="<?= $foto; ?>" 
+                                         style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px;"
+                                         class="me-3">
+                                    <div>
+                                        <div class="fw-semibold"><?= htmlspecialchars($row['judul']); ?></div>
+                                        <small class="text-muted"><?= htmlspecialchars($row['slug']); ?></small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="text-center">
+                                <?= getStatusBadge($row['status']); ?>
+                            </td>
+
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark px-3"><?= $row['jenis']; ?></span>
+                            </td>
+
+                            <td class="text-center">
+                                <?= $row['creator'] ?: '<span class="text-muted">-</span>' ?>
+                            </td>
+
+                            <td class="text-center">
+                                <small><?= formatDateTime($row['dibuat_pada'], 'd M Y, H:i'); ?></small>
+                            </td>
+
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="<?= getAdminUrl('berita/edit.php?id=' . $row['id_berita']); ?>" 
+                                       class="btn btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="<?= getAdminUrl('berita/hapus.php?id=' . $row['id_berita']); ?>" 
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('Yakin ingin menghapus berita ini?');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <?php if ($total_pages > 1): ?>
+                <nav class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <?= $current_page <= 1 ? 'disabled' : ''; ?>">
+                            <a class="page-link" href="?page=<?= $current_page - 1; ?>">&laquo;</a>
+                        </li>
+
+                        <?php for ($i=1; $i<=$total_pages; $i++): ?>
+                            <li class="page-item <?= $i === $current_page ? 'active' : ''; ?>">
+                                <a class="page-link" href="?page=<?= $i; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+
+                        <li class="page-item <?= $current_page >= $total_pages ? 'disabled' : ''; ?>">
+                            <a class="page-link" href="?page=<?= $current_page + 1; ?>">&raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
+
+        <?php else: ?>
+            <div class="text-center py-5">
+                <i class="bi bi-newspaper anggota-empty-icon"></i>
+                <h5 class="mt-3 text-muted">Tidak ada berita</h5>
+
+                <?php if (empty($search) && empty($filter_status)): ?>
+                <a href="<?= getAdminUrl('berita/tambah.php'); ?>" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-circle me-2"></i> Tambah Berita Pertama
+                </a>
+                <?php else: ?>
+                <a href="<?= getAdminUrl('berita/index.php'); ?>" class="btn btn-secondary mt-3">
+                    <i class="bi bi-x-circle me-2"></i> Reset Filter
+                </a>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
-        
+
     </div>
 </div>
 
-<?php
-
-// Include footer
-include __DIR__ . '/../includes/footer.php';
-?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>
