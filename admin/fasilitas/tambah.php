@@ -1,74 +1,131 @@
 <?php
 require __DIR__ . "/../../includes/config.php";
-require "../includes/functions.php";
 require "../includes/auth.php";
+require "../includes/functions.php";
 
-$conn = getDBConnection();
 requireLogin();
+$conn = getDBConnection();
 
-$user_id = $_SESSION['user_id'];
-$error = '';
+$page_title   = "Tambah Fasilitas";
+$active_page  = "fasilitas";
+
+function getLoggedUserIdFallback() {
+    if (function_exists('getCurrentUser')) {
+        $u = getCurrentUser();
+        if (is_array($u)) {
+            if (!empty($u['id']))          return $u['id'];
+            if (!empty($u['id_pengguna'])) return $u['id_pengguna'];
+        }
+    }
+    if (isset($_SESSION['user_id']))      return $_SESSION['user_id'];
+    if (isset($_SESSION['id_pengguna']))  return $_SESSION['id_pengguna'];
+    return null;
+}
+
+function generateSlugDasar($text) {
+    $text = trim($text);
+    if ($text === '') return 'fasilitas-'.time();
+
+    $text = strtolower($text);
+    $text = preg_replace('/[^a-z0-9]+/i', '-', $text);
+    $text = trim($text, '-');
+    return $text !== '' ? $text : 'fasilitas-'.time();
+}
+
+
+function generateUniqueSlugFasilitas($conn, $nama, $exclude_id = null) {
+    $base_slug = generateSlugDasar($nama);
+    $slug      = $base_slug;
+    $i         = 2;
+
+    while (true) {
+        if ($exclude_id) {
+            $sql = "SELECT 1 FROM fasilitas WHERE slug = $1 AND id_fasilitas <> $2 LIMIT 1";
+            $res = pg_query_params($conn, $sql, [$slug, $exclude_id]);
+        } else {
+            $sql = "SELECT 1 FROM fasilitas WHERE slug = $1 LIMIT 1";
+            $res = pg_query_params($conn, $sql, [$slug]);
+        }
+
+        if ($res && pg_num_rows($res) === 0) {
+            return $slug;
+        }
+
+        $slug = $base_slug . '-' . $i;
+        $i++;
+    }
+}
+
+$user_id = getLoggedUserIdFallback();
+
+$error   = '';
 $success = '';
 
-// Handle submit
 if (isset($_POST['submit'])) {
 
-    $nama       = trim($_POST['nama']);
-    $slug       = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $nama)));
-    $kategori   = trim($_POST['kategori']);
-    $deskripsi  = trim($_POST['deskripsi']);
-    $status     = $_POST['status'] ?? 'disetujui';
-    $id_foto    = null;
+    $nama      = trim($_POST['nama'] ?? '');
+    $kategori  = trim($_POST['kategori'] ?? '');
+    $deskripsi = trim($_POST['deskripsi'] ?? '');
+
+    if ($nama === '') {
+        $error = "Nama fasilitas wajib diisi.";
+    } elseif ($kategori === '') {
+        $error = "Kategori fasilitas wajib diisi.";
+    }
+
+    if (function_exists('isAdmin') && isAdmin()) {
+        $status = 'disetujui';
+    } else {
+        $status = 'diajukan';
+    }
+
+    $slug    = generateUniqueSlugFasilitas($conn, $nama);
+    $id_foto = null;
 
     // ------- UPLOAD FOTO --------
-    if (!empty($_FILES['foto']['name']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+    if (empty($error) && !empty($_FILES['foto']['name']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
 
-        $uploadDir = __DIR__ . "/../../public/uploads/fasilitas/";
+        $uploadDir = __DIR__ . "/../../uploads/fasilitas/";
 
-        // Buat direktori jika belum ada
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
 
-        // Validasi tipe file
-        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        $file_type = $_FILES['foto']['type'];
-        
-        if (!in_array($file_type, $allowed_types)) {
-            $error = "Tipe file tidak diizinkan. Hanya JPG, PNG, dan GIF.";
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type     = $_FILES['foto']['type'];
+
+        if (!in_array($file_type, $allowed_types, true)) {
+            $error = "Tipe file tidak diizinkan. Hanya JPG, PNG, GIF, WebP.";
         } else {
-            // Generate nama file unik
-            $ext = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
-            $fileName = time() . "_" . uniqid() . "." . $ext;
-            $uploadPath = $uploadDir . $fileName;
+            $ext       = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
+            $fileName  = time() . "_" . uniqid() . "." . $ext;
+            $uploadPath= $uploadDir . $fileName;
 
-            // Upload file
             if (move_uploaded_file($_FILES['foto']['tmp_name'], $uploadPath)) {
-                
-                // Path relatif untuk disimpan di database
-                $lokasi_file = "fasilitas/" . $fileName;
 
-                // Insert ke tabel media dan ambil id_media
-                $sqlMedia = "INSERT INTO media(lokasi_file, tipe_file, ukuran_file) 
-                            VALUES ($1, $2, $3) RETURNING id_media";
-                
-                $file_size = filesize($uploadPath);
-                
+                $lokasi_file = "fasilitas/" . $fileName;
+                $file_size   = filesize($uploadPath);
+
+                $sqlMedia = "
+                    INSERT INTO media (lokasi_file, tipe_file, ukuran_file, dibuat_oleh, dibuat_pada)
+                    VALUES ($1, $2, $3, $4, NOW())
+                    RETURNING id_media
+                ";
+
                 $resMedia = pg_query_params($conn, $sqlMedia, [
                     $lokasi_file,
                     $file_type,
-                    $file_size
+                    $file_size,
+                    $user_id
                 ]);
 
                 if ($resMedia) {
-                    $media = pg_fetch_assoc($resMedia);
+                    $media   = pg_fetch_assoc($resMedia);
                     $id_foto = $media['id_media'];
-                    
-                    // Debug: uncomment untuk melihat ID yang di-generate
-                    // echo "Debug: ID Media = " . $id_foto . "<br>";
                 } else {
                     $error = "Gagal menyimpan data media: " . pg_last_error($conn);
                 }
+
             } else {
                 $error = "Gagal mengupload file.";
             }
@@ -80,20 +137,35 @@ if (isset($_POST['submit'])) {
         $sql = "
             INSERT INTO fasilitas (nama, slug, kategori, deskripsi, id_foto, status, dibuat_oleh, dibuat_pada)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            RETURNING id_fasilitas
         ";
 
         $result = pg_query_params($conn, $sql, [
-            $nama, 
-            $slug, 
-            $kategori, 
-            $deskripsi, 
-            $id_foto,  // Pastikan ini tidak NULL jika upload berhasil
-            $status, 
+            $nama,
+            $slug,
+            $kategori,
+            $deskripsi !== '' ? $deskripsi : null,
+            $id_foto,
+            $status,
             $user_id
         ]);
 
         if ($result) {
-            $_SESSION['success_message'] = "Fasilitas berhasil ditambahkan!";
+            $row   = pg_fetch_assoc($result);
+            $newId = $row['id_fasilitas'] ?? null;
+
+            // LOG AKTIVITAS
+            if (function_exists('log_aktivitas')) {
+                $ket = "Menambahkan fasilitas: {$nama} (status: {$status})";
+                log_aktivitas($conn, 'create', 'fasilitas', $newId, $ket);
+            }
+
+            if (function_exists('isAdmin') && isAdmin()) {
+                $_SESSION['success_message'] = "Fasilitas berhasil ditambahkan dan disetujui.";
+            } else {
+                $_SESSION['success_message'] = "Fasilitas berhasil diajukan dan menunggu persetujuan admin.";
+            }
+
             header("Location: index.php?success=1");
             exit;
         } else {
@@ -119,13 +191,6 @@ include "../includes/header.php";
     <?php if (!empty($error)): ?>
         <div class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($error) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($success)): ?>
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i><?= htmlspecialchars($success) ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
@@ -157,9 +222,8 @@ include "../includes/header.php";
                 <div class="mb-3">
                     <label class="form-label">Upload Foto</label>
                     <input type="file" name="foto" class="form-control" accept="image/*" id="fotoInput">
-                    <small class="text-muted">Format: JPG, PNG, GIF. Maksimal 5MB.</small>
+                    <small class="text-muted">Format: JPG, PNG, GIF, WebP. Maksimal 5MB.</small>
                     
-                    <!-- Preview Image -->
                     <div id="imagePreview" class="mt-3" style="display:none;">
                         <img id="preview" src="" alt="Preview" style="max-width: 300px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
@@ -180,7 +244,6 @@ include "../includes/header.php";
     </div>
 </div>
 
-<!-- Script untuk preview image -->
 <script>
 document.getElementById('fotoInput').addEventListener('change', function(e) {
     const file = e.target.files[0];

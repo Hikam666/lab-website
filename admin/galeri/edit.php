@@ -18,7 +18,6 @@ if (!isset($_GET['id'])) {
 
 $id_album = (int)$_GET['id'];
 
-// Ambil data album + media cover (jika ada)
 $sql_album = "
     SELECT 
         ga.id_album,
@@ -130,8 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        // Admin → tetap disetujui
-        // Operator → perubahan diajukan
         $status_baru = isAdmin() ? 'disetujui' : 'diajukan';
 
         $sql_update = "

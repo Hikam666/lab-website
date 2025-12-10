@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
         
         if ($delete_result) {
 
-            // hapus file fisik kalau ada
             if ($berita['foto']) {
                 $foto_path = __DIR__ . '/../../uploads/' . $berita['foto'];
                 if (file_exists($foto_path)) {

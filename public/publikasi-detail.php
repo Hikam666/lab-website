@@ -26,7 +26,7 @@ $sql = "SELECT
             p.tempat,
             p.tahun,
             p.doi,
-            p.url_sinta,             -- ✅ TAMBAH: ambil url_sinta
+            p.url_sinta,           
             m.lokasi_file as cover_image,
             m.keterangan_alt as cover_alt
         FROM publikasi p
@@ -180,10 +180,6 @@ include __DIR__ . '/../includes/header.php';
                         </a>
                         <?php endif; ?>
                         
-                        <button class="btn btn-outline-secondary" onclick="window.print()">
-                            <i class="bi bi-printer me-2"></i>Print
-                        </button>
-                        
                         <a href="publikasi.php" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Kembali
                         </a>
@@ -263,14 +259,13 @@ include __DIR__ . '/../includes/header.php';
 
         </div>
     </div>
-    <!-- Publikasi Detail End -->
+    <!-- Publikasi Detail -->
 
 <?php
-// Close database connection
 if ($conn) {
     pg_close($conn);
 }
 
-// Include footer
+
 include __DIR__ . '/../includes/footer.php';
 ?>

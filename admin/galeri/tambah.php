@@ -25,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Judul album wajib diisi.';
     }
 
-    // Generate slug otomatis dari judul
     $slug = '';
     if ($judul !== '') {
         $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $judul));
@@ -36,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Slug album tidak valid (gagal dibuat dari judul).';
     }
 
-    // Cek slug unik
     if ($slug !== '') {
         $check = pg_query_params(
             $conn,
@@ -48,16 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Siapkan variabel untuk id_cover (media)
     $id_cover = null;
 
-    // Jika tidak ada error sejauh ini → boleh proses cover
     if (empty($errors) && isset($_FILES['cover']) && $_FILES['cover']['error'] !== UPLOAD_ERR_NO_FILE) {
 
         if ($_FILES['cover']['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'Terjadi kesalahan saat upload cover album.';
         } else {
-            // Upload cover sebagai media
             $upload_dir_fs = __DIR__ . '/../../uploads';
             $allowed_types = ['image/jpeg','image/png','image/webp','image/gif'];
             $max_size      = 5 * 1024 * 1024;
@@ -74,8 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 finfo_close($finfo);
 
                 $size = file_exists($filepath) ? filesize($filepath) : 0;
-
-                // Insert ke media
                 $sql_media = "INSERT INTO media (lokasi_file, tipe_file, keterangan_alt, dibuat_oleh, ukuran_file)
                               VALUES ($1, $2, $3, $4, $5)
                               RETURNING id_media";

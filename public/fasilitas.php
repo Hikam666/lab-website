@@ -1,21 +1,16 @@
 <?php
-// Memuat konfigurasi
 require_once __DIR__ . '/../includes/config.php';
 
-// Page settings
 $active_page = 'fasilitas';
 $page_title = 'Fasilitas Laboratorium';
 $page_keywords = 'fasilitas, peralatan, laboratorium, teknologi';
 $page_description = 'Fasilitas dan peralatan Laboratorium Teknologi Data';
 $extra_css = ['fasilitas.css'];
 
-// Mengambil koneksi database
 $conn = getDBConnection();
 
-// Get kategori parameter for filtering
 $kategori_filter = isset($_GET['kategori']) ? $_GET['kategori'] : '';
 
-// Get all fasilitas
 $sql = "SELECT 
             f.id_fasilitas,
             f.nama,
@@ -35,11 +30,12 @@ if (!empty($kategori_filter)) {
     $result = pg_query($conn, $sql . " ORDER BY f.kategori ASC, f.nama ASC");
 }
 
-// Get available categories
-$sql_kategori = "SELECT DISTINCT kategori FROM fasilitas WHERE status = 'disetujui' AND kategori IS NOT NULL ORDER BY kategori ASC";
+$sql_kategori = "SELECT DISTINCT kategori 
+                 FROM fasilitas 
+                 WHERE status = 'disetujui' AND kategori IS NOT NULL 
+                 ORDER BY kategori ASC";
 $result_kategori = pg_query($conn, $sql_kategori);
 
-// Include header
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -60,8 +56,6 @@ include __DIR__ . '/../includes/header.php';
     <!-- Fasilitas Content Start -->
     <div class="container-fluid py-5">
         <div class="container">
-            
-            <!-- Intro -->
             <div class="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 700px;">
                 <h1 class="display-6 mb-4">Fasilitas & Peralatan</h1>
                 <p>Laboratorium Teknologi Data dilengkapi dengan berbagai fasilitas modern untuk mendukung kegiatan riset, praktikum, dan pengembangan teknologi.</p>
@@ -106,8 +100,16 @@ include __DIR__ . '/../includes/header.php';
                             </div>
                             <?php
                         }
-                        
-                        $image_src = SITE_URL . '/public/uploads/' . $row['foto'];
+                        if (!empty($row['foto'])) {
+                            $rel_path  = ltrim($row['foto'], '/');
+                            $image_src = SITE_URL . '/uploads/' . $rel_path;
+                            $alt_text  = !empty($row['foto_alt'])
+                                ? $row['foto_alt']
+                                : $row['nama'];
+                        } else {
+                            $image_src = SITE_URL . '/assets/img/default-cover.jpg';
+                            $alt_text  = $row['nama'];
+                        }
                 ?>
                 
                 <!-- Fasilitas Card -->
@@ -116,7 +118,7 @@ include __DIR__ . '/../includes/header.php';
                         <div class="facility-image">
                             <img src="<?php echo $image_src; ?>" 
                                  class="card-img-top" 
-                                 alt="<?php echo htmlspecialchars($row['nama']); ?>">
+                                 alt="<?php echo htmlspecialchars($alt_text); ?>">
                         </div>
                         <div class="card-body">
                             <?php if ($row['kategori']): ?>
@@ -157,11 +159,9 @@ include __DIR__ . '/../includes/header.php';
     <!-- Fasilitas Content End -->
 
 <?php
-// Close database connection
 if ($conn) {
     pg_close($conn);
 }
 
-// Include footer
 include __DIR__ . '/../includes/footer.php';
 ?>

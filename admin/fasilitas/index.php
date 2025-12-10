@@ -6,8 +6,8 @@ require "../includes/functions.php";
 requireLogin();
 $conn = getDBConnection();
 
-$page_title = "Fasilitas";
-$active_page = "fasilitas";
+$page_title   = "Fasilitas";
+$active_page  = "fasilitas";
 
 /* Ambil data fasilitas + foto*/
 $query = "
@@ -25,7 +25,7 @@ include "../includes/header.php";
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-             <h1><i class="bi bi-building"></i> Fasilitas</h1>
+            <h1><i class="bi bi-building"></i> Fasilitas</h1>
             <p class="text-muted">Kelola fasilitas dan peralatan laboratorium</p>
         </div>
         <a href="tambah.php" class="btn btn-primary">
@@ -42,9 +42,13 @@ include "../includes/header.php";
     <div class="row g-3">
         <?php while ($row = pg_fetch_assoc($result)): ?>
             <?php
-            $img = !empty($row['lokasi_file']) 
-                ? getPublicUploadUrl($row['lokasi_file'])
-                : "https://via.placeholder.com/300x200?text=No+Image";
+            if (!empty($row['lokasi_file'])) {
+                // lokasi_file contoh: "fasilitas/nama-file.jpg"
+                $rel_path = ltrim($row['lokasi_file'], '/');
+                $img = SITE_URL . '/uploads/' . $rel_path;
+            } else {
+                $img = SITE_URL . '/assets/img/default-cover.jpg';
+            }
             ?>
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 h-100">

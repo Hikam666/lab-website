@@ -49,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     $peran_input = trim($_POST['peran'] ?? '');
     $peran = strtolower($peran_input);
 
-    // Checkbox aktif: jika dicentang => 't', jika tidak => 'f'
     $aktif = isset($_POST['aktif']) ? 't' : 'f';
 
     if ($nama_input === '' || $email === '' || $peran === '') {

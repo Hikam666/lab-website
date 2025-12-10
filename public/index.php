@@ -160,10 +160,10 @@ include __DIR__ . '/../includes/header.php';
                         </a>
                     </div>
                 </div>
-            </div> <!-- row -->
-        </div> <!-- container -->
+            </div> 
+        </div> 
     </div>
-    <!-- Riset & Publikasi End -->
+    <!-- Riset & Publikasi-->
 
 <!-- Kontak & Kerja Sama / Alamat, Jam, lalu Tombol -->
 <div class="container-fluid py-5" id="kontak">
@@ -224,18 +224,15 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-        </div> <!-- row -->
-    </div> <!-- container -->
-</div>
+        </div> 
+    </div> 
 <!-- Kontak End -->
 
 
 <?php
-// Close database connection
 if ($conn) {
     pg_close($conn);
 }
 
-// Include footer
 include __DIR__ . '/../includes/footer.php';
 ?>

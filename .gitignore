@@ -1,6 +1,8 @@
 .env
 /.env
 uploads/*
+uploads/**/*
+uploads
 /admin/test_layout.php
 /admin/setup_users.php
 

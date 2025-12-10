@@ -1,12 +1,9 @@
 <?php
-// Memuat konfigurasi
 require_once __DIR__ . '/../includes/config.php';
 
-// Page settings
 $active_page = 'berita';
 $extra_css = ['StyleBerita.css'];
 
-// Mengambil slug dari URL
 $slug = isset($_GET['slug']) ? $_GET['slug'] : '';
 
 if (empty($slug)) {
@@ -14,10 +11,8 @@ if (empty($slug)) {
     exit;
 }
 
-// Mengambil koneksi database
 $conn = getDBConnection();
 
-// Get berita detail
 $sql = "SELECT 
             b.id_berita,
             b.jenis,
@@ -46,15 +41,12 @@ if (!$result || pg_num_rows($result) == 0) {
 
 $berita = pg_fetch_assoc($result);
 
-// Set page meta
 $page_title = $berita['judul'];
 $page_description = $berita['ringkasan'] ? $berita['ringkasan'] : truncateText(strip_tags($berita['isi_html']), 150);
 $page_keywords = 'berita, ' . $berita['jenis'] . ', laboratorium teknologi data';
 
-// Include header
 include __DIR__ . '/../includes/header.php';
 
-// Default image if no cover
 $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_image'] : SITE_URL . '/assets/img/default-news.jpg';
 ?>
 
@@ -197,11 +189,9 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
     <!-- Berita Detail End -->
 
 <?php
-// Close database connection
 if ($conn) {
     pg_close($conn);
 }
 
-// Include footer
 include __DIR__ . '/../includes/footer.php';
 ?>

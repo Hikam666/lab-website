@@ -50,8 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ===== STATUS BERDASARKAN ROLE =====
-    // Admin boleh pilih status dari form
-    // Operator: apapun pilihannya, dipaksa 'diajukan'
     if (isAdmin()) {
         $status = in_array($status_in, ['draft','disetujui','diajukan','ditolak','arsip'], true)
             ? $status_in

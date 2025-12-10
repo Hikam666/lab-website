@@ -20,8 +20,8 @@ $page_title  = 'Persetujuan Konten';
 
 // ---------- PROSES FORM APPROVE / REJECT ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis'], $_POST['id'])) {
-    $aksi    = $_POST['aksi'];            // 'approve' atau 'reject'
-    $jenis   = $_POST['jenis'];           // 'galeri', 'berita', 'publikasi', 'fasilitas', 'aktivitas', 'foto', 'anggota'
+    $aksi    = $_POST['aksi'];           
+    $jenis   = $_POST['jenis'];           
     $id      = (int)$_POST['id'];
     $catatan = trim($_POST['catatan'] ?? '');
 
@@ -55,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
 
         // ==== KHUSUS FOTO GALERI ====
         if ($jenis === 'foto') {
-            // Ambil data foto + album + media
             $sql_get = "
                 SELECT 
                     gi.$pk,
@@ -90,13 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             if ($aksi === 'approve') {
 
                 if ($aksi_request === 'hapus') {
-                    // Setujui permintaan hapus → hapus betulan
                     $filepath = $upload_dir_fs . '/' . $lokasi_file;
                     if (!empty($lokasi_file) && file_exists($filepath)) {
                         @unlink($filepath);
                     }
-
-                    // hapus galeri_item + media
                     pg_query_params($conn, "DELETE FROM galeri_item WHERE id_item = $1", [$id]);
                     pg_query_params($conn, "DELETE FROM media       WHERE id_media = $1", [$id_media]);
 
@@ -109,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     log_aktivitas($conn, 'APPROVE_DELETE', $table, $id, $ket);
 
                 } else {
-                    // Setujui tambah / edit / lain-lain → hanya ubah status
                     $sql_update = "
                         UPDATE galeri_item
                         SET status = 'disetujui',
@@ -131,7 +126,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             } else { // $aksi === 'reject'
 
                 if ($aksi_request === 'tambah') {
-                    // Tolak penambahan foto
                     $sql_update = "
                         UPDATE galeri_item
                         SET status = 'ditolak',
@@ -149,7 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     log_aktivitas($conn, 'REJECT_CREATE', $table, $id, $ket);
 
                 } elseif ($aksi_request === 'edit' || $aksi_request === 'hapus') {
-                    // Tolak edit / hapus → kembalikan status ke disetujui
                     $sql_update = "
                         UPDATE galeri_item
                         SET status = 'disetujui',
@@ -167,7 +160,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     log_aktivitas($conn, 'REJECT_' . strtoupper($aksi_request), $table, $id, $ket);
 
                 } else {
-                    // Tidak ada aksi_request → anggap permintaan perubahan umum
                     $sql_update = "
                         UPDATE galeri_item
                         SET status = 'ditolak',
@@ -208,14 +200,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             if ($aksi === 'approve') {
 
                 if (!$aktif) {
-                    // aktif = FALSE + status = diajukan → permintaan HAPUS → hapus beneran
                     pg_query_params($conn, "DELETE FROM anggota_lab WHERE id_anggota = $1", [$id]);
 
                     $ket = 'Menyetujui penghapusan anggota: ' . $nama . ' (ID=' . $id . ')';
                     log_aktivitas($conn, 'APPROVE_DELETE', 'anggota_lab', $id, $ket);
 
                 } else {
-                    // pengajuan tambah / edit → jadikan disetujui
                     pg_query_params(
                         $conn,
                         "UPDATE anggota_lab SET status = 'disetujui' WHERE id_anggota = $1",
@@ -226,10 +216,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     log_aktivitas($conn, 'APPROVE', 'anggota_lab', $id, $ket);
                 }
 
-            } else { // $aksi === 'reject'
+            } else {
 
                 if (!$aktif) {
-                    // Menolak permintaan hapus → kembalikan seperti semula
                     pg_query_params(
                         $conn,
                         "UPDATE anggota_lab 
@@ -242,7 +231,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     log_aktivitas($conn, 'REJECT_DELETE', 'anggota_lab', $id, $ket);
 
                 } else {
-                    // Menolak pengajuan tambah / edit
                     pg_query_params(
                         $conn,
                         "UPDATE anggota_lab SET status = 'ditolak' WHERE id_anggota = $1",
@@ -260,8 +248,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
-        // ==== GENERIC: bukan foto & bukan anggota ====
-
         // Ambil data konten
         $sql_get = "SELECT {$title_col}, status FROM {$table} WHERE {$pk} = $1";
         $res_get = pg_query_params($conn, $sql_get, [$id]);
@@ -275,7 +261,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
 
         $status_baru = ($aksi === 'approve') ? 'disetujui' : 'ditolak';
 
-        // Khusus tabel yang punya kolom disetujui_oleh / disetujui_pada / catatan_review
         if (in_array($table, ['berita', 'aktivitas'], true)) {
             if ($aksi === 'approve') {
                 $sql_update = "
@@ -299,7 +284,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                 pg_query_params($conn, $sql_update, ['ditolak', $admin_id, $catatan !== '' ? $catatan : null, $id]);
             }
         } else {
-            // Tabel lain cukup update status saja
             $sql_update = "UPDATE {$table} SET status = $1 WHERE {$pk} = $2";
             pg_query_params($conn, $sql_update, [$status_baru, $id]);
         }
@@ -670,7 +654,6 @@ include __DIR__ . '/../includes/header.php';
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($pending_anggota)): ?>
                             <?php
-                                // aktif = false → request hapus
                                 $is_delete_req = ($row['aktif'] !== 't');
                             ?>
                             <tr>

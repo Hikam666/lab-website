@@ -71,7 +71,7 @@ include __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-newspaper me-2"></i>Berita & Agenda</h1>
+            <h1><i class="bi bi-newspaper me-2"></i>Berita & Pengumuman</h1>
             <p class="text-muted mb-0">Kelola daftar berita dan pengumuman</p>
         </div>
         <div>

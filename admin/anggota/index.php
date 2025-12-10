@@ -7,24 +7,19 @@ requireLogin();
 $active_page = 'anggota';
 $page_title  = 'Anggota Peneliti';
 
-// Cek role
 $is_admin = function_exists('isAdmin') ? isAdmin() : false;
 
-// Get database connection
 $conn = getDBConnection();
 
-// Pagination settings
 $items_per_page = 20;
 $current_page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($current_page < 1) $current_page = 1;
 $offset = ($current_page - 1) * $items_per_page;
 
-// Search & Filter
 $search        = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_peran  = isset($_GET['peran']) ? trim($_GET['peran']) : '';
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 
-// Build WHERE clause
 $where_conditions = [];
 $params           = [];
 $param_count      = 1;
@@ -51,13 +46,11 @@ $where_sql = !empty($where_conditions)
     ? 'WHERE ' . implode(' AND ', $where_conditions)
     : '';
 
-// Get total count
 $count_sql    = "SELECT COUNT(*) as total FROM anggota_lab a $where_sql";
 $count_result = pg_query_params($conn, $count_sql, $params);
 $total_items  = $count_result ? (int) pg_fetch_assoc($count_result)['total'] : 0;
 $total_pages  = $total_items > 0 ? ceil($total_items / $items_per_page) : 1;
 
-// Get anggota data
 $sql = "SELECT 
             a.id_anggota,
             a.nama,
@@ -78,7 +71,6 @@ $sql = "SELECT
 
 $result = pg_query_params($conn, $sql, $params);
 
-// Get unique peran for filter dropdown
 $peran_sql    = "SELECT DISTINCT peran_lab FROM anggota_lab WHERE peran_lab IS NOT NULL AND peran_lab <> '' ORDER BY peran_lab";
 $peran_result = pg_query($conn, $peran_sql);
 $peran_list   = [];

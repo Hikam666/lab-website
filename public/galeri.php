@@ -14,16 +14,14 @@ $conn = getDBConnection();
 
 // Pagination settings
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 9; // 3 baris x 3 kolom
+$per_page = 9; 
 $offset = ($page - 1) * $per_page;
 
-// Get total count
 $sql_count = "SELECT COUNT(*) as total FROM galeri_album WHERE status = 'disetujui'";
 $result_count = pg_query($conn, $sql_count);
 $total_rows = pg_fetch_assoc($result_count)['total'];
 $total_pages = ceil($total_rows / $per_page);
 
-// Get albums with cover and item count (with pagination)
 $sql = "SELECT 
             ga.id_album,
             ga.judul,
@@ -151,11 +149,9 @@ include __DIR__ . '/../includes/header.php';
                             </li>
                             
                             <?php
-                            // Smart pagination
                             $start_page = max(1, $page - 3);
                             $end_page = min($total_pages, $page + 3);
-                            
-                            // First page
+
                             if ($start_page > 1):
                             ?>
                             <li class="page-item">
@@ -166,7 +162,6 @@ include __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
                             <?php endif; ?>
                             
-                            <!-- Page Numbers -->
                             <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
                             <li class="page-item <?php echo ($page == $i) ? 'active' : ''; ?>">
                                 <a class="page-link" href="?page=<?php echo $i; ?>">
@@ -198,18 +193,15 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             <?php endif; ?>
-            <!-- Pagination End -->
-
         </div>
     </div>
     <!-- Galeri Albums End -->
 
 <?php
-// Close database connection
+
 if ($conn) {
     pg_close($conn);
 }
 
-// Include footer
 include __DIR__ . '/../includes/footer.php';
 ?>

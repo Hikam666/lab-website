@@ -154,9 +154,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($errors)) {
         $_SESSION['form_errors'] = $errors;
     } else {
-        // === ADMIN vs OPERATOR: STATUS ===
-        // - Admin: langsung disetujui
-        // - Operator: perubahan ditandai 'diajukan' agar muncul di halaman persetujuan
         $status_update = $is_admin ? 'disetujui' : 'diajukan';
 
         pg_query($conn, "BEGIN");
@@ -216,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // === UPDATE anggota_lab (tambah kolom status) ===
+            // === anggota_lab (tambah kolom status) ===
             $sql_update = "UPDATE anggota_lab SET 
                     nama           = $1,
                     slug           = $2,
@@ -265,7 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Gagal memperbarui data anggota");
             }
 
-            // === Update Pendidikan ===
+            // === Pendidikan ===
             pg_query_params($conn, "DELETE FROM anggota_pendidikan WHERE id_anggota = $1", [$id_anggota]);
             if (isset($_POST['pendidikan'])) {
                 foreach ($_POST['pendidikan'] as $idx => $pend) {
@@ -286,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // === Update Sertifikasi ===
+            // === Sertifikasi ===
             pg_query_params($conn, "DELETE FROM anggota_sertifikasi WHERE id_anggota = $1", [$id_anggota]);
             if (isset($_POST['sertifikasi'])) {
                 foreach ($_POST['sertifikasi'] as $idx => $sert) {
@@ -305,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // === Update Mata Kuliah ===
+            // === Mata Kuliah ===
             pg_query_params($conn, "DELETE FROM anggota_matakuliah WHERE id_anggota = $1", [$id_anggota]);
 
             if (isset($_POST['matakuliah_ganjil'])) {

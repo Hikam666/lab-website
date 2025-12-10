@@ -1,11 +1,8 @@
 <?php
-// Memuat konfigurasi
 require_once __DIR__ . '/../includes/config.php';
 
-// Page settings
 $active_page = 'galeri';
 
-// Mengambil slug dari URL
 $slug = isset($_GET['slug']) ? $_GET['slug'] : '';
 
 if (empty($slug)) {
@@ -13,7 +10,6 @@ if (empty($slug)) {
     exit;
 }
 
-// Mengambil koneksi database
 $conn = getDBConnection();
 
 // Get album detail
@@ -39,14 +35,12 @@ if (!$result || pg_num_rows($result) == 0) {
 
 $album = pg_fetch_assoc($result);
 
-// Pagination settings for photos
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
 
-$per_page = 12; // 3 baris x 4 kolom
+$per_page = 12; 
 $offset   = ($page - 1) * $per_page;
 
-// Get total photo count (hanya yang disetujui)
 $sql_count = "SELECT COUNT(*) as total 
               FROM galeri_item 
               WHERE id_album = $1
@@ -55,10 +49,8 @@ $result_count = pg_query_params($conn, $sql_count, array($album['id_album']));
 $row_count    = pg_fetch_assoc($result_count);
 $total_photos = (int)($row_count['total'] ?? 0);
 
-// Hitung total halaman
 $total_pages = $total_photos > 0 ? (int)ceil($total_photos / $per_page) : 1;
 
-// Get foto (hanya yang disetujui) dengan pagination
 $sql_items = "SELECT 
                 gi.id_item,
                 gi.caption,
@@ -81,7 +73,6 @@ $page_description = $album['deskripsi'] ? $album['deskripsi'] : 'Album foto ' . 
 $page_keywords    = 'galeri, foto, ' . $album['judul'];
 $extra_css        = ['galeri.css'];
 
-// Include header
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -198,7 +189,6 @@ include __DIR__ . '/../includes/header.php';
                 <div class="col-12">
                     <nav aria-label="Photo pagination">
                         <ul class="pagination justify-content-center">
-                            <!-- Previous Button -->
                             <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
                                 <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $page - 1; ?>" aria-label="Previous">
                                     <i class="bi bi-chevron-left"></i>
@@ -206,11 +196,8 @@ include __DIR__ . '/../includes/header.php';
                             </li>
                             
                             <?php
-                            // Smart pagination
                             $start_page = max(1, $page - 3);
                             $end_page   = min($total_pages, $page + 3);
-                            
-                            // First page
                             if ($start_page > 1):
                             ?>
                             <li class="page-item">
@@ -221,7 +208,6 @@ include __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
                             <?php endif; ?>
                             
-                            <!-- Page Numbers -->
                             <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
                             <li class="page-item <?php echo ($page == $i) ? 'active' : ''; ?>">
                                 <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $i; ?>">
@@ -230,7 +216,6 @@ include __DIR__ . '/../includes/header.php';
                             </li>
                             <?php endfor; ?>
                             
-                            <!-- Last page -->
                             <?php if ($end_page < $total_pages): ?>
                             <?php if ($end_page < $total_pages - 1): ?>
                             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -242,7 +227,6 @@ include __DIR__ . '/../includes/header.php';
                             </li>
                             <?php endif; ?>
                             
-                            <!-- Next Button -->
                             <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
                                 <a class="page-link" href="?slug=<?php echo urlencode($slug); ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
                                     <i class="bi bi-chevron-right"></i>
@@ -271,11 +255,9 @@ include __DIR__ . '/../includes/header.php';
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
 
 <?php
-// Close database connection
 if ($conn) {
     pg_close($conn);
 }
 
-// Include footer
 include __DIR__ . '/../includes/footer.php';
 ?>

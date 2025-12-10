@@ -17,12 +17,6 @@
                     <p><i class="fa fa-map-marker-alt me-2"></i>Gedung JTI, Politeknik Negeri Malang</p>
                     <p><i class="fa fa-phone-alt me-2"></i>+62 812-0000-0000</p>
                     <p><i class="fa fa-envelope me-2"></i>lab.teknologidata@polinema.ac.id</p>
-
-                    <div class="d-flex mt-4">
-                        <a class="btn btn-lg-square btn-primary me-2" href="#"><i class="fab fa-instagram"></i></a>
-                        <a class="btn btn-lg-square btn-primary me-2" href="#"><i class="fab fa-youtube"></i></a>
-                        <a class="btn btn-lg-square btn-primary me-2" href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
                 </div>
 
                 <div class="col-lg-6 ps-lg-5">

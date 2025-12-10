@@ -151,7 +151,7 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
                                 
                                 <?php if ($anggota['google_scholar']): ?>
                                 <a href="<?php echo htmlspecialchars($anggota['google_scholar']); ?>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-google"></i> Scholar
+                                    <i class="bi-journal-richtext"></i> Scholar
                                 </a>
                                 <?php endif; ?>
                                 

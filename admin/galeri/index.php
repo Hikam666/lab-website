@@ -11,7 +11,6 @@ $active_page = 'galeri';
 $page_title  = 'Manajemen Galeri Album';
 $extra_css = ['galeri.css']; 
 
-// Ambil daftar album + jumlah foto
 $sql = "
     SELECT 
         ga.id_album,

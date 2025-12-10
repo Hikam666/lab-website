@@ -12,7 +12,6 @@ $extra_css = ['profil.css'];
 // Mengambil koneksi database
 $conn = getDBConnection();
 
-// Get team members - Updated query to use 'keahlian' instead of 'bio_html'
 $sql = "SELECT 
             a.id_anggota,
             a.nama,
@@ -26,7 +25,7 @@ $sql = "SELECT
             m.keterangan_alt as foto_alt
         FROM anggota_lab a
         LEFT JOIN media m ON a.id_foto = m.id_media
-        WHERE a.status = 'disetujui'
+        WHERE a.status = 'disetujui' AND a.aktif = TRUE
         ORDER BY a.urutan ASC, a.nama ASC";
 
 $result = pg_query($conn, $sql);
@@ -150,7 +149,6 @@ include __DIR__ . '/../includes/header.php';
 
             <?php 
             if ($result && pg_num_rows($result) > 0):
-                // Separate head and members
                 $kepala_lab = null;
                 $anggota_list = [];
                 

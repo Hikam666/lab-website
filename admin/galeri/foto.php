@@ -31,14 +31,10 @@ $album       = pg_fetch_assoc($res_album);
 $currentUser = getCurrentUser();
 $id_pengguna = $currentUser['id'] ?? ($_SESSION['user_id'] ?? null);
 
-// =========================
-// HAPUS FOTO
-// =========================
 if (isset($_GET['hapus_item'])) {
     $id_item = (int)$_GET['hapus_item'];
 
     if (isOperator()) {
-        // Operator hanya mengajukan penghapusan
         $sql = "UPDATE galeri_item
                 SET status = 'diajukan', aksi_request = 'hapus'
                 WHERE id_item = $1 AND id_album = $2";
@@ -69,7 +65,7 @@ if (isset($_GET['hapus_item'])) {
         }
 
         pg_query_params($conn, "DELETE FROM galeri_item WHERE id_item = $1", [$id_item]);
-        pg_query_params($conn, "DELETE FROM media       WHERE id_media = $1", [$row['id_media']]);
+        pg_query_params($conn, "DELETE FROM media       WHERE id_media = $1", [$row['id_media']]);
 
         $ket = "Admin menghapus foto (id_item=$id_item) dari album #$id_album ({$album['judul']})";
         log_aktivitas($conn, 'DELETE', 'galeri_item', $id_item, $ket);
@@ -83,15 +79,9 @@ if (isset($_GET['hapus_item'])) {
     exit;
 }
 
-// =========================
-// PROSES TAMBAH / EDIT FOTO
-// =========================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $aksi_form = $_POST['aksi'] ?? '';
 
-    // -------------------------
-    // TAMBAH FOTO
-    // -------------------------
     if ($aksi_form === 'tambah_foto') {
         if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
             setFlashMessage('Tidak ada file foto yang diupload.', 'danger');
@@ -100,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $caption = trim($_POST['caption'] ?? '');
-        $urutan  = (int)($_POST['urutan'] ?? 0);
 
         $status_foto  = isAdmin() ? 'disetujui' : 'diajukan';
         $aksi_request = isAdmin() ? null : 'tambah';
@@ -139,13 +128,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($res_media && ($m = pg_fetch_assoc($res_media))) {
             $id_media = (int)$m['id_media'];
 
-            $sql_item = "INSERT INTO galeri_item (id_album, id_media, caption, urutan, dibuat_oleh, status, aksi_request)
-                         VALUES ($1, $2, $3, $4, $5, $6, $7)";
+            $sql_item = "INSERT INTO galeri_item (id_album, id_media, caption, dibuat_oleh, status, aksi_request)
+                         VALUES ($1, $2, $3, $4, $5, $6)";
             pg_query_params($conn, $sql_item, [
                 $id_album,
                 $id_media,
                 $caption,
-                $urutan,
                 $id_pengguna,
                 $status_foto,
                 $aksi_request
@@ -170,13 +158,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // -------------------------
-    // EDIT FOTO (caption / urutan)
-    // -------------------------
     if ($aksi_form === 'edit_foto') {
         $id_item = (int)($_POST['id_item'] ?? 0);
         $caption = trim($_POST['caption'] ?? '');
-        $urutan  = (int)($_POST['urutan'] ?? 0);
 
         if ($id_item <= 0) {
             setFlashMessage('Data foto tidak valid.', 'danger');
@@ -188,13 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $aksi_request = isAdmin() ? null : 'edit';
 
         if (isAdmin()) {
+
             $sql = "UPDATE galeri_item
                     SET caption = $1,
-                        urutan = $2,
-                        status = $3,
+                        status = $2,
                         aksi_request = NULL
-                    WHERE id_item = $4 AND id_album = $5";
-            pg_query_params($conn, $sql, [$caption, $urutan, $status_foto, $id_item, $id_album]);
+                    WHERE id_item = $3 AND id_album = $4";
+            pg_query_params($conn, $sql, [$caption, $status_foto, $id_item, $id_album]);
 
             $ket = "Admin mengedit foto (id_item=$id_item) di album #$id_album ({$album['judul']})";
             log_aktivitas($conn, 'UPDATE', 'galeri_item', $id_item, $ket);
@@ -202,11 +186,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $sql = "UPDATE galeri_item
                     SET caption = $1,
-                        urutan = $2,
-                        status = $3,
-                        aksi_request = $4
-                    WHERE id_item = $5 AND id_album = $6";
-            pg_query_params($conn, $sql, [$caption, $urutan, $status_foto, $aksi_request, $id_item, $id_album]);
+                        status = $2,
+                        aksi_request = $3
+                    WHERE id_item = $4 AND id_album = $5";
+            pg_query_params($conn, $sql, [$caption, $status_foto, $aksi_request, $id_item, $id_album]);
 
             $ket = "Operator mengajukan pengeditan foto (id_item=$id_item) di album #$id_album ({$album['judul']})";
             log_aktivitas($conn, 'REQUEST_UPDATE', 'galeri_item', $id_item, $ket);
@@ -218,14 +201,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// =========================
-// AMBIL DAFTAR FOTO (SEMUA STATUS)
-// =========================
 $sql_foto = "
     SELECT 
         gi.id_item,
         gi.caption,
-        gi.urutan,
         gi.status,
         gi.aksi_request,
         gi.dibuat_pada,
@@ -234,7 +213,7 @@ $sql_foto = "
     FROM galeri_item gi
     JOIN media m ON gi.id_media = m.id_media
     WHERE gi.id_album = $1
-    ORDER BY gi.urutan ASC, gi.dibuat_pada ASC
+    ORDER BY gi.dibuat_pada ASC
 ";
 $res_foto = pg_query_params($conn, $sql_foto, [$id_album]);
 
@@ -262,7 +241,6 @@ include __DIR__ . '/../includes/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Form Tambah Foto -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header">
             <strong>Tambah Foto</strong>
@@ -279,10 +257,6 @@ include __DIR__ . '/../includes/header.php';
                     <label for="caption" class="form-label">Caption (opsional)</label>
                     <input type="text" name="caption" id="caption" class="form-control" maxlength="200">
                 </div>
-                <div class="col-md-2">
-                    <label for="urutan" class="form-label">Urutan</label>
-                    <input type="number" name="urutan" id="urutan" class="form-control" value="0">
-                </div>
                 <div class="col-md-2 d-flex align-items-center pt-2">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-plus-circle me-1"></i> Tambah Foto
@@ -292,7 +266,6 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <!-- Daftar Foto -->
     <div class="card shadow-sm">
         <div class="card-header">
             <strong>Daftar Foto</strong>
@@ -306,7 +279,6 @@ include __DIR__ . '/../includes/header.php';
                                 <th width="60">ID</th>
                                 <th width="120">Preview</th>
                                 <th>Caption</th>
-                                <th width="80">Urutan</th>
                                 <th width="140">Status</th>
                                 <th width="160">Dibuat</th>
                                 <th width="220" class="text-end">Aksi</th>
@@ -318,22 +290,17 @@ include __DIR__ . '/../includes/header.php';
                                 <td><?php echo (int)$f['id_item']; ?></td>
                                 <td>
                                     <img src="../../uploads/<?php echo htmlspecialchars($f['lokasi_file']); ?>"
-                                         alt="<?php echo htmlspecialchars($f['keterangan_alt']); ?>"
-                                         class="rounded"
-                                         style="width: 100px; height: 70px; object-fit: cover;">
+                                            alt="<?php echo htmlspecialchars($f['keterangan_alt']); ?>"
+                                            class="rounded"
+                                            style="width: 100px; height: 70px; object-fit: cover;">
                                 </td>
                                 <td>
                                     <form method="post" class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
                                         <input type="hidden" name="aksi" value="edit_foto">
                                         <input type="hidden" name="id_item" value="<?php echo (int)$f['id_item']; ?>">
                                         <input type="text" name="caption" class="form-control form-control-sm"
-                                               value="<?php echo htmlspecialchars($f['caption']); ?>"
-                                               placeholder="Caption foto">
-                                </td>
-                                <td>
-                                        <input type="number" name="urutan" class="form-control form-control-sm"
-                                               style="width: 80px;"
-                                               value="<?php echo (int)$f['urutan']; ?>">
+                                                value="<?php echo htmlspecialchars($f['caption']); ?>"
+                                                placeholder="Caption foto">
                                 </td>
                                 <td>
                                     <?php echo getStatusBadge($f['status']); ?>
@@ -356,8 +323,8 @@ include __DIR__ . '/../includes/header.php';
                                         </button>
                                     </form>
                                     <a href="foto.php?id=<?php echo $id_album; ?>&hapus_item=<?php echo (int)$f['id_item']; ?>"
-                                       class="btn btn-sm btn-danger"
-                                       onclick="return confirm('Yakin ingin menghapus foto ini?');">
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Yakin ingin menghapus foto ini?');">
                                         <i class="bi bi-trash"></i> Hapus
                                     </a>
                                 </td>
@@ -377,3 +344,4 @@ include __DIR__ . '/../includes/header.php';
 
 <?php
 include __DIR__ . '/../includes/footer.php';
+?>

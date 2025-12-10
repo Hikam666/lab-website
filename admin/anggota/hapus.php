@@ -36,8 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
     if (!$is_admin) {
         pg_query($conn, "BEGIN");
         try {
-            // TANDAI sebagai permintaan hapus:
-            // status = diajukan, aktif = FALSE
             $update_sql = "UPDATE anggota_lab 
                            SET status = 'diajukan',
                                aktif = FALSE,

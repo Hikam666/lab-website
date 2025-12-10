@@ -9,7 +9,6 @@ $conn = getDBConnection();
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // STATUS berdasarkan peran
     $status = isAdmin() ? 'disetujui' : 'diajukan';
 
     $errors = [];
@@ -193,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cv_file,
                 $aktif ? 't' : 'f',
                 $urutan,
-                $status   // ⬅ status dari admin/operator
+                $status   
             ]);
             
             if (!$result) {

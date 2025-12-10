@@ -74,7 +74,7 @@ $current_user = getCurrentUser();
                 <a href="<?php echo getAdminUrl('berita/index.php'); ?>" 
                    class="sidebar-menu-link <?php echo ($active_page == 'berita') ? 'active' : ''; ?>">
                     <i class="bi bi-newspaper"></i>
-                    <span>Berita & Agenda</span>
+                    <span>Berita & Pengumuman</span>
                 </a>
             </div>
             

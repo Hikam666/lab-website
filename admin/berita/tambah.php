@@ -9,14 +9,13 @@ $conn = getDBConnection();
 
 $active_page = 'berita';
 $page_title  = 'Tambah Berita';
-$extra_css   = []; // kalau punya css khusus, tambahkan di array ini
 
 $errors     = [];
 $form_data  = $_SESSION['form_data']  ?? [];
 $form_errors= $_SESSION['form_errors']?? [];
 unset($_SESSION['form_data'], $_SESSION['form_errors']);
 
-// Inisialisasi default form kalau belum ada data lama
+
 $judul        = $form_data['judul']        ?? '';
 $jenis        = $form_data['jenis']        ?? 'berita';
 $status_form  = $form_data['status']       ?? 'draft'; 
@@ -44,8 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ===== STATUS BERDASARKAN ROLE =====
-    // Admin  -> disetujui
-    // Operator -> diajukan
     if (isAdmin()) {
         $status = 'disetujui';
     } else {
@@ -302,18 +299,6 @@ include __DIR__ . '/../includes/header.php';
                     </div>
                 </div>
             </div>
-            
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Catatan Review (opsional)</label>
-                        <textarea class="form-control" 
-                                  name="catatan_review" 
-                                  rows="5"><?php echo htmlspecialchars($catatan_rev); ?></textarea>
-                    </div>
-                </div>
-            </div>
-            
         </div>
         
         <div class="col-lg-4">
