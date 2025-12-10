@@ -65,12 +65,6 @@ include "../includes/header.php";
                         <p class="text-muted small">
                             <?= htmlspecialchars(mb_strimwidth($row['deskripsi'], 0, 80, "...")) ?>
                         </p>
-
-                        <!-- Status Badge -->
-                        <span class="badge 
-                            <?= $row['status'] == 'disetujui' ? 'bg-success' : 'bg-warning text-dark' ?>">
-                            <?= ucfirst($row['status']) ?>
-                        </span>
                     </div>
 
                     <div class="card-footer bg-white border-0 d-flex gap-2">

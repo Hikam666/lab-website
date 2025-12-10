@@ -314,4 +314,36 @@ function log_aktivitas(\PgSql\Connection $conn, $aksi, $tabel, $id_entitas = nul
         $keterangan
     ]);
 }
+
+/**
+ * Ambil URL publik untuk file yang diupload
+ */
+function getPublicUploadUrl($path) {
+    if (empty($path)) {
+        return null;
+    }
+    
+    // Jika path sudah lengkap (dimulai dengan http/https), return as is
+    if (preg_match('/^https?:\/\//', $path)) {
+        return $path;
+    }
+    
+    // Jika path sudah dimulai dengan /cobaPBL, return as is
+    if (strpos($path, '/lab-website') === 0) {
+        return $path;
+    }
+    
+    // Hapus prefix 'uploads/' jika ada (untuk backward compatibility)
+    if (strpos($path, 'uploads/') === 0) {
+        $path = substr($path, 8);
+    }
+    
+    // Pastikan tidak ada double slash
+    $path = ltrim($path, '/');
+    
+    // Return URL publik yang benar
+    return "/lab-website/public/uploads/" . $path;
+}
+
+
 ?>

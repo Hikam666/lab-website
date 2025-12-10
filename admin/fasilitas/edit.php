@@ -138,16 +138,17 @@ include "../includes/header.php";
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Status</label>
-            <select name="status" class="form-select">
-                <option value="disetujui" <?= $data['status'] === 'disetujui' ? 'selected' : '' ?>>Disetujui</option>
-                <option value="ditolak" <?= $data['status'] === 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
-            </select>
+        <select name="status" class="form-control" required>
+            <option value="disetujui" <?= ($data['status'] == 'disetujui' ? 'selected' : '') ?>>Disetujui</option>
+            <option value="draf" <?= ($data['status'] == 'draf' ? 'selected' : '') ?>>Draf</option>
+            <option value="menunggu" <?= ($data['status'] == 'menunggu' ? 'selected' : '') ?>>Menunggu Persetujuan</option>
+        </select>
         </div>
-
-        <button type="submit" name="submit" class="btn btn-primary">Update</button>
-        <a href="<?= getAdminUrl('fasilitas/index.php'); ?>" class="btn btn-secondary">Batal</a>
-
+        
+        <div class="mb-">
+            <button type="submit" name="submit" class="btn btn-primary">Update</button>
+            <a href="<?= getAdminUrl('fasilitas/index.php'); ?>" class="btn btn-secondary">Batal</a>
+        </div>
     </form>
 
 </div>

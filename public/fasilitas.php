@@ -107,7 +107,7 @@ include __DIR__ . '/../includes/header.php';
                             <?php
                         }
                         
-                        $image_src = $row['foto'] ? SITE_URL . '/uploads/' . $row['foto'] : SITE_URL . '/assets/img/default-facility.jpg';
+                        $image_src = SITE_URL . '/public/uploads/' . $row['foto'];
                 ?>
                 
                 <!-- Fasilitas Card -->
