@@ -46,10 +46,12 @@ if (!$data) {
     exit;
 }
 
+// 1. JIKA OPERATOR: AJUKAN HAPUS
 if (!(function_exists('isAdmin') && isAdmin())) {
     $qUpdate = "
         UPDATE fasilitas
-        SET status = 'diajukan'
+        SET status = 'diajukan',
+            aksi_request = 'hapus' -- <--- PENAMBAHAN UNTUK KONSISTENSI WORKFLOW
         WHERE id_fasilitas = $1
     ";
     $resUpdate = pg_query_params($conn, $qUpdate, [$id]);
@@ -57,9 +59,9 @@ if (!(function_exists('isAdmin') && isAdmin())) {
     if ($resUpdate) {
         if (function_exists('log_aktivitas')) {
             $ket = "Mengajukan penghapusan fasilitas: {$data['nama']}";
-            log_aktivitas($conn, 'update', 'fasilitas', $id, $ket);
+            log_aktivitas($conn, 'REQUEST_DELETE', 'fasilitas', $id, $ket);
         }
-        setFlashMessage("Pengajuan hapus fasilitas telah dikirim dan menunggu persetujuan admin.", "success");
+        setFlashMessage("Pengajuan hapus fasilitas telah dikirim dan menunggu persetujuan admin.", "warning");
     } else {
         setFlashMessage("Gagal mengajukan penghapusan fasilitas.", "danger");
     }
@@ -68,6 +70,7 @@ if (!(function_exists('isAdmin') && isAdmin())) {
     exit;
 }
 
+// 2. JIKA ADMIN: EKSEKUSI HAPUS PERMANEN
 pg_query($conn, "BEGIN");
 
 $id_foto    = $data['id_media'] ?? null;

@@ -28,42 +28,56 @@ if (!$result || pg_num_rows($result) === 0) {
 $berita = pg_fetch_assoc($result);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
+    
+    $is_admin = isAdmin();
+    $berita_judul = $berita['judul'] ?? 'tanpa judul';
+    $foto_cover = $berita['foto'];
+
     pg_query($conn, "BEGIN");
     try {
-        $delete_sql = "DELETE FROM berita WHERE id_berita = $1";
-        $delete_result = pg_query_params($conn, $delete_sql, [$id_berita]);
         
-        if ($delete_result) {
+        if ($is_admin) {
 
-            if ($berita['foto']) {
-                $foto_path = __DIR__ . '/../../uploads/' . $berita['foto'];
+            $delete_sql = "DELETE FROM berita WHERE id_berita = $1";
+            $delete_result = pg_query_params($conn, $delete_sql, [$id_berita]);
+            
+            if (!$delete_result) {
+                throw new Exception('Gagal menghapus dari database.');
+            }
+
+            if ($foto_cover) {
+                $foto_path = __DIR__ . '/../../uploads/' . $foto_cover;
                 if (file_exists($foto_path)) {
                     @unlink($foto_path);
                 }
             }
 
-            // log aktivitas
-            log_aktivitas(
-                $conn,
-                'delete',
-                'berita',
-                $id_berita,
-                'Menghapus berita: ' . ($berita['judul'] ?? 'tanpa judul')
-            );
+            log_aktivitas($conn, 'DELETE', 'berita', $id_berita, 'Menghapus berita (langsung): ' . $berita_judul);
 
-            pg_query($conn, "COMMIT");
-            setFlashMessage('Berita berhasil dihapus', 'success');
-            header('Location: ' . getAdminUrl('berita/index.php'));
-            exit;
+            setFlashMessage('Berita berhasil dihapus secara permanen.', 'success');
+            
         } else {
-            throw new Exception('Gagal menghapus dari database.');
+            $update_sql = "UPDATE berita SET status = 'diajukan', aksi_request = 'hapus' WHERE id_berita = $1";
+            $update_result = pg_query_params($conn, $update_sql, [$id_berita]);
+            
+            if (!$update_result) {
+                 throw new Exception('Gagal mengajukan penghapusan.');
+            }
+
+            log_aktivitas($conn, 'REQUEST_DELETE', 'berita', $id_berita, 'Operator mengajukan penghapusan berita: ' . $berita_judul);
+
+            setFlashMessage('Permintaan penghapusan berita telah diajukan dan menunggu persetujuan Admin.', 'warning');
         }
+        
+        pg_query($conn, "COMMIT");
+
     } catch (Exception $e) {
         pg_query($conn, "ROLLBACK");
-        setFlashMessage('Gagal menghapus: ' . $e->getMessage(), 'error');
-        header('Location: ' . getAdminUrl('berita/index.php'));
-        exit;
+        setFlashMessage('Gagal memproses permintaan: ' . $e->getMessage(), 'error');
     }
+
+    header('Location: ' . getAdminUrl('berita/index.php'));
+    exit;
 }
 
 $active_page = 'berita';
@@ -91,7 +105,12 @@ include __DIR__ . '/../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="alert alert-warning">
-                    Anda akan menghapus berita berikut.<strong>Tindakan ini tidak dapat dibatalkan</strong>.
+                    Anda akan menghapus berita berikut. 
+                    <?php if (isAdmin()): ?>
+                        <strong>Tindakan ini akan menghapus permanen.</strong>
+                    <?php else: ?>
+                        <strong>Tindakan ini akan mengajukan permintaan penghapusan kepada Admin.</strong>
+                    <?php endif; ?>
                 </div>
                 
                 <h5 class="mb-3"><?php echo htmlspecialchars($berita['judul']); ?></h5>
@@ -99,7 +118,7 @@ include __DIR__ . '/../includes/header.php';
                 <?php if ($berita['foto']): ?>
                 <div class="text-center mb-4">
                     <img src="<?php echo SITE_URL.'/uploads/'.$berita['foto']; ?>" 
-                         class="img-fluid rounded anggota-delete-foto-preview">
+                            class="img-fluid rounded anggota-delete-foto-preview">
                 </div>
                 <?php endif; ?>
                 
