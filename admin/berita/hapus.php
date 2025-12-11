@@ -91,7 +91,7 @@ include __DIR__ . '/../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="alert alert-warning">
-                    Anda akan menghapus berita berikut. Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+                    Anda akan menghapus berita berikut.<strong>Tindakan ini tidak dapat dibatalkan</strong>.
                 </div>
                 
                 <h5 class="mb-3"><?php echo htmlspecialchars($berita['judul']); ?></h5>

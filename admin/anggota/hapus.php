@@ -131,7 +131,7 @@ include __DIR__ . '/../includes/header.php';
                 <div class="alert alert-warning">
                     Anda akan menghapus anggota berikut. 
                     <?php if ($is_admin): ?>
-                        Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+                        <strong>Tindakan ini tidak dapat dibatalkan</strong>.
                     <?php else: ?>
                         Sebagai operator, tindakan ini akan diajukan ke admin untuk persetujuan.
                     <?php endif; ?>
