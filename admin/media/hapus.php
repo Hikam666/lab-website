@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
     pg_query($conn, "BEGIN");
     try {
         // hapus file fisik
-        $path = _DIR_ . '/../../uploads/' . $media['lokasi_file'];
+        $path = __DIR__ . '/../../uploads/' . $media['lokasi_file'];
         if (file_exists($path)) {
             @unlink($path);
         }
