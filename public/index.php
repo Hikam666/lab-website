@@ -170,49 +170,43 @@ include __DIR__ . '/../includes/header.php';
     <div class="container">
         <div class="row g-4 contact-information-section">
 
-            <!-- Judul & deskripsi full width -->
             <div class="col-12 wow fadeInUp" data-wow-delay="0.1s">
                 <h1 class="display-6 mb-3">Kontak & Kerja Sama</h1>
-                <p class="mb-4">
-                    Ingin mengajukan kolaborasi riset, undangan pelatihan, magang industri,
+                <p class="lead mb-5"> Ingin mengajukan kolaborasi riset, undangan pelatihan, magang industri,
                     atau membutuhkan dukungan teknis lab? Silakan hubungi kami melalui halaman kontak.
                 </p>
             </div>
 
-            <!-- Kolom 1: Alamat -->
             <div class="col-md-6 wow fadeInUp" data-wow-delay="0.2s">
                 <div class="d-flex align-items-start">
-                    <div class="icon-box-primary">
+                    <div class="icon-box-primary me-3 pt-1">
                         <i class="bi bi-geo-alt text-dark fs-1"></i>
                     </div>
                     <div class="ms-3">
-                        <h5>Alamat Laboratorium</h5>
+                        <h5 class="mb-1">Alamat Laboratorium</h5>
                         <span>Gedung Jurusan Teknologi Informasi — Lantai 8 Barat</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Kolom 2: Jam Operasional -->
             <div class="col-md-6 wow fadeInUp" data-wow-delay="0.3s">
                 <div class="d-flex align-items-start">
-                    <div class="icon-box-primary">
+                    <div class="icon-box-primary me-3 pt-1">
                         <i class="bi bi-clock text-dark fs-1"></i>
                     </div>
                     <div class="ms-3">
-                        <h5>Jam Operasional</h5>
+                        <h5 class="mb-1">Jam Operasional</h5>
                         <span>Senin—Jumat 08.00—16.00</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Baris bawah: Tombol Kontak & Kerja Sama -->
-            <div class="col-12 wow fadeInUp" data-wow-delay="0.4s">
+            <div class="col-12 wow fadeInUp mt-5" data-wow-delay="0.4s">
                 <div class="card contact-cta-box shadow-sm border-0">
-                    <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                    <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between p-4">
                         <div class="mb-3 mb-md-0">
                             <h5 class="mb-1">Form Kontak & Kerja Sama</h5>
-                            <p class="text-muted mb-0">
-                                Kirim pertanyaan, proposal kerja sama, atau permintaan resmi lainnya
+                            <p class="text-muted mb-0 small"> Kirim pertanyaan, proposal kerja sama, atau permintaan resmi lainnya
                                 melalui halaman kontak berikut.
                             </p>
                         </div>
@@ -226,9 +220,7 @@ include __DIR__ . '/../includes/header.php';
 
         </div> 
     </div> 
-<!-- Kontak End -->
-
-
+</div>
 <?php
 if ($conn) {
     pg_close($conn);
