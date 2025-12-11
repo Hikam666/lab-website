@@ -780,32 +780,34 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Status -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-toggle-on me-2"></i>Status</h5>
-                </div>
-                <div class="card-body">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="aktif" name="aktif"
-                            <?php echo $anggota['aktif'] ? 'checked' : ''; ?>>
-                        <label class="form-check-label" for="aktif">
-                            Aktif (tampil di website)
-                        </label>
+            <div class="card mb-4" 
+            style="
+                position: sticky; 
+                top: 100px; 
+                z-index: 1000; 
+                border: 1px solid #e9ecef;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                background-color: #ffffff;">
+                          
+            <div class="card-body py-2 px-4">                   
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                        
+                    <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                           
+                        <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                             
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" id="aktif" name="aktif" checked style="transform: scale(1.15);">
+                            <label class="form-check-label ms-2 small" for="aktif"> Aktif (tampil di website)
+                             </label>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save me-2"></i>Simpan Perubahan
-                        </button>
-                        <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary">
-                            <i class="bi bi-x-circle me-2"></i>Batal
-                        </a>
+                    <div style="min-width: 170px;"> 
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-save me-1"></i>Simpan
+                            </button>
+                            <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-x-circle me-1"></i>Batal
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

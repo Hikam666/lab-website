@@ -47,16 +47,18 @@ $sql_count = "SELECT COUNT(*) as total
                 AND status = 'disetujui'";
 $result_count = pg_query_params($conn, $sql_count, array($album['id_album']));
 $row_count    = pg_fetch_assoc($result_count);
-$total_photos = (int)($row_count['total'] ?? 0);
+$total_items = (int)($row_count['total'] ?? 0);
 
-$total_pages = $total_photos > 0 ? (int)ceil($total_photos / $per_page) : 1;
+$total_pages = $total_items > 0 ? (int)ceil($total_items / $per_page) : 1;
 
+// PERBAIKAN: Tambahkan m.tipe_file untuk deteksi video
 $sql_items = "SELECT 
                 gi.id_item,
                 gi.caption,
                 gi.urutan,
                 gi.dibuat_pada,
                 m.lokasi_file,
+                m.tipe_file,
                 m.keterangan_alt
             FROM galeri_item gi
             JOIN media m ON gi.id_media = m.id_media
@@ -122,46 +124,65 @@ include __DIR__ . '/../includes/header.php';
                         
                         <span class="ms-3">
                             <i class="bi bi-images me-2"></i>
-                            <?php echo $total_photos; ?> Foto
+                            <?php echo $total_items; ?> Item
                         </span>
                     </div>
 
-                    <?php if ($total_photos > 0 && $total_pages > 1): ?>
+                    <?php if ($total_items > 0 && $total_pages > 1): ?>
                         <p class="text-center text-muted mt-2">
-                            Menampilkan foto 
+                            Menampilkan item 
                             <?php echo $offset + 1; ?> - 
-                            <?php echo min($offset + $per_page, $total_photos); ?>
+                            <?php echo min($offset + $per_page, $total_items); ?>
                             (Halaman <?php echo $page; ?> dari <?php echo $total_pages; ?>)
                         </p>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <!-- Photo Grid -->
+            <!-- Photo & Video Grid -->
             <div class="row g-4">
                 <?php 
                 if ($result_items && pg_num_rows($result_items) > 0):
                     $delay = 0.1;
                     while ($item = pg_fetch_assoc($result_items)):
-                        $image_src = '../uploads/' . $item['lokasi_file'];
+                        $media_src = '../uploads/' . $item['lokasi_file'];
+                        $is_video = strpos($item['tipe_file'], 'video/') === 0;
                 ?>
                 
-                <!-- Photo Item -->
+                <!-- Media Item -->
                 <div class="col-lg-3 col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="<?php echo $delay; ?>s">
                     <div class="gallery-photo-item">
-                        <a href="<?php echo $image_src; ?>" 
-                           data-lightbox="album-<?php echo $album['id_album']; ?>" 
-                           data-title="<?php echo htmlspecialchars($item['caption'] ? $item['caption'] : $item['keterangan_alt']); ?>">
-                            <img src="<?php echo $image_src; ?>" 
-                                 alt="<?php echo htmlspecialchars($item['keterangan_alt']); ?>" 
-                                 class="img-fluid rounded"
-                                 onerror="this.src='../assets/img/default-gallery.jpg'">
-                            <?php if ($item['caption']): ?>
-                            <div class="photo-caption">
-                                <?php echo htmlspecialchars($item['caption']); ?>
+                        <?php if ($is_video): ?>
+                            <!-- Video Item -->
+                            <div class="video-container">
+                                <video controls class="img-fluid rounded" style="width: 100%; height: 250px; object-fit: cover;">
+                                    <source src="<?php echo $media_src; ?>" type="<?php echo htmlspecialchars($item['tipe_file']); ?>">
+                                    Browser Anda tidak mendukung tag video.
+                                </video>
+                                <?php if ($item['caption']): ?>
+                                <div class="photo-caption">
+                                    <i class="bi bi-camera-video me-1"></i>
+                                    <?php echo htmlspecialchars($item['caption']); ?>
+                                </div>
+                                <?php endif; ?>
                             </div>
-                            <?php endif; ?>
-                        </a>
+                        <?php else: ?>
+                            <!-- Photo Item -->
+                            <a href="<?php echo $media_src; ?>" 
+                               data-lightbox="album-<?php echo $album['id_album']; ?>" 
+                               data-title="<?php echo htmlspecialchars($item['caption'] ? $item['caption'] : $item['keterangan_alt']); ?>">
+                                <img src="<?php echo $media_src; ?>" 
+                                     alt="<?php echo htmlspecialchars($item['keterangan_alt']); ?>" 
+                                     class="img-fluid rounded"
+                                     style="width: 100%; height: 250px; object-fit: cover;"
+                                     onerror="this.src='../assets/img/default-gallery.jpg'">
+                                <?php if ($item['caption']): ?>
+                                <div class="photo-caption">
+                                    <?php echo htmlspecialchars($item['caption']); ?>
+                                </div>
+                                <?php endif; ?>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
                 
@@ -172,11 +193,11 @@ include __DIR__ . '/../includes/header.php';
                 else:
                 ?>
                 
-                <!-- No Photos Message -->
+                <!-- No Items Message -->
                 <div class="col-12">
                     <div class="alert alert-info text-center" role="alert">
                         <i class="bi bi-info-circle me-2"></i>
-                        Album ini belum memiliki foto.
+                        Album ini belum memiliki foto atau video.
                     </div>
                 </div>
                 
@@ -184,7 +205,7 @@ include __DIR__ . '/../includes/header.php';
             </div>
 
             <!-- Pagination Start -->
-            <?php if ($total_photos > 0 && $total_pages > 1): ?>
+            <?php if ($total_items > 0 && $total_pages > 1): ?>
             <div class="row mt-5">
                 <div class="col-12">
                     <nav aria-label="Photo pagination">
@@ -253,7 +274,6 @@ include __DIR__ . '/../includes/header.php';
     <!-- Lightbox2 CSS & JS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
-
 <?php
 if ($conn) {
     pg_close($conn);

@@ -204,18 +204,27 @@ include __DIR__ . '/../includes/header.php';
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Cover Album</label>
-                    <?php if (!empty($cover_image)): ?>
-                        <div class="mb-2">
-                            <img src="../../uploads/<?php echo htmlspecialchars($cover_image); ?>"
-                                 alt="Cover album"
-                                 class="rounded border"
-                                 style="max-width: 220px; max-height: 140px; object-fit: cover;">
-                        </div>
-                    <?php else: ?>
-                        <p class="text-muted mb-1"><em>Belum ada cover album.</em></p>
+                    <label class="form-label">Cover Album</label><br>
+                    <?php 
+                    $cover_url = (!empty($cover_image) && defined('SITE_URL')) ? SITE_URL . '/uploads/' . $cover_image : null;
+                    $default_img = (defined('SITE_URL')) ? SITE_URL . '/assets/img/default-cover.jpg' : 'default-cover.jpg';
+                    $image_id = 'galeri_cover_preview';
+                    ?>
+                    <div id="image_preview_container" class="mb-2" style="width: 220px; height: 140px;">
+                        <img id="<?= $image_id ?>" 
+                              src="<?= $cover_url ?: $default_img ?>" 
+                              width="220" height="140" 
+                              class="rounded border" 
+                              style="object-fit:cover;">
+                    </div>
+                    <?php if (!$cover_url): ?>
+                        <p class="text-muted small" id="no_cover_text" style="display: <?= $cover_url ? 'none' : 'block' ?>;">Belum ada cover album.</p>
                     <?php endif; ?>
-                    <input type="file" name="cover" id="cover" class="form-control" accept="image/*">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Ganti Cover Baru</label>
+                    <input type="file" name="cover" id="cover_input" class="form-control" accept="image/*">
                     <div class="form-text">
                         Pilih file untuk mengganti cover album (opsional). Format: JPG, PNG, WebP, GIF. Maks 5MB.
                     </div>
@@ -237,5 +246,36 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
+<script>
+document.getElementById('cover_input').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('galeri_cover_preview');
+    const noCoverText = document.getElementById('no_cover_text');
+    
+    const coverLamaUrl = '<?= $cover_url ?>'; 
+    const defaultImg = '<?= $default_img ?>'; 
+
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            if (noCoverText) {
+                noCoverText.style.display = 'none';
+            }
+        };
+
+        reader.readAsDataURL(file);
+    } else {
+        preview.src = coverLamaUrl || defaultImg;
+        
+        if (!coverLamaUrl && noCoverText) {
+             noCoverText.style.display = 'block';
+        }
+    }
+});
+</script>
+
 <?php
 include __DIR__ . '/../includes/footer.php';
+?>

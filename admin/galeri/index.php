@@ -60,7 +60,6 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID</th>
                                 <th>Album</th>
                                 <th width="120">Status</th>
                                 <th width="120">Jumlah Foto</th>
@@ -71,7 +70,6 @@ include __DIR__ . '/../includes/header.php';
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($res_album)): ?>
                             <tr>
-                                <td><?php echo (int)$row['id_album']; ?></td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <?php if (!empty($row['cover_image'])): ?>
@@ -135,3 +133,4 @@ include __DIR__ . '/../includes/header.php';
 
 <?php
 include __DIR__ . '/../includes/footer.php';
+?>
