@@ -80,7 +80,6 @@ if ($peran_result) {
     }
 }
 
-$extra_css = ['/assets/css/anggota.css'];
 include __DIR__ . '/../includes/header.php';
 ?>
 

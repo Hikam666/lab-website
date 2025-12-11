@@ -104,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
 $active_page = 'anggota';
 $page_title  = 'Hapus Anggota';
 
+
 include __DIR__ . '/../includes/header.php';
 ?>
 

@@ -354,6 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $form_errors = $_SESSION['form_errors'] ?? [];
 unset($_SESSION['form_errors']);
 
+
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -420,21 +421,20 @@ include __DIR__ . '/../includes/header.php';
                         <label for="program_studi" class="form-label">Program Studi</label>
                         <input type="text" class="form-control" id="program_studi" name="program_studi"
                                value="<?php echo htmlspecialchars($anggota['program_studi'] ?? ''); ?>"
-                               maxlength="150" placeholder="Contoh: Teknik Informatika">
+                               maxlength="150">
                     </div>
 
                     <div class="mb-3">
                         <label for="jabatan" class="form-label">Jabatan</label>
                         <input type="text" class="form-control" id="jabatan" name="jabatan"
                                value="<?php echo htmlspecialchars($anggota['jabatan'] ?? ''); ?>"
-                               maxlength="100" placeholder="Contoh: Tenaga Pengajar">
+                               maxlength="100">
                     </div>
 
                     <div class="mb-3">
                         <label for="peran_lab" class="form-label">Peran Lab</label>
                         <input type="text" class="form-control" id="peran_lab" name="peran_lab"
-                               value="<?php echo htmlspecialchars($anggota['peran_lab'] ?? ''); ?>"
-                               placeholder="Contoh: Kepala Lab, Anggota, Asisten">
+                               value="<?php echo htmlspecialchars($anggota['peran_lab'] ?? ''); ?>">
                     </div>
 
                     <div class="mb-3">

@@ -157,9 +157,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
         $dibuat_oleh = getLoggedUserIdFallback();
 
-        // sesuai struktur tabel:
-        // id_publikasi, judul, slug, abstrak, jenis, tempat, tahun, doi,
-        // id_cover, status, dibuat_oleh, dibuat_pada, diperbarui_pada
         $sql = "
             INSERT INTO publikasi
                 (judul, slug, abstrak, jenis, tempat, tahun, doi, id_cover, status, dibuat_oleh, dibuat_pada, diperbarui_pada, url_sinta)
@@ -268,8 +265,7 @@ include __DIR__ . '/../includes/header.php';
 
             <div class="pub-group">
                 <label>URL Publikasi</label>
-                <input type="text" name="url_sinta" placeholder="https://sinta.kemdikbud.go.id/..." value="<?= htmlspecialchars($form['url_sinta']) ?>">
-                <small class="text-muted">Catatan: kolom ini belum disimpan ke database karena struktur tabel belum menyediakan field URL.</small>
+                <input type="text" name="url_sinta"value="<?= htmlspecialchars($form['url_sinta']) ?>">
             </div>
 
             <div class="pub-group">
