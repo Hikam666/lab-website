@@ -244,7 +244,6 @@ include __DIR__ . '/../includes/header.php';
                     <option value="Jurnal"    <?= $form['jenis'] === 'Jurnal'    ? 'selected' : '' ?>>Jurnal</option>
                     <option value="Prosiding" <?= $form['jenis'] === 'Prosiding' ? 'selected' : '' ?>>Prosiding</option>
                     <option value="Buku"      <?= $form['jenis'] === 'Buku'      ? 'selected' : '' ?>>Buku</option>
-                    <option value="Lainnya"   <?= $form['jenis'] === 'Lainnya'   ? 'selected' : '' ?>>Lainnya</option>
                 </select>
             </div>
 
