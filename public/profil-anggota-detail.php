@@ -52,9 +52,11 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 3;
 $offset = ($page - 1) * $per_page;
 
-$sql_pub = "SELECT p.* FROM publikasi_penulis pp
+$sql_pub = "SELECT p.*, p.penulis AS penulis_display 
+            FROM publikasi_penulis pp
             JOIN publikasi p ON pp.id_publikasi = p.id_publikasi
             WHERE pp.id_anggota = $1 AND p.status = 'disetujui'";
+
 $sql_pub .= ($sort == 'oldest') ? " ORDER BY p.tahun ASC" : " ORDER BY p.tahun DESC";
 $sql_pub .= " LIMIT $per_page OFFSET $offset";
 $result_pub = pg_query_params($conn, $sql_pub, array($anggota['id_anggota']));
@@ -88,7 +90,6 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
     <div class="row justify-content-center">
         <div class="col-lg-10">
             
-            <!-- Profile Header -->
             <div class="card profile-header-card mb-4">
                 <div class="card-body p-4">
                     <div class="row">
@@ -189,7 +190,6 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
                 </div>
             </div>
             
-            <!-- Pendidikan & Sertifikasi -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-3">
                     <div class="card h-100">
@@ -208,8 +208,8 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
                                 <?php if ($pend['tahun_mulai'] || $pend['tahun_selesai']): ?>
                                 <div class="text-primary small fw-semibold">
                                     <?php echo ($pend['tahun_mulai'] && $pend['tahun_selesai']) ? 
-                                        htmlspecialchars($pend['tahun_mulai']) . ' - ' . htmlspecialchars($pend['tahun_selesai']) : 
-                                        htmlspecialchars($pend['tahun_selesai']); ?>
+                                         htmlspecialchars($pend['tahun_mulai']) . ' - ' . htmlspecialchars($pend['tahun_selesai']) : 
+                                         htmlspecialchars($pend['tahun_selesai']); ?>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -247,7 +247,6 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
                 </div>
             </div>
             
-            <!-- Mata Kuliah -->
             <?php if (!empty($matakuliah_ganjil) || !empty($matakuliah_genap)): ?>
             <div class="card mb-4">
                 <div class="card-header bg-white border-bottom">
@@ -284,7 +283,6 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
             </div>
             <?php endif; ?>
             
-            <!-- Publikasi -->
             <div class="card mb-4">
                 <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0"><i class="bi bi-file-text text-primary me-2"></i>Publikasi</h5>
@@ -293,7 +291,6 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
                     <div class="btn-group mb-4" role="group">
                         <a href="?slug=<?php echo $slug; ?>&sort=latest" class="btn btn-sm <?php echo ($sort == 'latest') ? 'btn-primary' : 'btn-outline-primary'; ?>">Terbaru</a>
                         <a href="?slug=<?php echo $slug; ?>&sort=oldest" class="btn btn-sm <?php echo ($sort == 'oldest') ? 'btn-primary' : 'btn-outline-primary'; ?>">Terlama</a>
-                        <a href="?slug=<?php echo $slug; ?>&sort=cited" class="btn btn-sm <?php echo ($sort == 'cited') ? 'btn-primary' : 'btn-outline-primary'; ?>">Most Cited</a>
                     </div>
                     
                     <?php if ($result_pub && pg_num_rows($result_pub) > 0): ?>
@@ -305,7 +302,14 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
                                     <?php if ($pub['jenis']): ?>
                                     <span class="badge bg-secondary mb-2"><?php echo htmlspecialchars($pub['jenis']); ?></span>
                                     <?php endif; ?>
+                                    
                                     <h6><a href="publikasi-detail.php?slug=<?php echo $pub['slug']; ?>" class="text-decoration-none text-dark"><?php echo htmlspecialchars($pub['judul']); ?></a></h6>
+                                    
+                                    <?php if (!empty($pub['penulis_display'])): ?>
+                                    <p class="small text-dark mb-1 fw-bold">
+                                        <?php echo htmlspecialchars($pub['penulis_display']); ?>
+                                    </p>
+                                    <?php endif; ?>
                                     <?php if ($pub['tempat']): ?>
                                     <p class="small text-muted mb-1"><?php echo htmlspecialchars($pub['tempat']); ?></p>
                                     <?php endif; ?>

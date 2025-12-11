@@ -8,20 +8,13 @@ $conn        = getDBConnection();
 $active_page = 'publikasi';
 $page_title  = 'Publikasi & Jurnal';
 
-// Cek role (kalau nanti mau beda hak admin/operator)
 $is_admin = function_exists('isAdmin') ? isAdmin() : false;
 
-// =====================
-// PAGINATION
-// =====================
 $items_per_page = 20;
 $current_page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($current_page < 1) $current_page = 1;
 $offset = ($current_page - 1) * $items_per_page;
 
-// =====================
-// FILTER & SEARCH
-// =====================
 $search        = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_jenis  = isset($_GET['jenis']) ? trim($_GET['jenis']) : '';
 $filter_status = isset($_GET['status']) ? trim($_GET['status']) : '';
@@ -30,23 +23,21 @@ $where_conditions = [];
 $params           = [];
 $param_count      = 1;
 
-// cari di judul / tempat / doi
 if ($search !== '') {
     $where_conditions[] = "(p.judul ILIKE $" . $param_count .
                           " OR p.tempat ILIKE $" . $param_count .
-                          " OR p.doi ILIKE $" . $param_count . ")";
+                          " OR p.doi ILIKE $" . $param_count . 
+                          " OR p.penulis ILIKE $" . $param_count . ")";
     $params[] = '%' . $search . '%';
     $param_count++;
 }
 
-// filter jenis
 if ($filter_jenis !== '') {
     $where_conditions[] = "p.jenis = $" . $param_count;
     $params[] = $filter_jenis;
     $param_count++;
 }
 
-// filter status (draft, diajukan, disetujui, ditolak, arsip)
 if ($filter_status !== '') {
     $where_conditions[] = "p.status = $" . $param_count;
     $params[] = $filter_status;
@@ -57,17 +48,11 @@ $where_sql = !empty($where_conditions)
     ? 'WHERE ' . implode(' AND ', $where_conditions)
     : '';
 
-// =====================
-// TOTAL DATA
-// =====================
-$count_sql    = "SELECT COUNT(*) AS total FROM publikasi p $where_sql";
+$count_sql      = "SELECT COUNT(*) AS total FROM publikasi p $where_sql";
 $count_result = pg_query_params($conn, $count_sql, $params);
-$total_items  = $count_result ? (int) pg_fetch_assoc($count_result)['total'] : 0;
-$total_pages  = $total_items > 0 ? ceil($total_items / $items_per_page) : 1;
+$total_items    = $count_result ? (int) pg_fetch_assoc($count_result)['total'] : 0;
+$total_pages    = $total_items > 0 ? ceil($total_items / $items_per_page) : 1;
 
-// =====================
-// DATA PUBLIKASI
-// =====================
 $sql = "
     SELECT 
         p.id_publikasi,
@@ -79,18 +64,13 @@ $sql = "
         p.doi,
         p.status,
         p.dibuat_pada,
+        p.penulis,             -- <-- BARU: Ambil kolom penulis (TEXT)
         m.lokasi_file AS cover_file,
-        u.nama_lengkap AS pembuat,
-        COUNT(DISTINCT pp.id_anggota) AS jumlah_penulis
+        u.nama_lengkap AS pembuat
     FROM publikasi p
     LEFT JOIN media m ON p.id_cover = m.id_media
-    LEFT JOIN publikasi_penulis pp ON p.id_publikasi = pp.id_publikasi
     LEFT JOIN pengguna u ON p.dibuat_oleh = u.id_pengguna
-    $where_sql
-    GROUP BY 
-        p.id_publikasi,
-        m.lokasi_file,
-        u.nama_lengkap
+    {$where_sql}
     ORDER BY p.dibuat_pada DESC
     LIMIT $items_per_page OFFSET $offset
 ";
@@ -98,7 +78,7 @@ $sql = "
 $result = pg_query_params($conn, $sql, $params);
 $publikasi = $result ? pg_fetch_all($result) : [];
 
-$extra_css = ['/assets/css/anggota.css']; // re-use style anggota
+$extra_css = ['/assets/css/anggota.css']; 
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -126,7 +106,7 @@ include __DIR__ . '/../includes/header.php';
                 <input type="text"
                        name="search"
                        class="form-control"
-                       placeholder="Judul, venue, atau DOI..."
+                       placeholder="Judul, venue, DOI, atau Penulis..."
                        value="<?php echo htmlspecialchars($search); ?>">
             </div>
 
@@ -134,10 +114,10 @@ include __DIR__ . '/../includes/header.php';
                 <label class="form-label">Jenis</label>
                 <select name="jenis" class="form-select">
                     <option value="">Semua Jenis</option>
-                    <option value="Jurnal"    <?php echo $filter_jenis === 'Jurnal' ? 'selected' : ''; ?>>Jurnal</option>
-                    <option value="Prosiding" <?php echo $filter_jenis === 'Prosiding' ? 'selected' : ''; ?>>Prosiding</option>
-                    <option value="Buku"      <?php echo $filter_jenis === 'Buku' ? 'selected' : ''; ?>>Buku</option>
-                    <option value="Lainnya"   <?php echo $filter_jenis === 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
+                    <option value="Jurnal"      <?php echo $filter_jenis === 'Jurnal' ? 'selected' : ''; ?>>Jurnal</option>
+                    <option value="Prosiding"   <?php echo $filter_jenis === 'Prosiding' ? 'selected' : ''; ?>>Prosiding</option>
+                    <option value="Buku"        <?php echo $filter_jenis === 'Buku' ? 'selected' : ''; ?>>Buku</option>
+                    <option value="Lainnya"     <?php echo $filter_jenis === 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
                 </select>
             </div>
 
@@ -145,11 +125,11 @@ include __DIR__ . '/../includes/header.php';
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Semua Status</option>
-                    <option value="draft"      <?php echo $filter_status === 'draft' ? 'selected' : ''; ?>>Draft</option>
-                    <option value="diajukan"   <?php echo $filter_status === 'diajukan' ? 'selected' : ''; ?>>Diajukan</option>
-                    <option value="disetujui"  <?php echo $filter_status === 'disetujui' ? 'selected' : ''; ?>>Disetujui</option>
-                    <option value="ditolak"    <?php echo $filter_status === 'ditolak' ? 'selected' : ''; ?>>Ditolak</option>
-                    <option value="arsip"      <?php echo $filter_status === 'arsip' ? 'selected' : ''; ?>>Arsip</option>
+                    <option value="draft"       <?php echo $filter_status === 'draft' ? 'selected' : ''; ?>>Draft</option>
+                    <option value="diajukan"    <?php echo $filter_status === 'diajukan' ? 'selected' : ''; ?>>Diajukan</option>
+                    <option value="disetujui"   <?php echo $filter_status === 'disetujui' ? 'selected' : ''; ?>>Disetujui</option>
+                    <option value="ditolak"     <?php echo $filter_status === 'ditolak' ? 'selected' : ''; ?>>Ditolak</option>
+                    <option value="arsip"       <?php echo $filter_status === 'arsip' ? 'selected' : ''; ?>>Arsip</option>
                 </select>
             </div>
 
@@ -187,8 +167,7 @@ include __DIR__ . '/../includes/header.php';
                             <th>Publikasi</th>
                             <th class="text-center" width="150">Status</th>
                             <th class="text-center" width="160">Jenis & Tahun</th>
-                            <th class="text-center" width="160">Penulis</th>
-                            <th class="text-center" width="180">Dibuat</th>
+                            <th class="text-center" width="160">Penulis</th> <th class="text-center" width="180">Dibuat</th>
                             <th class="text-center" width="180">Aksi</th>
                         </tr>
                     </thead>
@@ -199,7 +178,6 @@ include __DIR__ . '/../includes/header.php';
                                 : SITE_URL . '/assets/img/default-cover.jpg';
                         ?>
                         <tr>
-                            <!-- PUBLIKASI: cover + judul + venue + DOI -->
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="me-3">
@@ -227,7 +205,6 @@ include __DIR__ . '/../includes/header.php';
                                 </div>
                             </td>
 
-                            <!-- STATUS -->
                             <td class="text-center">
                                 <?php
                                 if (isset($row['status']) && $row['status'] !== '') {
@@ -236,7 +213,6 @@ include __DIR__ . '/../includes/header.php';
                                 ?>
                             </td>
 
-                            <!-- JENIS & TAHUN -->
                             <td class="text-center">
                                 <?php if (!empty($row['jenis'])): ?>
                                     <span class="badge bg-info text-dark px-3 mb-1">
@@ -251,18 +227,23 @@ include __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                             </td>
 
-                            <!-- PENULIS -->
                             <td class="text-center">
-                                <?php if ((int)$row['jumlah_penulis'] > 0): ?>
-                                    <span class="badge bg-secondary">
-                                        <?php echo (int)$row['jumlah_penulis']; ?> penulis
-                                    </span>
+                                <?php if (!empty($row['penulis'])): ?>
+                                    <small class="text-wrap d-block" style="max-width: 150px; margin: 0 auto;">
+                                        <?php 
+                                            // Hanya tampilkan 2 baris
+                                            $penulis_trimmed = substr($row['penulis'], 0, 80);
+                                            if (strlen($row['penulis']) > 80) {
+                                                $penulis_trimmed .= '...';
+                                            }
+                                            echo nl2br(htmlspecialchars($penulis_trimmed));
+                                        ?>
+                                    </small>
                                 <?php else: ?>
                                     <span class="text-muted">-</span>
                                 <?php endif; ?>
                             </td>
 
-                            <!-- DIBUAT -->
                             <td class="text-center">
                                 <small class="d-block">
                                     <?php echo formatDateTime($row['dibuat_pada'], 'd M Y, H:i'); ?>
@@ -274,7 +255,6 @@ include __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                             </td>
 
-                            <!-- AKSI -->
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
                                     <a href="<?php echo getAdminUrl('publikasi/edit.php?id=' . $row['id_publikasi']); ?>"

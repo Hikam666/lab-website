@@ -9,11 +9,23 @@ $conn = getDBConnection();
 $page_title   = "Fasilitas";
 $active_page  = "fasilitas";
 
-/* Ambil data fasilitas + foto*/
+$search_query = $_GET['cari'] ?? ''; 
+$search_sql   = ''; 
+
+if (!empty($search_query)) {
+    $safe_search = pg_escape_string($conn, $search_query);
+
+    $search_sql = "
+        WHERE f.nama ILIKE '%{$safe_search}%' 
+        OR f.kategori ILIKE '%{$safe_search}%'
+    ";
+}
+
 $query = "
     SELECT f.*, m.lokasi_file
     FROM fasilitas f
     LEFT JOIN media m ON f.id_foto = m.id_media
+    {$search_sql} -- Sisipkan kondisi pencarian di sini
     ORDER BY f.dibuat_pada DESC
 ";
 $result = pg_query($conn, $query);
@@ -35,17 +47,31 @@ include "../includes/header.php";
 
     <div class="card mb-3 shadow-sm">
         <div class="card-body">
-            <input type="text" class="form-control" placeholder="Cari nama atau kategori...">
+            <form action="" method="GET">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="cari" 
+                           placeholder="Cari nama atau kategori..." 
+                           value="<?= htmlspecialchars($search_query) ?>"> <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i> Cari
+                    </button>
+                    
+                    <?php if (!empty($search_query)): ?>
+                        <a href="index.php" class="btn btn-outline-secondary">Reset</a>
+                    <?php endif; ?>
+                </div>
+            </form>
         </div>
     </div>
 
     <div class="row g-3">
-        <?php while ($row = pg_fetch_assoc($result)): ?>
+        <?php 
+        if (pg_num_rows($result) > 0): 
+            while ($row = pg_fetch_assoc($result)): 
+        ?>
             <?php
             if (!empty($row['lokasi_file'])) {
-                // lokasi_file contoh: "fasilitas/nama-file.jpg"
                 $rel_path = ltrim($row['lokasi_file'], '/');
-                $img = SITE_URL . '/uploads/' . $rel_path;
+                $img = SITE_URL . '/uploads/' . $rel_path; 
             } else {
                 $img = SITE_URL . '/assets/img/default-cover.jpg';
             }
@@ -53,7 +79,6 @@ include "../includes/header.php";
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 h-100">
 
-                    <!-- Foto -->
                     <div class="bg-light border-bottom" style="height: 180px; display:flex;justify-content:center;align-items:center;">
                         <img src="<?= $img ?>" class="img-fluid w-100 h-100" style="object-fit: cover;">
                     </div>
@@ -84,7 +109,18 @@ include "../includes/header.php";
 
                 </div>
             </div>
-        <?php endwhile; ?>
+        <?php 
+            endwhile; 
+        else:
+        ?>
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                Tidak ada fasilitas yang ditemukan<?php if(!empty($search_query)) echo " untuk **'{$search_query}'**"; ?>.
+            </div>
+        </div>
+        <?php 
+        endif; 
+        ?>
     </div>
 
 </div>

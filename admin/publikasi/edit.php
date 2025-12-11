@@ -80,12 +80,13 @@ $form = [
     'tempat'    => $data['tempat'],
     'tahun'     => $data['tahun'],
     'doi'       => $data['doi'],
-    'url_sinta' => $data['url_sinta'] ?? ''  
+    'url_sinta' => $data['url_sinta'] ?? '',
+    'penulis'   => $data['penulis'] ?? '' 
 ];
 
 $errors   = [];
-$id_cover = $data['id_cover'];   // default pakai cover lama
-$old_status = $data['status'];   // status sebelum di-update
+$id_cover = $data['id_cover'];   
+$old_status = $data['status'];   
 
 // ========================================
 // PROSES EDIT
@@ -100,9 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['tahun']     = trim($_POST['tahun']   ?? '');
     $form['doi']       = trim($_POST['doi']     ?? '');
     $form['url_sinta'] = trim($_POST['url_sinta'] ?? '');
+    $form['penulis']   = trim($_POST['penulis'] ?? ''); 
 
     if ($form['judul'] === '') {
         $errors[] = "Judul wajib diisi.";
+    }
+    if ($form['penulis'] === '') {
+        $errors[] = "Nama penulis wajib diisi.";
     }
     if ($form['tahun'] !== '' && !ctype_digit($form['tahun'])) {
         $errors[] = "Tahun harus berupa angka.";
@@ -113,9 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ============================
     if (!empty($_FILES['cover']['name'])) {
 
-        $file        = $_FILES['cover'];
+        $file         = $_FILES['cover'];
         $allowed_ext = ['jpg','jpeg','png','webp'];
-        $ext         = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $ext          = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
         if (!in_array($ext, $allowed_ext, true)) {
             $errors[] = "Format cover harus JPG/PNG/WEBP.";
@@ -160,6 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($dataMedia) {
                         $id_cover = $dataMedia['id_media'];
+                        
                     } else {
                         $errors[] = "Gagal menyimpan data cover: " . pg_last_error($conn);
                     }
@@ -169,9 +175,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ========================================
-    // SIMPAN PERUBAHAN
-    // ========================================
-      // ========================================
     // SIMPAN PERUBAHAN
     // ========================================
     if (empty($errors)) {
@@ -184,28 +187,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tempat    = $form['tempat']  === '' ? null : $form['tempat'];
         $doi       = $form['doi']     === '' ? null : $form['doi'];
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
+        $penulis   = $form['penulis'] === '' ? null : $form['penulis']; 
 
-        // === LOGIKA STATUS ADMIN vs OPERATOR ===
         if (function_exists('isAdmin') && isAdmin()) {
             $status_baru = 'disetujui';
         } else {
             $status_baru = 'diajukan';
         }
 
+        $anggota_id = getLoggedUserIdFallback();
+        
+        if ($anggota_id) {
+            $checkPenulis = pg_query_params($conn, "SELECT 1 FROM publikasi_penulis WHERE id_publikasi = $1 AND id_anggota = $2", [$id, $anggota_id]);
+            if (!$checkPenulis || pg_num_rows($checkPenulis) === 0) {
+                $sqlInsertPenulis = "
+                    INSERT INTO publikasi_penulis (id_publikasi, id_anggota, urutan)
+                    VALUES ($1, $2, 1) 
+                    ON CONFLICT DO NOTHING;
+                ";
+                pg_query_params($conn, $sqlInsertPenulis, [$id, $anggota_id]);
+            }
+        }
+
         $sqlUpdate = "
             UPDATE publikasi
-            SET judul           = $1,
-                slug            = $2,
-                abstrak         = $3,
-                jenis           = $4,
-                tempat          = $5,
-                tahun           = $6,
-                doi             = $7,
-                url_sinta       = $8,
-                id_cover        = $9,
-                status          = $10,
-                diperbarui_pada = NOW()
-            WHERE id_publikasi  = $11
+            SET judul               = $1,
+                slug                = $2,
+                abstrak             = $3,
+                jenis               = $4,
+                tempat              = $5,
+                tahun               = $6,
+                doi                 = $7,
+                url_sinta           = $8,
+                id_cover            = $9,
+                status              = $10,
+                penulis             = $11,  
+                diperbarui_pada     = NOW()
+            WHERE id_publikasi      = $12
         ";
 
         $params = [
@@ -219,7 +237,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $url_sinta,
             $id_cover,
             $status_baru,
-            $id
+            $penulis, 
+            $id     
         ];
 
         $result = pg_query_params($conn, $sqlUpdate, $params);
@@ -265,64 +284,62 @@ include __DIR__ . '/../includes/header.php';
 
         <form method="POST" enctype="multipart/form-data" class="pub-form">
 
-            <!-- JUDUL -->
             <div class="pub-group">
                 <label>Judul</label>
                 <input type="text" name="judul" required
                        value="<?= htmlspecialchars($form['judul']) ?>">
             </div>
 
-            <!-- ABSTRAK -->
+            <div class="pub-group">
+                <label>Penulis</label>
+                <input type="text" name="penulis" required
+                       value="<?= htmlspecialchars($form['penulis']) ?>">
+                <small class="text-muted">Masukkan nama semua penulis. Pisahkan dengan koma.</small>
+            </div>
             <div class="pub-group">
                 <label>Abstrak</label>
                 <textarea name="abstrak"><?= htmlspecialchars($form['abstrak']) ?></textarea>
             </div>
 
-            <!-- JENIS -->
             <div class="pub-group">
                 <label>Jenis</label>
                 <select name="jenis">
-                    <option value="Jurnal"    <?= $form['jenis']=="Jurnal"    ? "selected":"" ?>>Jurnal</option>
-                    <option value="Prosiding" <?= $form['jenis']=="Prosiding" ? "selected":"" ?>>Prosiding</option>
-                    <option value="Buku"      <?= $form['jenis']=="Buku"      ? "selected":"" ?>>Buku</option>
-                    <option value="Lainnya"   <?= $form['jenis']=="Lainnya"   ? "selected":"" ?>>Lainnya</option>
+                    <option value="Jurnal"      <?= $form['jenis']=="Jurnal"      ? "selected":"" ?>>Jurnal</option>
+                    <option value="Prosiding"   <?= $form['jenis']=="Prosiding"   ? "selected":"" ?>>Prosiding</option>
+                    <option value="Buku"        <?= $form['jenis']=="Buku"        ? "selected":"" ?>>Buku</option>
+                    <option value="Lainnya"     <?= $form['jenis']=="Lainnya"     ? "selected":"" ?>>Lainnya</option>
                 </select>
             </div>
 
-            <!-- TEMPAT -->
             <div class="pub-group">
                 <label>Nama Jurnal / Konferensi</label>
                 <input type="text" name="tempat"
                        value="<?= htmlspecialchars($form['tempat']) ?>">
             </div>
 
-            <!-- TAHUN -->
             <div class="pub-group">
                 <label>Tahun</label>
                 <input type="number" name="tahun"
                        value="<?= htmlspecialchars($form['tahun']) ?>">
             </div>
 
-            <!-- DOI -->
             <div class="pub-group">
                 <label>DOI</label>
                 <input type="text" name="doi"
                        value="<?= htmlspecialchars($form['doi']) ?>">
             </div>
 
-            <!-- URL SINTA (hanya form, belum ke DB) -->
             <div class="pub-group">
                 <label>URL Publikasi</label>
                 <input type="text" name="url_sinta"
                        value="<?= htmlspecialchars($form['url_sinta']) ?>">
             </div>
 
-            <!-- COVER -->
             <div class="pub-group">
                 <label>Cover Saat Ini</label><br>
                 <?php if (!empty($data['cover_file'])): ?>
                     <img src="<?= SITE_URL . '/uploads/' . htmlspecialchars($data['cover_file']) ?>"
-     style="max-width:220px; max-height:300px; object-fit:contain; border:1px solid #ddd; border-radius:8px; display:block;">
+         style="max-width:220px; max-height:300px; object-fit:contain; border:1px solid #ddd; border-radius:8px; display:block;">
 
                 <?php else: ?>
                     <div class="cover-null">Tidak Ada</div>

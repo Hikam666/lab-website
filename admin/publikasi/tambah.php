@@ -9,9 +9,6 @@ $page_title  = "Tambah Publikasi";
 $active_page = "publikasi";
 $extra_css   = ['publikasi.css'];
 
-/**
- * Helper lokal: buat slug dari teks.
- */
 function generateSlugLocal($text) {
     $text = trim($text);
     if ($text === '') return 'publikasi-' . time();
@@ -32,9 +29,7 @@ function generateSlugLocal($text) {
     return $text ?: 'publikasi-' . time();
 }
 
-/**
- * Ambil user id yang login tanpa mengubah auth.php
- */
+
 function getLoggedUserIdFallback() {
     if (function_exists('getCurrentUser')) {
         $u = getCurrentUser();
@@ -57,7 +52,8 @@ $form = [
     'tempat'    => '',
     'tahun'     => date('Y'),
     'doi'       => '',
-    'url_sinta' => '' 
+    'url_sinta' => '',
+    'penulis'   => ''
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -70,18 +66,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['tahun']     = trim($_POST['tahun'] ?? '');
     $form['doi']       = trim($_POST['doi'] ?? '');
     $form['url_sinta'] = trim($_POST['url_sinta'] ?? '');
+    $form['penulis']   = trim($_POST['penulis'] ?? '');
 
     // === LOGIKA STATUS: ADMIN vs OPERATOR ===
     if (function_exists('isAdmin') && isAdmin()) {
-        $status = 'disetujui';    // langsung publish
+        $status = 'disetujui';
     } else {
-        // operator atau selain admin
-        $status = 'diajukan';     // masuk antrean persetujuan
+        $status = 'diajukan';
     }
 
     // validasi
     if ($form['judul'] === '') {
         $errors[] = "Judul publikasi wajib diisi.";
+    }
+
+    if ($form['penulis'] === '') {
+        $errors[] = "Nama penulis wajib diisi.";
     }
 
     if ($form['tahun'] !== '' && !ctype_digit((string)$form['tahun'])) {
@@ -147,21 +147,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Simpan publikasi
     // =========================
     if (empty($errors)) {
-        $judul   = $form['judul'];
-        $slug    = generateSlugLocal($judul);
-        $abstrak = $form['abstrak'] === '' ? null : $form['abstrak'];
-        $jenis   = $form['jenis']   === '' ? null : $form['jenis'];
-        $tempat  = $form['tempat']  === '' ? null : $form['tempat'];
-        $tahun   = $form['tahun']   === '' ? null : (int)$form['tahun'];
-        $doi     = $form['doi']     === '' ? null : $form['doi'];
+        $judul     = $form['judul'];
+        $slug      = generateSlugLocal($judul);
+        $abstrak   = $form['abstrak']   === '' ? null : $form['abstrak'];
+        $jenis     = $form['jenis']     === '' ? null : $form['jenis'];
+        $tempat    = $form['tempat']    === '' ? null : $form['tempat'];
+        $tahun     = $form['tahun']     === '' ? null : (int)$form['tahun'];
+        $doi       = $form['doi']       === '' ? null : $form['doi'];
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
+        $penulis   = $form['penulis']   === '' ? null : $form['penulis']; 
         $dibuat_oleh = getLoggedUserIdFallback();
 
         $sql = "
             INSERT INTO publikasi
-                (judul, slug, abstrak, jenis, tempat, tahun, doi, id_cover, status, dibuat_oleh, dibuat_pada, diperbarui_pada, url_sinta)
+                (judul, slug, abstrak, jenis, tempat, tahun, doi, id_cover, status, dibuat_oleh, dibuat_pada, diperbarui_pada, url_sinta, penulis)
             VALUES
-                ($1,    $2,   $3,      $4,    $5,     $6,    $7,  $8,       $9,     $10,        NOW(),       NOW(),       $11)
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), $11, $12)
             RETURNING id_publikasi
         ";
 
@@ -176,8 +177,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_cover,
             $status,
             $dibuat_oleh,
-            $url_sinta
-
+            $url_sinta,
+            $penulis
         ];
 
         $res = pg_query_params($conn, $sql, $params);
@@ -185,8 +186,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($res) {
             $row   = pg_fetch_assoc($res);
             $newId = $row['id_publikasi'] ?? null;
+            $anggota_id = getLoggedUserIdFallback();
 
-            // log aktivitas (jika fungsi tersedia)
+            if ($newId && $anggota_id) {
+                $sqlPenulis = "
+                    INSERT INTO publikasi_penulis (id_publikasi, id_anggota, urutan)
+                    VALUES ($1, $2, 1) 
+                    ON CONFLICT DO NOTHING;
+                ";
+                pg_query_params($conn, $sqlPenulis, [$newId, $anggota_id]); 
+            }
+     
             if (function_exists('log_aktivitas')) {
                 $ket = 'Menambahkan publikasi: ' . $judul . ' (status: ' . $status . ')';
                 log_aktivitas($conn, 'create', 'publikasi', $newId, $ket);
@@ -234,6 +244,11 @@ include __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="pub-group">
+                <label>Penulis</label>
+                <input type="text" name="penulis" required value="<?= htmlspecialchars($form['penulis']) ?>">
+                <small class="text-muted">Masukkan nama semua penulis. Pisahkan dengan koma.</small>
+            </div>
+            <div class="pub-group">
                 <label>Abstrak</label>
                 <textarea name="abstrak" rows="4"><?= htmlspecialchars($form['abstrak']) ?></textarea>
             </div>
@@ -241,9 +256,10 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>Jenis</label>
                 <select name="jenis">
-                    <option value="Jurnal"    <?= $form['jenis'] === 'Jurnal'    ? 'selected' : '' ?>>Jurnal</option>
-                    <option value="Prosiding" <?= $form['jenis'] === 'Prosiding' ? 'selected' : '' ?>>Prosiding</option>
-                    <option value="Buku"      <?= $form['jenis'] === 'Buku'      ? 'selected' : '' ?>>Buku</option>
+                    <option value="Jurnal"      <?= $form['jenis'] === 'Jurnal'      ? 'selected' : '' ?>>Jurnal</option>
+                    <option value="Prosiding"   <?= $form['jenis'] === 'Prosiding' ? 'selected' : '' ?>>Prosiding</option>
+                    <option value="Buku"        <?= $form['jenis'] === 'Buku'        ? 'selected' : '' ?>>Buku</option>
+                    <option value="Lainnya"     <?= $form['jenis'] === 'Lainnya'     ? 'selected' : '' ?>>Lainnya</option>
                 </select>
             </div>
 
@@ -263,8 +279,8 @@ include __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="pub-group">
-                <label>URL Publikasi</label>
-                <input type="text" name="url_sinta"value="<?= htmlspecialchars($form['url_sinta']) ?>">
+                <label>URL Publikasi (Sinta, Scopus, dll)</label>
+                <input type="text" name="url_sinta" value="<?= htmlspecialchars($form['url_sinta']) ?>">
             </div>
 
             <div class="pub-group">
