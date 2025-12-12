@@ -134,7 +134,7 @@ include __DIR__ . '/../includes/header.php';
                             <?php if (!empty($publikasi['url_sinta'])): ?>
                             <div class="meta-item">
                                 <i class="bi bi-journal-bookmark me-2"></i>
-                                <strong>URL Sinta:</strong> 
+                                <strong>URL Publikasi:</strong> 
                                 <a href="<?php echo htmlspecialchars($publikasi['url_sinta']); ?>" target="_blank">
                                     <?php echo htmlspecialchars($publikasi['url_sinta']); ?>
                                 </a>
@@ -176,7 +176,7 @@ include __DIR__ . '/../includes/header.php';
                         <a href="<?php echo htmlspecialchars($publikasi['url_sinta']); ?>" 
                            target="_blank" 
                            class="btn btn-success">
-                            <i class="bi bi-journal-bookmark me-2"></i>Buka di Sinta
+                            <i class="bi bi-journal-bookmark me-2"></i>Buka Jurnal
                         </a>
                         <?php endif; ?>
                         
