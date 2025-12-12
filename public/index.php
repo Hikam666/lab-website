@@ -11,20 +11,6 @@ $page_description = 'Laboratorium Teknologi Data JTI Politeknik Negeri Malang - 
 // Mengambil koneksi database
 $conn = getDBConnection();
 
-//css gambar atas kontak  kerja sama
-?>
-<style>
-.section-research-publications {
-    background-image: url('<?php echo SITE_URL; ?>/assets/img/gedungTI2.jpg'); /* atau gambar kamu */
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat;
-    min-height: 500px; /* atur besar gambar */
-}
-</style>
-<?php
-
-
 // Mengambil statistik
 $sql_stats_anggota = "SELECT COUNT(*) as total FROM anggota_lab WHERE aktif = TRUE";
 $result_stats_anggota = pg_query($conn, $sql_stats_anggota);
@@ -141,13 +127,39 @@ include __DIR__ . '/../includes/header.php';
 
     <!-- Riset & Publikasi / highlight -->
     <div class="container-fluid section-research-publications mt-5 wow fadeInUp" data-wow-delay="0.1s">
-        <div class="container">
-            <div class="row g-0">
-                <div class="col-lg-6 pt-lg-5">
+    <div class="container">
+        <div class="row g-0">
+            <div class="col-lg-6 pt-lg-5">
+                <div class="bg-white p-5 mt-lg-5">
+                    <h1 class="display-6 mb-4 wow fadeIn" data-wow-delay="0.3s">
+                        Penelitian & Publikasi Ilmiah
+                    </h1>
+
+                    <p class="mb-4 wow fadeIn" data-wow-delay="0.4s">
+                        Laboratorium aktif mempublikasikan karya ilmiah pada jurnal nasional maupun internasional,
+                        menghasilkan prototipe teknologi terapan, dan mendukung kompetisi inovasi.
+                        Data publikasi dan HKI terdokumentasi secara terbuka.
+                    </p>
+
+                    <div class="row g-5 pt-2 mb-5">
+                        <div class="col-sm-6 wow fadeIn" data-wow-delay="0.3s">
+                            <div class="icon-box-primary mb-4">
+                                <i class="bi bi-journal-text text-dark"></i>
+                            </div>
+                            <h5 class="mb-3">Daftar Publikasi</h5>
+                            <span>Artikel jurnal, prosiding konferensi, laporan teknis.</span>
+                        </div>
+                    </div>
+
+                    <a class="btn btn-primary py-3 px-5 wow fadeIn" data-wow-delay="0.5s" href="publikasi.php">
+                        Lihat Semua Publikasi »
+                    </a>
                 </div>
-            </div> 
-        </div> 
+            </div>
+        </div>
     </div>
+</div>
+
     <!-- Riset & Publikasi-->
 
 <!-- Kontak & Kerja Sama / Alamat, Jam, lalu Tombol -->
