@@ -25,11 +25,9 @@ $sql = "SELECT
             b.dibuat_pada,
             m.lokasi_file as cover_image,
             m.keterangan_alt as cover_alt,
-            p.nama_lengkap as penulis_nama,
-            p.email as penulis_email
+            b.penulis as penulis_nama   
         FROM berita b
         LEFT JOIN media m ON b.id_cover = m.id_media
-        LEFT JOIN pengguna p ON b.dibuat_oleh = p.id_pengguna
         WHERE b.slug = $1 AND b.status = 'disetujui'";
 
 $result = pg_query_params($conn, $sql, array($slug));
@@ -50,7 +48,6 @@ include __DIR__ . '/../includes/header.php';
 $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_image'] : SITE_URL . '/assets/img/default-news.jpg';
 ?>
 
-    <!-- Page Header Start -->
     <div class="container-fluid page-header-banner py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container text-center py-5">
             <h1 class="display-3 text-white mb-4 animated slideInDown"><?php echo htmlspecialchars($berita['judul']); ?></h1>
@@ -63,15 +60,11 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
             </nav>
         </div>
     </div>
-    <!-- Page Header End -->
-
-    <!-- Berita Detail Start -->
     <div class="container-fluid py-5">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 mx-auto">
                     
-                    <!-- Berita Header -->
                     <div class="mb-4">
                         <span class="badge bg-primary mb-3"><?php echo ucfirst($berita['jenis']); ?></span>
                         <h1 class="mb-3"><?php echo htmlspecialchars($berita['judul']); ?></h1>
@@ -83,11 +76,13 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                             <?php if ($berita['penulis_nama']): ?>
                             <i class="bi bi-person me-2"></i>
                             <span><?php echo htmlspecialchars($berita['penulis_nama']); ?></span>
+                            <?php else: ?>
+                            <i class="bi bi-person me-2"></i>
+                            <span>Admin</span>
                             <?php endif; ?>
                         </div>
                     </div>
 
-                    <!-- Cover Image -->
                     <?php if ($berita['cover_image']): ?>
                     <div class="mb-4">
                         <img src="<?php echo $image_src; ?>" 
@@ -96,7 +91,6 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                     </div>
                     <?php endif; ?>
 
-                    <!-- Ringkasan -->
                     <?php if ($berita['ringkasan']): ?>
                     <div class="alert alert-light border-start border-primary border-4 mb-4">
                         <strong>Ringkasan:</strong><br>
@@ -104,19 +98,17 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                     </div>
                     <?php endif; ?>
 
-                    <!-- Isi Berita -->
                     <div class="berita-content mb-5">
                         <?php echo $berita['isi_html']; ?>
                     </div>
 
-                    <!-- Info Tanggal untuk Agenda -->
                     <?php if ($berita['jenis'] == 'agenda' && $berita['tanggal_mulai']): ?>
                     <div class="alert alert-info mb-4">
                         <h5><i class="bi bi-calendar-event me-2"></i>Informasi Waktu</h5>
                         <p class="mb-0">
-                            <strong>Tanggal:</strong> <?php echo formatTanggalIndo($berita['tanggal_mulai']); ?>
+                            <strong>Tanggal Mulai:</strong> <?php echo formatTanggalIndo($berita['tanggal_mulai']); ?>
                             <?php if ($berita['tanggal_selesai']): ?>
-                            <br><strong>Tanggal :</strong> <?php echo formatTanggalIndo($berita['tanggal_selesai']); ?>
+                            <br><strong>Tanggal Selesai:</strong> <?php echo formatTanggalIndo($berita['tanggal_selesai']); ?>
                             <?php endif; ?>
                         </p>
                     </div>
@@ -131,7 +123,6 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                 </div>
             </div>
 
-            <!-- Related News -->
             <?php
             // Get related news
             $sql_related = "SELECT 
@@ -159,11 +150,14 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
                         <?php while ($related = pg_fetch_assoc($result_related)): ?>
                         <div class="col-md-4">
                             <div class="card h-100">
-                                <?php if ($related['cover_image']): ?>
-                                <img src="<?php echo SITE_URL . '/uploads/' . $related['cover_image']; ?>" 
+                                <?php 
+                                $related_image_src = $related['cover_image'] 
+                                    ? SITE_URL . '/uploads/' . $related['cover_image'] 
+                                    : SITE_URL . '/assets/img/default-news.jpg';
+                                ?>
+                                <img src="<?php echo $related_image_src; ?>" 
                                      class="card-img-top" 
                                      alt="<?php echo htmlspecialchars($related['judul']); ?>">
-                                <?php endif; ?>
                                 <div class="card-body">
                                     <span class="badge bg-secondary mb-2"><?php echo ucfirst($related['jenis']); ?></span>
                                     <h5 class="card-title">
@@ -186,9 +180,7 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
 
         </div>
     </div>
-    <!-- Berita Detail End -->
-
-<?php
+    <?php
 if ($conn) {
     pg_close($conn);
 }

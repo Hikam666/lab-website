@@ -10,46 +10,45 @@ $conn = getDBConnection();
 $active_page = 'berita';
 $page_title  = 'Tambah Berita';
 
-$errors     = [];
-$form_data  = $_SESSION['form_data']  ?? [];
-$form_errors= $_SESSION['form_errors']?? [];
+$errors      = [];
+$form_data   = $_SESSION['form_data']    ?? [];
+$form_errors = $_SESSION['form_errors']  ?? [];
 unset($_SESSION['form_data'], $_SESSION['form_errors']);
 
 
-$judul        = $form_data['judul']        ?? '';
-$jenis        = $form_data['jenis']        ?? 'berita';
-$status_form  = $form_data['status']       ?? 'draft'; 
-$ringkasan    = $form_data['ringkasan']    ?? '';
-$isi_html     = $form_data['isiberita']    ?? '';
-$catatan_rev  = $form_data['catatan_review'] ?? '';
+$judul       = $form_data['judul']        ?? '';
+$jenis       = $form_data['jenis']        ?? 'berita';
+$penulis     = $form_data['penulis']      ?? ($user['nama_lengkap'] ?? ''); 
+$ringkasan   = $form_data['ringkasan']    ?? '';
+$isi_html    = $form_data['isiberita']    ?? '';
+$catatan_rev = $form_data['catatan_review'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $errors = [];
 
-    $judul       = trim($_POST['judul']   ?? '');
-    $jenis       = trim($_POST['jenis']   ?? 'berita');
-    $status_form = trim($_POST['status']  ?? 'draft');    
+    $judul       = trim($_POST['judul']    ?? '');
+    $jenis       = trim($_POST['jenis']    ?? 'berita');
+    $penulis     = trim($_POST['penulis']  ?? ''); 
     $ringkasan   = trim($_POST['ringkasan'] ?? '');
     $isi_html    = trim($_POST['isiberita'] ?? '');
     $catatan_rev = trim($_POST['catatan_review'] ?? '');
 
-    // ===== VALIDASI DASAR =====
     if ($judul === '') {
         $errors[] = "Judul wajib diisi.";
     }
-    if (!in_array($jenis, ['berita','agenda','pengumuman'], true)) {
+    if (!in_array($jenis, ['berita','pengumuman'], true)) {
         $errors[] = "Jenis berita tidak valid.";
     }
+    if ($penulis === '') {
+         $errors[] = "Nama penulis wajib diisi.";
+    }
 
-    // ===== STATUS BERDASARKAN ROLE =====
     if (isAdmin()) {
         $status = 'disetujui';
     } else {
         $status = 'diajukan';
     }
-
-    // ===== VALIDASI FOTO =====
     $id_foto = null;
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
         if ($_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
@@ -57,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $foto = $_FILES['foto'];
 
-            // cek mime
             $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime_type = finfo_file($finfo, $foto['tmp_name']);
@@ -67,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = "Format cover harus JPG, PNG, atau WebP.";
             }
 
-            // cek ukuran max 5MB
             if ($foto['size'] > 5 * 1024 * 1024) {
                 $errors[] = "Ukuran cover maksimal 5MB.";
             }
@@ -80,7 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         pg_query($conn, "BEGIN");
 
         try {
-            // SLUG unik
             $slug = generateSlug($judul);
             $check_slug = pg_query_params($conn, "SELECT id_berita FROM berita WHERE slug = $1", [$slug]);
             if (pg_num_rows($check_slug) > 0) {
@@ -93,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // ===== SIMPAN COVER KE /uploads/berita & TABEL MEDIA =====
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
                 $foto = $_FILES['foto'];
                 $ext  = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
@@ -132,20 +127,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id_foto = pg_fetch_assoc($media_result)['id_media'];
             }
 
-            // ===== INSERT BERITA =====
             $tanggal_mulai = date('Y-m-d H:i:s'); 
             $dibuatOleh    = $user['id'] ?? null;
 
             $sql = "INSERT INTO berita (
-                        judul, slug, jenis, ringkasan, isi_html, catatan_review, 
+                        judul, slug, jenis, penulis, ringkasan, isi_html, catatan_review, 
                         id_cover, status, tanggal_mulai, dibuat_oleh, dibuat_pada, diperbarui_pada
-                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())
+                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),NOW())
                     RETURNING id_berita";
 
             $result = pg_query_params($conn, $sql, [
                 $judul,
                 $slug,
                 $jenis,
+                $penulis, 
                 $ringkasan ?: null,
                 $isi_html ?: null,
                 $catatan_rev ?: null,
@@ -159,10 +154,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Gagal menyimpan data berita.");
             }
 
-            $row        = pg_fetch_assoc($result);
-            $id_berita  = $row['id_berita'] ?? null;
+            $row         = pg_fetch_assoc($result);
+            $id_berita   = $row['id_berita'] ?? null;
 
-            // ===== LOG AKTIVITAS =====
+            // LOG AKTIVITAS
             if ($id_berita) {
                 log_aktivitas(
                     $conn,
@@ -190,7 +185,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // simpan error & data ke session supaya form tidak hilang
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_data']   = $_POST;
 
@@ -266,21 +260,23 @@ include __DIR__ . '/../includes/header.php';
                             Jenis <span class="text-danger">*</span>
                         </label>
                         <select class="form-control" name="jenis">
-                            <option value="berita"     <?php echo $jenis==='berita'?'selected':''; ?>>Berita</option>
+                            <option value="berita"    <?php echo $jenis==='berita'?'selected':''; ?>>Berita</option>
                             <option value="pengumuman" <?php echo $jenis==='pengumuman'?'selected':''; ?>>Pengumuman</option>
                         </select>
                     </div>
-
+                    
                     <div class="mb-3">
                         <label class="form-label">
-                            Status (info)
+                            Penulis <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control" 
-                               value="<?php echo isAdmin() ? 'disetujui (otomatis)' : 'diajukan (otomatis)'; ?>" 
-                               disabled>
-                        <!-- status sebenarnya di-set di server -->
+                        <input type="text" 
+                               class="form-control" 
+                               name="penulis" 
+                               maxlength="150"
+                               value="<?php echo htmlspecialchars($penulis); ?>" 
+                               required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">
                             Ringkasan 
@@ -327,7 +323,7 @@ include __DIR__ . '/../includes/header.php';
                         <img src="" alt="Preview" class="img-fluid rounded anggota-new-photo-preview">
                     </div>
                 </div>
-            </div>         
+            </div>     
             
             <div class="card">
                 <div class="card-body">
@@ -351,6 +347,14 @@ include __DIR__ . '/../includes/header.php';
 </form>
 
 <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+
+        <style>
+        .ck-editor__editable {
+            min-height: 450px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        </style>
 
 <script>
     ClassicEditor
@@ -390,14 +394,10 @@ include __DIR__ . '/../includes/header.php';
                         fotoPreview.style.display = 'none';
                         return;
                     }
-                    
                     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-                    if (!allowedTypes.includes(file.type)) {
-                        alert('Format file harus JPG, PNG, atau WebP');
-                        this.value = '';
-                        fotoPreview.style.display = 'none';
-                        return;
+                    if (file.type && !allowedTypes.includes(file.type)) {
                     }
+
                     
                     const reader = new FileReader();
                     reader.onload = function(e) {

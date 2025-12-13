@@ -14,6 +14,7 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 9; 
 $offset = ($page - 1) * $per_page;
 
+// Query COUNT
 $sql_count = "SELECT COUNT(*) as total FROM berita WHERE status = 'disetujui'";
 if ($filter != 'all') {
     $sql_count .= " AND jenis = '" . escapeString($conn, $filter) . "'";
@@ -32,10 +33,9 @@ $sql = "SELECT
             b.dibuat_pada,
             m.lokasi_file as cover_image,
             m.keterangan_alt as cover_alt,
-            p.nama_lengkap as penulis_nama
+            b.penulis as penulis_nama  
         FROM berita b
         LEFT JOIN media m ON b.id_cover = m.id_media
-        LEFT JOIN pengguna p ON b.dibuat_oleh = p.id_pengguna
         WHERE b.status = 'disetujui'";
 
 if ($filter != 'all') {
@@ -49,7 +49,6 @@ $result = pg_query($conn, $sql);
 include __DIR__ . '/../includes/header.php';
 ?>
 
-    <!-- Page Header Start -->
     <div class="container-fluid page-header-banner py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container text-center py-5">
             <h1 class="display-3 text-white mb-4 animated slideInDown">Berita & Pengumuman</h1>
@@ -61,9 +60,6 @@ include __DIR__ . '/../includes/header.php';
             </nav>
         </div>
     </div>
-    <!-- Page Header End -->
-
-    <!-- Filter Section Start -->
     <div class="container-fluid py-3 bg-light">
         <div class="container">
             <div class="row justify-content-center">
@@ -85,9 +81,6 @@ include __DIR__ . '/../includes/header.php';
             </div>
         </div>
     </div>
-    <!-- Filter Section End -->
-
-    <!-- All News Grid Start -->
     <div class="container-fluid py-5 bg-light" id="semua-berita">
         <div class="container">
             <div class="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 600px;">
@@ -115,17 +108,16 @@ include __DIR__ . '/../includes/header.php';
             $image_alt = $row['cover_alt'] ? $row['cover_alt'] : $row['judul'];
     ?>
     
-    <!-- News Item - FORCED VISIBLE -->
     <div class="col-lg-4 col-md-6 news-item" 
-         data-category="<?php echo $row['jenis']; ?>" 
-         style="opacity: 1 !important; visibility: visible !important; display: block !important;">
+          data-category="<?php echo $row['jenis']; ?>" 
+          style="opacity: 1 !important; visibility: visible !important; display: block !important;">
         
         <div class="news-card" style="display: block !important; opacity: 1 !important; visibility: visible !important;">
             <div class="news-card-image">
                 <img src="<?php echo $image_src; ?>" 
-                     alt="<?php echo htmlspecialchars($image_alt); ?>" 
-                     onerror="this.src='../assets/img/default-news.jpg'"
-                     style="display: block !important;">
+                    alt="<?php echo htmlspecialchars($image_alt); ?>" 
+                    onerror="this.src='../assets/img/default-news.jpg'"
+                    style="display: block !important;">
                 <div class="news-card-badge <?php echo $badge_class; ?>"><?php echo $badge_label; ?></div>
                 <div class="news-card-date">
                     <div class="date-day"><?php echo $hari; ?></div>
@@ -144,7 +136,9 @@ include __DIR__ . '/../includes/header.php';
                 <div class="news-card-footer">
                     <span>
                         <i class="bi bi-person me-1"></i> 
-                        <?php echo $row['penulis_nama'] ? htmlspecialchars($row['penulis_nama']) : 'Admin'; ?>
+                        <?php 
+                        echo htmlspecialchars($row['penulis_nama'] ?: 'Admin'); 
+                        ?>
                     </span>
                     <a href="berita-detail.php?slug=<?php echo $row['slug']; ?>" class="news-read-more">
                         Baca <i class="bi bi-arrow-right"></i>
@@ -161,7 +155,6 @@ include __DIR__ . '/../includes/header.php';
     else:
     ?>
     
-    <!-- No Data Message -->
     <div class="col-12">
         <div class="alert alert-info text-center" role="alert">
             <i class="bi bi-info-circle me-2"></i>
@@ -172,7 +165,6 @@ include __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 </div>
 
-            <!-- Pagination Start -->
             <?php if ($total_pages > 1): ?>
             <div class="row mt-5">
                 <div class="col-12">

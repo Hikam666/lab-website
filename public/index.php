@@ -104,7 +104,7 @@ include __DIR__ . '/../includes/header.php';
 
                     <div class="col-12 col-md-4 d-flex justify-content-center">
                         <div class="profile-statistic-bubble bubble-color-gray bubble-size-fixed">
-                            <div class="profile-bubble-label">Proyek Riset</div>
+                            <div class="profile-bubble-label">Jumlah Publikasi</div>
                             <div class="profile-bubble-number"><?php echo $total_publikasi; ?></div>
                         </div>
                     </div>
@@ -113,7 +113,7 @@ include __DIR__ . '/../includes/header.php';
 
                 <!-- CTA -->
                 <a class="btn btn-primary py-3 px-5 profile-button-cta mt-4" href="profil.php">
-                    Lihat Visi, Misi & Struktur »
+                    Lihat Visi, Misi & Anggota Lab »
                 </a>
             </div>
 
@@ -121,9 +121,6 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 <!-- About End -->
-
-
-
 
     <!-- Riset & Publikasi / highlight -->
     <div class="container-fluid section-research-publications mt-5 wow fadeInUp" data-wow-delay="0.1s">
@@ -138,7 +135,7 @@ include __DIR__ . '/../includes/header.php';
                     <p class="mb-4 wow fadeIn" data-wow-delay="0.4s">
                         Laboratorium aktif mempublikasikan karya ilmiah pada jurnal nasional maupun internasional,
                         menghasilkan prototipe teknologi terapan, dan mendukung kompetisi inovasi.
-                        Data publikasi dan HKI terdokumentasi secara terbuka.
+                        Data publikasi terdokumentasi secara terbuka.
                     </p>
 
                     <div class="row g-5 pt-2 mb-5">
@@ -161,8 +158,6 @@ include __DIR__ . '/../includes/header.php';
 </div>
 
     <!-- Riset & Publikasi-->
-
-<!-- Kontak & Kerja Sama / Alamat, Jam, lalu Tombol -->
 <div class="container-fluid py-5" id="kontak">
     <div class="container">
         <div class="row g-4 contact-information-section">

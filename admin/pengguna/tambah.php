@@ -14,13 +14,12 @@ if (isset($_POST['submit'])) {
     $email = trim($_POST['email']);
     $peran = trim($_POST['peran']);
 
-    // Tentukan default password berdasarkan peran
     if ($peran === 'admin') {
         $default_password = 'admin123';
     } elseif ($peran === 'operator') {
         $default_password = 'operator123';
     } else {
-        $default_password = '123456'; // fallback jika ada peran lain
+        $default_password = '123456'; 
     }
 
     $password = password_hash($default_password, PASSWORD_BCRYPT);

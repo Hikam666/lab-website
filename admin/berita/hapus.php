@@ -12,7 +12,7 @@ if ($id_berita <= 0) {
     exit;
 }
 
-// Ambil data berita
+// Ambil data berita 
 $sql = "SELECT b.*, m.lokasi_file as foto 
         FROM berita b 
         LEFT JOIN media m ON b.id_cover = m.id_media 
@@ -37,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
     try {
         
         if ($is_admin) {
-
             $delete_sql = "DELETE FROM berita WHERE id_berita = $1";
             $delete_result = pg_query_params($conn, $delete_sql, [$id_berita]);
             

@@ -10,17 +10,14 @@ $is_admin    = function_exists('isAdmin') ? isAdmin() : false;
 
 $conn = getDBConnection();
 
-// Pagination
 $items_per_page = 20;
 $current_page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($current_page < 1) $current_page = 1;
 $offset = ($current_page - 1) * $items_per_page;
 
-// Search & Filter
-$search        = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search         = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_status = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-// WHERE builder
 $where_conditions = [];
 $params = [];
 $param_count = 1;
@@ -39,25 +36,21 @@ if (!empty($filter_status)) {
 
 $where_sql = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
-// === COUNT total data ===
 $count_sql = "SELECT COUNT(*) as total FROM berita b $where_sql";
 $count_res = pg_query_params($conn, $count_sql, $params);
 $total_items = $count_res ? (int) pg_fetch_assoc($count_res)['total'] : 0;
 $total_pages = $total_items > 0 ? ceil($total_items / $items_per_page) : 1;
 
-// === Ambil data berita ===
 $sql = "SELECT 
             b.id_berita,
             b.judul,
             b.slug,
-            b.dibuat_pada,
             b.status,
             b.jenis,
-            m.lokasi_file AS foto,
-            u.nama_lengkap AS creator
+            b.penulis,             
+            m.lokasi_file AS foto
         FROM berita b
         LEFT JOIN media m ON b.id_cover = m.id_media
-        LEFT JOIN pengguna u ON b.dibuat_oleh = u.id_pengguna
         $where_sql
         ORDER BY b.dibuat_pada DESC
         LIMIT $items_per_page OFFSET $offset";
@@ -89,16 +82,16 @@ include __DIR__ . '/../includes/header.php';
             <div class="col-md-4">
                 <label class="form-label">Cari Judul</label>
                 <input type="text" name="search" class="form-control" placeholder="Judul..." 
-                       value="<?= htmlspecialchars($search); ?>">
+                        value="<?= htmlspecialchars($search); ?>">
             </div>
 
             <div class="col-md-3">
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Semua</option>
-                    <option value="diajukan"   <?= $filter_status==='diajukan'?'selected':'' ?>>Diajukan</option>
-                    <option value="disetujui"  <?= $filter_status==='disetujui'?'selected':'' ?>>Disetujui</option>
-                    <option value="ditolak"    <?= $filter_status==='ditolak'?'selected':'' ?>>Ditolak</option>
+                    <option value="diajukan"    <?= $filter_status==='diajukan'?'selected':'' ?>>Diajukan</option>
+                    <option value="disetujui"   <?= $filter_status==='disetujui'?'selected':'' ?>>Disetujui</option>
+                    <option value="ditolak"     <?= $filter_status==='ditolak'?'selected':'' ?>>Ditolak</option>
                 </select>
             </div>
 
@@ -134,10 +127,8 @@ include __DIR__ . '/../includes/header.php';
                             <th>BERITA</th>
                             <th class="text-center" width="160">STATUS</th>
                             <th class="text-center" width="130">JENIS</th>
-                            <th class="text-center" width="200">CREATOR</th>
-                            <th class="text-center" width="150">DIBUAT</th>
-                            <th class="text-center" width="180">AKSI</th>
-                        </tr>
+                            <th class="text-center" width="180">PENULIS</th> 
+                            <th class="text-center" width="180">AKSI</th> </tr>
                     </thead>
                     <tbody>
 
@@ -166,24 +157,20 @@ include __DIR__ . '/../includes/header.php';
                             <td class="text-center">
                                 <span class="badge bg-info text-dark px-3"><?= $row['jenis']; ?></span>
                             </td>
-
+                            
                             <td class="text-center">
-                                <?= $row['creator'] ?: '<span class="text-muted">-</span>' ?>
-                            </td>
-
-                            <td class="text-center">
-                                <small><?= formatDateTime($row['dibuat_pada'], 'd M Y, H:i'); ?></small>
+                                <div><?= htmlspecialchars($row['penulis']) ?: '<span class="text-muted">-</span>'; ?></div>
                             </td>
 
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
                                     <a href="<?= getAdminUrl('berita/edit.php?id=' . $row['id_berita']); ?>" 
-                                       class="btn btn-outline-primary">
+                                        class="btn btn-outline-primary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <a href="<?= getAdminUrl('berita/hapus.php?id=' . $row['id_berita']); ?>" 
-                                       class="btn btn-outline-danger"
-                                       onclick="return confirm('Yakin ingin menghapus berita ini?');">
+                                        class="btn btn-outline-danger"
+                                        onclick="return confirm('Yakin ingin menghapus berita ini?');">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </div>

@@ -64,7 +64,7 @@ include __DIR__ . '/../includes/header.php';
                                 <th width="120">Status</th>
                                 <th width="120">Jumlah Foto</th>
                                 <th width="180">Dibuat</th>
-                                <th width="220" class="text-end">Aksi</th>
+                                <th width="280" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,12 +74,12 @@ include __DIR__ . '/../includes/header.php';
                                     <div class="d-flex align-items-center">
                                         <?php if (!empty($row['cover_image'])): ?>
                                             <img src="../../uploads/<?php echo htmlspecialchars($row['cover_image']); ?>"
-                                                 alt=""
-                                                 class="rounded me-3"
-                                                 style="width: 60px; height: 40px; object-fit: cover;">
+                                                alt=""
+                                                class="rounded me-3"
+                                                style="width: 60px; height: 40px; object-fit: cover;">
                                         <?php else: ?>
                                             <div class="bg-light border rounded me-3 d-flex align-items-center justify-content-center"
-                                                 style="width: 60px; height: 40px;">
+                                                style="width: 60px; height: 40px;">
                                                 <i class="bi bi-image text-muted"></i>
                                             </div>
                                         <?php endif; ?>
@@ -111,8 +111,8 @@ include __DIR__ . '/../includes/header.php';
                                     </a>
                                     <?php if (isAdmin()): ?>
                                         <a href="hapus.php?id=<?php echo (int)$row['id_album']; ?>"
-                                           class="btn btn-sm btn-danger"
-                                           onclick="return confirm('Yakin ingin menghapus album ini beserta semua fotonya?');">
+                                            class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Yakin ingin menghapus album ini beserta semua fotonya?');">
                                             <i class="bi bi-trash"></i> Hapus
                                         </a>
                                     <?php endif; ?>

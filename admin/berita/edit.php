@@ -14,7 +14,6 @@ if ($id_berita <= 0) {
     exit;
 }
 
-// Ambil data berita
 $sql = "SELECT b.*, m.lokasi_file AS foto, m.id_media AS id_foto
         FROM berita b
         LEFT JOIN media m ON b.id_cover = m.id_media
@@ -31,37 +30,46 @@ $berita = pg_fetch_assoc($result);
 
 // ===== PROSES SIMPAN EDIT =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $judul     = trim($_POST['judul']);
-    $jenis     = $_POST['jenis'] ?? 'berita';
-    $status_in = $_POST['status'] ?? 'draft'; // nilai dari form
-    $ringkasan = $_POST['ringkasan'] ?? '';
-    $isi       = $_POST['isiberita'] ?? '';
+    $judul      = trim($_POST['judul']);
+    $jenis      = $_POST['jenis'] ?? 'berita';
+    $penulis    = trim($_POST['penulis'] ?? ''); 
+    $ringkasan  = $_POST['ringkasan'] ?? '';
+    $isi        = $_POST['isiberita'] ?? '';
 
+    // ===== VALIDASI DASAR =====
     if ($judul === '') {
         setFlashMessage('Judul wajib diisi.', 'error');
         header('Location: ' . getAdminUrl('berita/edit.php?id='.$id_berita));
         exit;
     }
+    if ($penulis === '') {
+        setFlashMessage('Penulis wajib diisi.', 'error');
+        header('Location: ' . getAdminUrl('berita/edit.php?id='.$id_berita));
+        exit;
+    }
 
-    if (!in_array($jenis, ['berita','agenda','pengumuman'], true)) {
+    if (!in_array($jenis, ['berita','pengumuman'], true)) { 
         setFlashMessage('Jenis berita tidak valid.', 'error');
         header('Location: ' . getAdminUrl('berita/edit.php?id='.$id_berita));
         exit;
     }
 
-    // ===== STATUS BERDASARKAN ROLE =====
+    // ===== STATUS BERDASARKAN ROLE (LOGIKA UTAMA YANG SAMA DENGAN TAMBAH) =====
     if (isAdmin()) {
-        $status = in_array($status_in, ['draft','disetujui','diajukan','ditolak','arsip'], true)
-            ? $status_in
-            : 'draft';
+        $status = 'disetujui';
+        $disetujui_oleh = $user['id'] ?? null;
+        $disetujui_pada = 'NOW()'; 
+        $flash_message = 'Berita berhasil diperbarui dan disetujui.';
     } else {
         $status = 'diajukan';
+        $disetujui_oleh = null;
+        $disetujui_pada = null;
+        $flash_message = 'Perubahan tersimpan dan berita diajukan untuk persetujuan admin.';
     }
 
     $slug = generateSlug($judul);
     $id_foto_final = $berita['id_foto'];
 
-    // Upload cover baru jika ada
     if (!empty($_FILES['foto']['name'])) {
         $file = $_FILES['foto'];
 
@@ -90,31 +98,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Update berita
-    $update_sql = "UPDATE berita SET
-                    judul = $1,
-                    slug = $2,
-                    jenis = $3,
-                    ringkasan = $4,
-                    isi_html = $5,
-                    status = $6,
-                    id_cover = $7,
-                    diperbarui_pada = NOW()
-                   WHERE id_berita = $8";
+    $update_sql_parts = [];
+    $params_final = [];
+    $param_index = 1;
 
-    $update = pg_query_params($conn, $update_sql, [
-        $judul,
-        $slug,
-        $jenis,
-        $ringkasan,
-        $isi,
-        $status,
-        $id_foto_final,
-        $id_berita
-    ]);
-
+    $update_sql_parts[] = "judul = $" . $param_index++; $params_final[] = $judul;
+    $update_sql_parts[] = "slug = $" . $param_index++; $params_final[] = $slug;
+    $update_sql_parts[] = "jenis = $" . $param_index++; $params_final[] = $jenis;
+    $update_sql_parts[] = "penulis = $" . $param_index++; $params_final[] = $penulis;
+    $update_sql_parts[] = "ringkasan = $" . $param_index++; $params_final[] = $ringkasan;
+    $update_sql_parts[] = "isi_html = $" . $param_index++; $params_final[] = $isi;
+    $update_sql_parts[] = "status = $" . $param_index++; $params_final[] = $status;
+    $update_sql_parts[] = "id_cover = $" . $param_index++; $params_final[] = $id_foto_final;
+    $update_sql_parts[] = "disetujui_oleh = $" . $param_index++; $params_final[] = $disetujui_oleh;
+    
+    $update_sql_parts[] = "diperbarui_pada = NOW()";
+    
+    if ($disetujui_pada === 'NOW()') {
+        $update_sql_parts[] = "disetujui_pada = NOW()";
+    } else {
+        $update_sql_parts[] = "disetujui_pada = NULL";
+    }
+    
+    $update_sql = "UPDATE berita SET " . implode(', ', $update_sql_parts) . " WHERE id_berita = $" . $param_index++;
+    $params_final[] = $id_berita;
+    
+    $update = pg_query_params($conn, $update_sql, $params_final);
+    
     if ($update) {
-        // LOG AKTIVITAS
         log_aktivitas(
             $conn,
             'update',
@@ -123,15 +134,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'Mengupdate berita: ' . $judul . ' (status: ' . $status . ')'
         );
 
-        if (!isAdmin()) {
-            setFlashMessage('Perubahan tersimpan dan berita diajukan untuk persetujuan admin.', 'success');
-        } else {
-            setFlashMessage('Berita berhasil diperbarui.', 'success');
-        }
+        setFlashMessage($flash_message, 'success');
         header('Location: ' . getAdminUrl('berita/index.php'));
         exit;
     } else {
-        setFlashMessage('Gagal memperbarui berita', 'error');
+        setFlashMessage('Gagal memperbarui berita: ' . pg_last_error($conn), 'error');
     }
 }
 
@@ -147,9 +154,9 @@ include __DIR__ . '/../includes/header.php';
             <h1><i class="bi bi-pencil-square me-2"></i>Edit Berita</h1>
             <p class="text-muted mb-0">
                 <?php if (isAdmin()): ?>
-                    Anda dapat mengubah status berita secara langsung.
+                    Berita ini akan otomatis berstatus <strong>Disetujui</strong> saat disimpan.
                 <?php else: ?>
-                    Perubahan Anda akan diajukan dan menunggu persetujuan admin.
+                    Perubahan akan diajukan dan statusnya menjadi <strong>Diajukan</strong>.
                 <?php endif; ?>
             </p>
         </div>
@@ -179,33 +186,32 @@ include __DIR__ . '/../includes/header.php';
                     <div class="mb-3">
                         <label class="form-label">Jenis</label>
                         <select name="jenis" class="form-control">
-                            <option value="berita"     <?= $berita['jenis']=='berita'?'selected':'' ?>>Berita</option>
-                            <option value="pengumuman" <?= $berita['jenis']=='pengumuman'?'selected':'' ?>>Pengumuman</option>
+                            <option value="berita"      <?= $berita['jenis']=='berita'?'selected':'' ?>>Berita</option>
+                            <option value="pengumuman"  <?= $berita['jenis']=='pengumuman'?'selected':'' ?>>Pengumuman</option>
                         </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Penulis</label>
+                        <input type="text" name="penulis" class="form-control"
+                               value="<?php echo htmlspecialchars($berita['penulis'] ?? ''); ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Status</label>
-
-                        <?php if (isAdmin()): ?>
-                            <select name="status" class="form-control">
-                                <option value="draft"      <?= $berita['status']=='draft'?'selected':'' ?>>Draft</option>
-                                <option value="diajukan"   <?= $berita['status']=='diajukan'?'selected':'' ?>>Diajukan</option>
-                                <option value="disetujui"  <?= $berita['status']=='disetujui'?'selected':'' ?>>Disetujui</option>
-                                <option value="ditolak"    <?= $berita['status']=='ditolak'?'selected':'' ?>>Ditolak</option>
-                                <option value="arsip"      <?= $berita['status']=='arsip'?'selected':'' ?>>Arsip</option>
-                            </select>
-                            <div class="form-text">
-                                Sebagai admin, Anda dapat langsung mengubah status publikasi berita.
-                            </div>
-                        <?php else: ?>
-                            <input type="text" class="form-control"
-                                   value="Perubahan akan diajukan (status: diajukan)" disabled>
-                            <div class="form-text">
-                                Status sebenarnya akan otomatis menjadi <strong>diajukan</strong> setelah Anda menyimpan perubahan.
-                            </div>
-                        <?php endif; ?>
+                        <label class="form-label">Status Saat Ini</label>
+                        <?php 
+                        $status_display = ucfirst($berita['status']);
+                        if (!isAdmin()) {
+                            $status_display .= " (Perubahan akan menjadi Diajukan)";
+                        }
+                        ?>
+                        <input type="text" class="form-control"
+                               value="<?php echo htmlspecialchars($status_display); ?>" disabled>
+                        <div class="form-text">
+                            Status publikasi diatur secara otomatis berdasarkan peran Anda saat menyimpan.
+                        </div>
                     </div>
+
 
                     <div class="mb-3">
                         <label class="form-label">Ringkasan</label>
@@ -269,6 +275,15 @@ include __DIR__ . '/../includes/header.php';
 </form>
 
 <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+
+<style>
+.ck-editor__editable {
+    min-height: 450px;
+    max-height: 700px;
+    overflow-y: auto;
+}
+</style>
+
 <script>
 ClassicEditor
     .create( document.querySelector( '#editor' ) )

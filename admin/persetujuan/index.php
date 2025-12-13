@@ -351,7 +351,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
 
             if ($aksi === 'approve') {
                 if ($is_delete_request) {
-                    // APPROVE HAPUS -> Hapus Permanen
                     $sql_del = "DELETE FROM publikasi WHERE id_publikasi = $1";
                     pg_query_params($conn, $sql_del, [$id]);
 
@@ -472,7 +471,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
-        // Ambil data konten
         $sql_get = "SELECT {$title_col}, status FROM {$table} WHERE {$pk} = $1";
         $res_get = pg_query_params($conn, $sql_get, [$id]);
 
@@ -511,8 +509,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
         exit;
     }
 }
-
-// ---------- AMBIL DATA PENDING (status = 'diajukan' ATAU aksi_request IS NOT NULL) ----------
 
 $pending_galeri = pg_query(
     $conn,
@@ -607,38 +603,39 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID</th>
                                 <th>Judul Album</th>
-                                <th width="180">Diajukan Pada</th>
-                                <th width="220" class="text-end">Aksi</th>
+                                <th width="200">Diajukan Pada</th>
+                                <th width="250" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($pending_galeri)): ?>
                             <tr>
-                                <td><?php echo (int)$row['id_album']; ?></td>
-                                <td><?php echo htmlspecialchars($row['judul']); ?></td>
+                                <td>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
+                                    <small class="text-muted">(ID: <?php echo (int)$row['id_album']; ?>)</small>
+                                </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td class="text-end">
                                     <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="galeri">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
                                         <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-circle me-1"></i>Setujui
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i> Setujui
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline ms-1">
+                                    <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="galeri">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
                                         <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Tolak
+                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
+                                            <i class="bi bi-x-circle"></i> Tolak
                                         </button>
                                     </form>
                                     <a href="../galeri/edit.php?id=<?php echo (int)$row['id_album']; ?>"
-                                        class="btn btn-sm btn-outline-secondary ms-1">
-                                        <i class="bi bi-pencil-square me-1"></i>Lihat / Edit
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil-square"></i> Lihat
                                     </a>
                                 </td>
                             </tr>
@@ -664,19 +661,20 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID</th>
                                 <th>Judul</th>
-                                <th width="180">Diajukan Pada</th>
+                                <th width="200">Diajukan Pada</th>
                                 <th width="160">Jenis Pengajuan</th>
-                                <th width="260" class="text-end">Aksi</th>
+                                <th width="280" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($pending_berita)): ?>
                             <?php $is_delete_req = ($row['aksi_request'] === 'hapus'); ?>
                             <tr>
-                                <td><?php echo (int)$row['id_berita']; ?></td>
-                                <td><?php echo htmlspecialchars($row['judul']); ?></td>
+                                <td>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
+                                    <small class="text-muted">(ID: <?php echo (int)$row['id_berita']; ?>)</small>
+                                </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td>
                                     <?php if ($is_delete_req): ?>
@@ -690,22 +688,22 @@ include __DIR__ . '/../includes/header.php';
                                         <input type="hidden" name="jenis" value="berita">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_berita']; ?>">
                                         <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-circle me-1"></i>
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i>
                                             <?php echo $is_delete_req ? 'Setujui Hapus' : 'Setujui'; ?>
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline ms-1">
+                                    <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="berita">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_berita']; ?>">
                                         <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Tolak
+                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
+                                            <i class="bi bi-x-circle"></i> Tolak
                                         </button>
                                     </form>
                                     <a href="../berita/edit.php?id=<?php echo (int)$row['id_berita']; ?>"
-                                        class="btn btn-sm btn-outline-secondary ms-1">
-                                        <i class="bi bi-pencil-square me-1"></i>Lihat / Edit
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil-square"></i> Lihat
                                     </a>
                                 </td>
                             </tr>
@@ -731,19 +729,20 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID</th>
                                 <th>Judul</th>
-                                <th width="180">Diajukan Pada</th>
+                                <th width="200">Diajukan Pada</th>
                                 <th width="160">Jenis Pengajuan</th>
-                                <th width="200" class="text-end">Aksi</th>
+                                <th width="250" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($pending_publikasi)): ?>
                             <?php $is_delete_req = ($row['aksi_request'] === 'hapus'); ?>
                             <tr>
-                                <td><?php echo (int)$row['id_publikasi']; ?></td>
-                                <td><?php echo htmlspecialchars($row['judul']); ?></td>
+                                <td>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
+                                    <small class="text-muted">(ID: <?php echo (int)$row['id_publikasi']; ?>)</small>
+                                </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td>
                                     <?php if ($is_delete_req): ?>
@@ -757,19 +756,23 @@ include __DIR__ . '/../includes/header.php';
                                         <input type="hidden" name="jenis" value="publikasi">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_publikasi']; ?>">
                                         <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-circle me-1"></i>
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i>
                                             <?php echo $is_delete_req ? 'Setujui Hapus' : 'Setujui'; ?>
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline ms-1">
+                                    <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="publikasi">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_publikasi']; ?>">
                                         <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Tolak
+                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
+                                            <i class="bi bi-x-circle"></i> Tolak
                                         </button>
                                     </form>
+                                    <a href="../publikasi/edit.php?id=<?php echo (int)$row['id_publikasi']; ?>"
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil-square"></i> Lihat
+                                    </a>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -794,19 +797,20 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID</th>
                                 <th>Nama Fasilitas</th>
-                                <th width="180">Diajukan Pada</th>
+                                <th width="200">Diajukan Pada</th>
                                 <th width="160">Jenis Pengajuan</th>
-                                <th width="200" class="text-end">Aksi</th>
+                                <th width="250" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($pending_fasilitas)): ?>
                             <?php $is_delete_req = ($row['aksi_request'] === 'hapus'); ?>
                             <tr>
-                                <td><?php echo (int)$row['id_fasilitas']; ?></td>
-                                <td><?php echo htmlspecialchars($row['nama']); ?></td>
+                                <td>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($row['nama']); ?></div>
+                                    <small class="text-muted">(ID: <?php echo (int)$row['id_fasilitas']; ?>)</small>
+                                </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td>
                                     <?php if ($is_delete_req): ?>
@@ -820,19 +824,23 @@ include __DIR__ . '/../includes/header.php';
                                         <input type="hidden" name="jenis" value="fasilitas">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_fasilitas']; ?>">
                                         <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-circle me-1"></i>
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i>
                                             <?php echo $is_delete_req ? 'Setujui Hapus' : 'Setujui'; ?>
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline ms-1">
+                                    <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="fasilitas">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_fasilitas']; ?>">
                                         <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Tolak
+                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
+                                            <i class="bi bi-x-circle"></i> Tolak
                                         </button>
                                     </form>
+                                    <a href="../fasilitas/edit.php?id=<?php echo (int)$row['id_fasilitas']; ?>"
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil-square"></i> Lihat
+                                    </a>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -857,13 +865,12 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID</th>
                                 <th>Nama</th>
                                 <th>Email</th>
-                                <th width="160">Peran Lab</th>
-                                <th width="140">Jenis Pengajuan</th>
+                                <th width="140">Peran Lab</th>
+                                <th width="160">Jenis Pengajuan</th>
                                 <th width="180">Diajukan / Diubah</th>
-                                <th width="260" class="text-end">Aksi</th>
+                                <th width="250" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -872,8 +879,10 @@ include __DIR__ . '/../includes/header.php';
                                 $is_delete_req = ($row['aktif'] !== 't');
                             ?>
                             <tr>
-                                <td><?php echo (int)$row['id_anggota']; ?></td>
-                                <td><strong><?php echo htmlspecialchars($row['nama']); ?></strong></td>
+                                <td>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($row['nama']); ?></div>
+                                    <small class="text-muted">(ID: <?php echo (int)$row['id_anggota']; ?>)</small>
+                                </td>
                                 <td>
                                     <?php if ($row['email']): ?>
                                         <a href="mailto:<?php echo htmlspecialchars($row['email']); ?>">
@@ -910,21 +919,21 @@ include __DIR__ . '/../includes/header.php';
                                         <input type="hidden" name="jenis" value="anggota">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_anggota']; ?>">
                                         <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-circle me-1"></i>Setujui
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i> Setujui
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline ms-1">
+                                    <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="anggota">
                                         <input type="hidden" name="id" value="<?php echo (int)$row['id_anggota']; ?>">
                                         <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Tolak
+                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
+                                            <i class="bi bi-x-circle"></i> Tolak
                                         </button>
                                     </form>
                                     <a href="../anggota/edit.php?id=<?php echo (int)$row['id_anggota']; ?>"
-                                        class="btn btn-sm btn-outline-secondary ms-1">
-                                        <i class="bi bi-pencil-square me-1"></i>Lihat / Edit
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil-square"></i> Lihat
                                     </a>
                                 </td>
                             </tr>
@@ -950,23 +959,20 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-striped mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th width="60">ID Foto</th>
-                                <th>Album</th>
-                                <th>Caption</th>
-                                <th width="120">Jenis Request</th>
-                                <th width="180">Diajukan Pada</th>
-                                <th width="260" class="text-end">Aksi</th>
+                                <th>Album / Caption</th>
+                                <th width="160">Jenis Request</th>
+                                <th width="200">Diajukan Pada</th>
+                                <th width="250" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php while ($f = pg_fetch_assoc($pending_foto)): ?>
                             <tr>
-                                <td><?php echo (int)$f['id_item']; ?></td>
                                 <td>
-                                    <strong><?php echo htmlspecialchars($f['judul_album']); ?></strong>
-                                    <div><small class="text-muted">ID Album: <?php echo (int)$f['id_album']; ?></small></div>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($f['judul_album']); ?></div>
+                                    <small class="text-muted">"<?php echo htmlspecialchars($f['caption']); ?>"</small><br>
+                                    <small class="text-muted">(ID Item: <?php echo (int)$f['id_item']; ?>)</small>
                                 </td>
-                                <td><?php echo htmlspecialchars($f['caption']); ?></td>
                                 <td>
                                     <span class="badge bg-warning text-dark">
                                         <?php echo htmlspecialchars($f['aksi_request'] ?: '-'); ?>
@@ -978,21 +984,21 @@ include __DIR__ . '/../includes/header.php';
                                         <input type="hidden" name="jenis" value="foto">
                                         <input type="hidden" name="id" value="<?php echo (int)$f['id_item']; ?>">
                                         <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-circle me-1"></i>Setujui
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i> Setujui
                                         </button>
                                     </form>
-                                    <form method="post" class="d-inline ms-1">
+                                    <form method="post" class="d-inline">
                                         <input type="hidden" name="jenis" value="foto">
                                         <input type="hidden" name="id" value="<?php echo (int)$f['id_item']; ?>">
                                         <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-x-circle me-1"></i>Tolak
+                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
+                                            <i class="bi bi-x-circle"></i> Tolak
                                         </button>
                                     </form>
                                     <a href="../galeri/foto.php?id=<?php echo (int)$f['id_album']; ?>"
-                                        class="btn btn-sm btn-outline-secondary ms-1">
-                                        <i class="bi bi-images me-1"></i>Lihat Album
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-images"></i> Lihat Album
                                     </a>
                                 </td>
                             </tr>
