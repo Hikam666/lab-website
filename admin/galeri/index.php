@@ -9,7 +9,6 @@ $conn = getDBConnection();
 
 $active_page = 'galeri';
 $page_title  = 'Manajemen Galeri Album';
-$extra_css = ['galeri.css']; 
 
 $sql = "
     SELECT 
@@ -60,11 +59,11 @@ include __DIR__ . '/../includes/header.php';
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Album</th>
-                                <th width="120">Status</th>
-                                <th width="120">Jumlah Foto</th>
-                                <th width="180">Dibuat</th>
-                                <th width="280" class="text-end">Aksi</th>
+                                <th>ALBUM</th>
+                                <th class="text-center" width="120">STATUS</th>
+                                <th class="text-center" width="120">JUMLAH FOTO</th>
+                                <th class="text-center" width="160">DIBUAT</th>
+                                <th class="text-center" width="180">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -76,46 +75,49 @@ include __DIR__ . '/../includes/header.php';
                                             <img src="../../uploads/<?php echo htmlspecialchars($row['cover_image']); ?>"
                                                 alt=""
                                                 class="rounded me-3"
-                                                style="width: 60px; height: 40px; object-fit: cover;">
+                                                style="width: 90px; height: 90px; object-fit: cover;">
                                         <?php else: ?>
                                             <div class="bg-light border rounded me-3 d-flex align-items-center justify-content-center"
-                                                style="width: 60px; height: 40px;">
-                                                <i class="bi bi-image text-muted"></i>
+                                                style="width: 90px; height: 90px;">
+                                                <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
                                             </div>
                                         <?php endif; ?>
                                         <div>
                                             <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
-                                            <small class="text-muted">Slug: <?php echo htmlspecialchars($row['slug']); ?></small>
+                                            <small class="text-muted"><?php echo htmlspecialchars($row['slug']); ?></small>
                                         </div>
                                     </div>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <?php echo getStatusBadge($row['status']); ?>
                                 </td>
-                                <td>
-                                    <span class="badge bg-secondary">
+                                <td class="text-center">
+                                    <span class="badge bg-secondary px-3">
                                         <?php echo (int)$row['total_foto']; ?> foto
                                     </span>
                                 </td>
-                                <td>
-                                    <small class="text-muted">
-                                        <?php echo formatTanggalWaktu($row['dibuat_pada']); ?>
-                                    </small>
+                                <td class="text-center">
+                                    <small><?php echo formatDateTime($row['dibuat_pada'], 'd M Y, H:i'); ?></small>
                                 </td>
-                                <td class="text-end">
-                                    <a href="edit.php?id=<?php echo (int)$row['id_album']; ?>" class="btn btn-sm btn-outline-primary me-1">
-                                        <i class="bi bi-pencil-square"></i> Edit
-                                    </a>
-                                    <a href="foto.php?id=<?php echo (int)$row['id_album']; ?>" class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="bi bi-images"></i> Foto
-                                    </a>
-                                    <?php if (isAdmin()): ?>
-                                        <a href="hapus.php?id=<?php echo (int)$row['id_album']; ?>"
-                                            class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Yakin ingin menghapus album ini beserta semua fotonya?');">
-                                            <i class="bi bi-trash"></i> Hapus
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="edit.php?id=<?php echo (int)$row['id_album']; ?>" 
+                                           class="btn btn-outline-primary"
+                                           title="Edit Album">
+                                            <i class="bi bi-pencil"></i>
                                         </a>
-                                    <?php endif; ?>
+                                        <a href="foto.php?id=<?php echo (int)$row['id_album']; ?>" 
+                                           class="btn btn-outline-secondary"
+                                           title="Kelola Foto">
+                                            <i class="bi bi-images"></i>
+                                        </a>
+                                        <a href="hapus.php?id=<?php echo (int)$row['id_album']; ?>"
+                                           class="btn btn-outline-danger"
+                                           onclick="return confirm('Yakin ingin menghapus album ini?');"
+                                           title="Hapus Album">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -123,8 +125,9 @@ include __DIR__ . '/../includes/header.php';
                     </table>
                 </div>
             <?php else: ?>
-                <div class="p-4 text-center text-muted">
-                    Belum ada album galeri.
+                <div class="text-center py-5">
+                    <i class="bi bi-images text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3 text-muted">Tidak ada album galeri</h5>
                 </div>
             <?php endif; ?>
         </div>
