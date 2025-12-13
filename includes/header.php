@@ -83,7 +83,7 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item">
                             <a href="<?php echo SITE_URL; ?>/public/index.php" 
-                               class="nav-link px-3 <?php echo ($active_page == 'home') ? 'active' : ''; ?>">
+                               class="nav-link px-3 <?php echo ($active_page == 'Beranda') ? 'active' : ''; ?>">
                                 Beranda
                             </a>
                         </li>

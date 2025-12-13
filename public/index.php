@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../includes/config.php';
 
 // Page settings
-$active_page = 'home';
+$active_page = 'Beranda';
 $page_title = 'Beranda';
 $page_keywords = 'laboratorium, teknologi data, JTI, Polinema, riset, publikasi';
 $page_description = 'Laboratorium Teknologi Data JTI Politeknik Negeri Malang - Riset terapan dan pengembangan solusi berbasis data';

@@ -53,7 +53,7 @@ $image_src = $berita['cover_image'] ? SITE_URL . '/uploads/' . $berita['cover_im
             <h1 class="display-3 text-white mb-4 animated slideInDown"><?php echo htmlspecialchars($berita['judul']); ?></h1>
             <nav aria-label="breadcrumb animated slideInDown">
                 <ol class="breadcrumb justify-content-center mb-0">
-                    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+                    <li class="breadcrumb-item"><a href="index.php">Beranda</a></li>
                     <li class="breadcrumb-item"><a href="berita.php">Berita</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Detail</li>
                 </ol>

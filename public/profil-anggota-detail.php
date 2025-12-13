@@ -78,7 +78,7 @@ $image_src = $anggota['foto'] ? SITE_URL . '/uploads/' . $anggota['foto'] : SITE
         <h1 class="display-3 text-white mb-4"><?php echo htmlspecialchars($anggota['nama']); ?></h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb justify-content-center mb-0">
-                <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+                <li class="breadcrumb-item"><a href="index.php">Beranda</a></li>
                 <li class="breadcrumb-item"><a href="profil.php">Profil</a></li>
                 <li class="breadcrumb-item active"><?php echo htmlspecialchars($anggota['nama']); ?></li>
             </ol>

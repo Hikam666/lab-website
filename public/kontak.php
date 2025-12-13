@@ -65,7 +65,7 @@ include __DIR__ . '/../includes/header.php';
             <h1 class="display-3 text-white mb-4 animated slideInDown">Kontak & Kerja Sama</h1>
             <nav aria-label="breadcrumb animated slideInDown">
                 <ol class="breadcrumb justify-content-center mb-0">
-                    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+                    <li class="breadcrumb-item"><a href="index.php">Beranda</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Kontak & Kerja Sama</li>
                 </ol>
             </nav>

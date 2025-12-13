@@ -1,26 +1,21 @@
 <?php
-// Memuat konfigurasi
 require_once __DIR__ . '/../includes/config.php';
 
-// Page settings
 $active_page = 'publikasi';
 $page_title = 'Riset & Publikasi';
 $page_keywords = 'publikasi, jurnal, riset, penelitian, laboratorium';
 $page_description = 'Publikasi ilmiah dan riset dari Laboratorium Teknologi Data';
 $extra_css = ['profil.css'];
 
-// Mengambil koneksi database
 $conn = getDBConnection();
 
-// Get parameters
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'latest';
 $tahun = isset($_GET['tahun']) ? (int)$_GET['tahun'] : 0;
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 9; // 3 baris x 3 kolom
+$per_page = 9; 
 $offset = ($page - 1) * $per_page;
 
-// Build SQL query
 $sql = "SELECT 
             p.id_publikasi,
             p.judul,
@@ -60,9 +55,6 @@ switch ($sort) {
     case 'oldest':
         $sql .= " ORDER BY p.tahun ASC, p.dibuat_pada ASC";
         break;
-    case 'cited':
-        $sql .= " ORDER BY p.tahun DESC, p.dibuat_pada DESC";
-        break;
     case 'latest':
     default:
         $sql .= " ORDER BY p.tahun DESC, p.dibuat_pada DESC";
@@ -73,10 +65,7 @@ $sql .= " LIMIT $" . $param_count . " OFFSET $" . ($param_count + 1);
 $params[] = $per_page;
 $params[] = $offset;
 
-// Execute query
 $result = pg_query_params($conn, $sql, $params);
-
-// Get total count for pagination
 $sql_count = "SELECT COUNT(*) as total FROM publikasi WHERE status = 'disetujui'";
 if ($tahun > 0) {
     $sql_count .= " AND tahun = " . $tahun;
@@ -88,7 +77,6 @@ $result_count = pg_query($conn, $sql_count);
 $total_rows = pg_fetch_assoc($result_count)['total'];
 $total_pages = ceil($total_rows / $per_page);
 
-// Get available years for filter
 $sql_years = "SELECT DISTINCT tahun FROM publikasi WHERE status = 'disetujui' AND tahun IS NOT NULL ORDER BY tahun DESC";
 $result_years = pg_query($conn, $sql_years);
 
@@ -96,7 +84,6 @@ $result_years = pg_query($conn, $sql_years);
 include __DIR__ . '/../includes/header.php';
 ?>
 
-    <!-- Page Header Start -->
     <div class="container-fluid page-header-banner py-5 mb-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container text-center py-5">
             <h1 class="display-3 text-white mb-4 animated slideInDown">Riset & Publikasi</h1>
@@ -108,14 +95,10 @@ include __DIR__ . '/../includes/header.php';
             </nav>
         </div>
     </div>
-    <!-- Page Header End -->
-
-    <!-- ISI KONTEN -->
     <div class="container my-5">
         
         <h3 class="mb-3 fw-bold text-dark">Daftar Publikasi</h3>
 
-        <!-- Info Text -->
         <?php if ($total_rows > 0): ?>
         <p class="text-muted mb-4">
             Menampilkan <?php echo min($per_page, $total_rows - $offset); ?> dari <?php echo $total_rows; ?> publikasi
@@ -125,31 +108,26 @@ include __DIR__ . '/../includes/header.php';
         </p>
         <?php endif; ?>
 
-        <!-- Filter & Search -->
         <form method="GET" action="" class="mb-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-                <!-- Sort Buttons -->
                 <div class="btn-group" role="group">
-                    <a href="?sort=cited<?php echo $tahun ? '&tahun='.$tahun : ''; ?><?php echo $search ? '&search='.urlencode($search) : ''; ?>" 
-                       class="btn <?php echo ($sort == 'cited') ? 'btn-primary' : 'btn-outline-primary'; ?>">
-                        Most Cited
-                    </a>
+                    
                     <a href="?sort=latest<?php echo $tahun ? '&tahun='.$tahun : ''; ?><?php echo $search ? '&search='.urlencode($search) : ''; ?>" 
-                       class="btn <?php echo ($sort == 'latest') ? 'btn-primary' : 'btn-outline-primary'; ?>">
-                        Latest
+                        class="btn <?php echo ($sort == 'latest' || $sort == 'cited') ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                        Terbaru
                     </a>
                     <a href="?sort=oldest<?php echo $tahun ? '&tahun='.$tahun : ''; ?><?php echo $search ? '&search='.urlencode($search) : ''; ?>" 
-                       class="btn <?php echo ($sort == 'oldest') ? 'btn-primary' : 'btn-outline-primary'; ?>">
-                        Oldest
+                        class="btn <?php echo ($sort == 'oldest') ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                        Terlama
                     </a>
                 </div>
                 
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <!-- Filter Tahun -->
                     <select name="tahun" class="form-select" style="width: auto; min-width: 120px;" onchange="this.form.submit()">
                         <option value="">Semua Tahun</option>
                         <?php 
                         if ($result_years) {
+                            pg_result_seek($result_years, 0); 
                             while ($year = pg_fetch_assoc($result_years)) {
                                 $selected = ($tahun == $year['tahun']) ? 'selected' : '';
                                 echo '<option value="' . $year['tahun'] . '" ' . $selected . '>' . $year['tahun'] . '</option>';
@@ -158,7 +136,6 @@ include __DIR__ . '/../includes/header.php';
                         ?>
                     </select>
                     
-                    <!-- Search Box -->
                     <div class="input-group" style="width: auto; min-width: 250px;">
                         <input type="text" name="search" class="form-control" placeholder="Cari publikasi..." value="<?php echo htmlspecialchars($search); ?>">
                         <button class="btn btn-outline-secondary" type="submit">
@@ -170,18 +147,16 @@ include __DIR__ . '/../includes/header.php';
             <input type="hidden" name="sort" value="<?php echo $sort; ?>">
         </form>
 
-        <!-- Publikasi Grid (3x3) -->
         <div class="row gy-4">
             <?php 
             if ($result && pg_num_rows($result) > 0):
                 $is_first = true;
                 while ($row = pg_fetch_assoc($result)):
-                    $highlight_class = ($is_first && $sort == 'cited') ? 'bg-warning text-dark' : '';
-                    $highlight_label = ($is_first && $sort == 'cited') ? 'Most Cited' : '';
+                    $highlight_class = '';
+                    $highlight_label = '';
                     $is_first = false;
             ?>
             
-            <!-- Publikasi Card -->
             <div class="col-md-6 col-lg-4">
                 <div class="card border-0 shadow-sm h-100">
                     <?php if ($highlight_label): ?>
@@ -230,7 +205,6 @@ include __DIR__ . '/../includes/header.php';
             else:
             ?>
             
-            <!-- No Data Message -->
             <div class="col-12">
                 <div class="alert alert-info text-center" role="alert">
                     <i class="bi bi-info-circle me-2"></i>
@@ -241,13 +215,11 @@ include __DIR__ . '/../includes/header.php';
             <?php endif; ?>
         </div>
 
-        <!-- Pagination -->
         <?php if ($total_pages > 1): ?>
         <div class="row mt-5">
             <div class="col-12">
                 <nav aria-label="Publication pagination">
                     <ul class="pagination justify-content-center">
-                        <!-- Previous -->
                         <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
                             <a class="page-link" href="?page=<?php echo $page - 1; ?>&sort=<?php echo $sort; ?><?php echo $tahun ? '&tahun='.$tahun : ''; ?><?php echo $search ? '&search='.urlencode($search) : ''; ?>">
                                 <i class="bi bi-chevron-left"></i>
@@ -270,7 +242,6 @@ include __DIR__ . '/../includes/header.php';
                         <?php endif; ?>
                         <?php endif; ?>
                         
-                        <!-- Page Numbers -->
                         <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
                         <li class="page-item <?php echo ($page == $i) ? 'active' : ''; ?>">
                             <a class="page-link" href="?page=<?php echo $i; ?>&sort=<?php echo $sort; ?><?php echo $tahun ? '&tahun='.$tahun : ''; ?><?php echo $search ? '&search='.urlencode($search) : ''; ?>">
@@ -279,7 +250,6 @@ include __DIR__ . '/../includes/header.php';
                         </li>
                         <?php endfor; ?>
                         
-                        <!-- Last page -->
                         <?php if ($end_page < $total_pages): ?>
                         <?php if ($end_page < $total_pages - 1): ?>
                         <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -291,7 +261,6 @@ include __DIR__ . '/../includes/header.php';
                         </li>
                         <?php endif; ?>
                         
-                        <!-- Next -->
                         <li class="page-item <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
                             <a class="page-link" href="?page=<?php echo $page + 1; ?>&sort=<?php echo $sort; ?><?php echo $tahun ? '&tahun='.$tahun : ''; ?><?php echo $search ? '&search='.urlencode($search) : ''; ?>">
                                 <i class="bi bi-chevron-right"></i>
