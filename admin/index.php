@@ -1,24 +1,14 @@
 <?php
-/**
- * INDEX.PHP
- * =========
- * Dashboard utama admin panel
- */
-
-// 1. Load dependencies
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// 2. Cek login
 requireLogin();
 
-// 3. Page Settings
 $active_page = 'dashboard';
 $page_title  = 'Dashboard Overview';
 
 $extra_css = ['dashboard.css']; 
 
-// 4. Buka Koneksi Database Utama
 $conn = getDBConnection();
 
 // Initialize stats
@@ -34,7 +24,6 @@ $stats = [
 $recent_activities = [];
 $recent_news       = [];
 
-// 5. Query Statistik (Jika koneksi berhasil)
 if ($conn) {
     // Helper function untuk count
     function getCount($conn, $table, $condition = "TRUE") {
@@ -64,9 +53,6 @@ if ($conn) {
         }
     }
 
-    // =========================================================================
-    // Mengambil data Aktivitas dari LOG_AKTIVITAS
-    // =========================================================================
     $sql_recent_activities = "
         SELECT 
             la.tabel_terpengaruh AS tabel,

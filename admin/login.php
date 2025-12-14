@@ -1,18 +1,10 @@
 <?php
-/**
- * LOGIN.PHP
- * =========
- * Halaman login untuk admin panel
- */
-
 // Start session
 session_start();
 
-// Load dependencies
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// Redirect if already logged in
 if (isLoggedIn()) {
     redirectAdmin('index.php');
 }
@@ -21,7 +13,6 @@ if (isLoggedIn()) {
 $error_message = '';
 $email = '';
 
-// Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = sanitizeInput($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -32,18 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!isValidEmail($email)) {
         $error_message = 'Format email tidak valid.';
     } else {
-        // Attempt login
         $result = loginUser($email, $password);
         
         if ($result['success']) {
-            // Check if there's a redirect URL
             $redirect = $_SESSION['redirect_after_login'] ?? 'index.php';
             unset($_SESSION['redirect_after_login']);
-            
-            // Set success message
             setFlashMessage('Selamat datang, ' . $result['user']['nama_lengkap'] . '!', 'success');
-            
-            // Redirect to dashboard or intended page
             redirectAdmin($redirect);
         } else {
             $error_message = $result['message'];

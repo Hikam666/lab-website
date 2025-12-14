@@ -93,7 +93,7 @@ include __DIR__ . '/../includes/header.php';
                             <div class="gallery-album-overlay">
                                 <div class="gallery-album-info">
                                     <i class="bi bi-images"></i>
-                                    <span><?php echo $row['jumlah_foto']; ?> Foto</span>
+                                    <span><?php echo $row['jumlah_foto']; ?> File</span>
                                 </div>
                                 <a href="galeri-detail.php?slug=<?php echo $row['slug']; ?>" class="btn btn-light">
                                     Lihat Album

@@ -1,14 +1,11 @@
 <?php
-// Memuat konfigurasi
 require_once __DIR__ . '/../includes/config.php';
 
-// Page settings
 $active_page = 'Beranda';
 $page_title = 'Beranda';
 $page_keywords = 'laboratorium, teknologi data, JTI, Polinema, riset, publikasi';
 $page_description = 'Laboratorium Teknologi Data JTI Politeknik Negeri Malang - Riset terapan dan pengembangan solusi berbasis data';
 
-// Mengambil koneksi database
 $conn = getDBConnection();
 
 // Mengambil statistik
@@ -23,8 +20,6 @@ $total_publikasi = pg_fetch_assoc($result_stats_publikasi)['total'];
 // Include header
 include __DIR__ . '/../includes/header.php';
 ?>
-
-    <!-- Bagian Carousel / Hero Mulai -->
     <div class="container-fluid hero-carousel-main px-0 mb-5">
         <div id="header-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
             <div class="carousel-inner">

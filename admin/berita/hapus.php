@@ -88,7 +88,7 @@ include __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-trash me-2"></i>Hapus Berita</h1>
+            <h1><i class="bi bi-trash me-2"></i>Hapus Berita dan Pengumuman</h1>
         </div>
         <a href="<?php echo getAdminUrl('berita/index.php'); ?>" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-2"></i>Kembali

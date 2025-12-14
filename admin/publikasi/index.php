@@ -64,7 +64,7 @@ $sql = "
         p.doi,
         p.status,
         p.dibuat_pada,
-        p.penulis,             -- <-- BARU: Ambil kolom penulis (TEXT)
+        p.penulis,            
         m.lokasi_file AS cover_file,
         u.nama_lengkap AS pembuat
     FROM publikasi p

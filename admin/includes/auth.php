@@ -1,16 +1,4 @@
 <?php
-/**
- * AUTH.PHP
- * ========
- * Sistem autentikasi dan manajemen sesi untuk CMS
- * * Fitur:
- * - Login/Logout
- * - Manajemen sesi
- * - Pengecekan peran (admin/operator)
- * - Pengecekan izin (permission)
- * - Pembuatan token CSRF
- */
-
 // Mulai sesi jika belum dimulai
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

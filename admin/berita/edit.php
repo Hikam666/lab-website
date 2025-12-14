@@ -151,7 +151,7 @@ include __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-pencil-square me-2"></i>Edit Berita</h1>
+            <h1><i class="bi bi-pencil-square me-2"></i>Edit Berita dan Pengumuman</h1>
             <p class="text-muted mb-0">
                 <?php if (isAdmin()): ?>
                     Berita ini akan otomatis berstatus <strong>Disetujui</strong> saat disimpan.

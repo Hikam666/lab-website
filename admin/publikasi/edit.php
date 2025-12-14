@@ -25,9 +25,7 @@ function generateSlugLocal($text) {
     return $text ?: 'publikasi-' . time();
 }
 
-/**
- * Ambil user id yang login (fallback)
- */
+
 function getLoggedUserIdFallback() {
     if (function_exists('getCurrentUser')) {
         $u = getCurrentUser();
@@ -41,9 +39,6 @@ function getLoggedUserIdFallback() {
     return null;
 }
 
-// ============================
-// CEK ID
-// ============================
 $id = $_GET['id'] ?? null;
 if (!$id || !ctype_digit($id)) {
     setFlashMessage("ID publikasi tidak valid.", "danger");
@@ -51,9 +46,6 @@ if (!$id || !ctype_digit($id)) {
     exit;
 }
 
-// =======================
-// Ambil data publikasi
-// =======================
 $sql = "
     SELECT p.*, 
            m.lokasi_file AS cover_file, 
@@ -88,9 +80,6 @@ $errors   = [];
 $id_cover = $data['id_cover'];   
 $old_status = $data['status'];   
 
-// ========================================
-// PROSES EDIT
-// ========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // input text
@@ -113,9 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Tahun harus berupa angka.";
     }
 
-    // ============================
-    // Upload Cover Baru (opsional)
-    // ============================
     if (!empty($_FILES['cover']['name'])) {
 
         $file         = $_FILES['cover'];
@@ -141,7 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!move_uploaded_file($file['tmp_name'], $path)) {
                     $errors[] = "Gagal upload cover.";
                 } else {
-                    // Insert media baru
                     $lokasi_file = 'publikasi/' . $new_name;
                     $tipe_file   = $file['type'];
                     $alt         = 'Cover publikasi';
@@ -174,9 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ========================================
-    // SIMPAN PERUBAHAN
-    // ========================================
     if (empty($errors)) {
 
         $slug      = generateSlugLocal($form['judul']);

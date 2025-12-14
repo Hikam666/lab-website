@@ -56,8 +56,6 @@ $sql = "SELECT
         LIMIT $items_per_page OFFSET $offset";
 
 $result = pg_query_params($conn, $sql, $params);
-
-$extra_css = ['/assets/css/anggota.css'];
 include __DIR__ . '/../includes/header.php';
 ?>
 

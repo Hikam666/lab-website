@@ -1,13 +1,13 @@
 <?php
+
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
 
 $active_page = 'anggota';
-$page_title  = 'Edit Anggota';
-$conn        = getDBConnection();
+$page_title = 'Edit Anggota';
+$conn = getDBConnection();
 
-// --- Info role user saat ini ---
 $is_admin = function_exists('isAdmin') ? isAdmin() : false;
 
 $id_anggota = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -20,8 +20,8 @@ if ($id_anggota <= 0) {
 
 // Ambil data anggota dari database
 $sql = "SELECT a.*, 
-               m.lokasi_file AS foto, 
-               m.id_media    AS id_foto_current
+              m.lokasi_file AS foto, 
+              m.id_media AS id_foto_current
         FROM anggota_lab a
         LEFT JOIN media m ON a.id_foto = m.id_media
         WHERE a.id_anggota = $1";
@@ -36,9 +36,9 @@ if (!$result || pg_num_rows($result) === 0) {
 $anggota = pg_fetch_assoc($result);
 
 // Ambil pendidikan
-$sql_pendidikan      = "SELECT * FROM anggota_pendidikan WHERE id_anggota = $1 ORDER BY urutan ASC, tahun_selesai DESC";
-$result_pendidikan   = pg_query_params($conn, $sql_pendidikan, [$id_anggota]);
-$pendidikan_list     = [];
+$sql_pendidikan = "SELECT * FROM anggota_pendidikan WHERE id_anggota = $1 ORDER BY urutan ASC, tahun_selesai DESC";
+$result_pendidikan = pg_query_params($conn, $sql_pendidikan, [$id_anggota]);
+$pendidikan_list = [];
 if ($result_pendidikan) {
     while ($row = pg_fetch_assoc($result_pendidikan)) {
         $pendidikan_list[] = $row;
@@ -46,9 +46,9 @@ if ($result_pendidikan) {
 }
 
 // Ambil sertifikasi
-$sql_sertifikasi    = "SELECT * FROM anggota_sertifikasi WHERE id_anggota = $1 ORDER BY urutan ASC, tahun DESC";
+$sql_sertifikasi = "SELECT * FROM anggota_sertifikasi WHERE id_anggota = $1 ORDER BY urutan ASC, tahun DESC";
 $result_sertifikasi = pg_query_params($conn, $sql_sertifikasi, [$id_anggota]);
-$sertifikasi_list   = [];
+$sertifikasi_list = [];
 if ($result_sertifikasi) {
     while ($row = pg_fetch_assoc($result_sertifikasi)) {
         $sertifikasi_list[] = $row;
@@ -56,10 +56,10 @@ if ($result_sertifikasi) {
 }
 
 // Ambil mata kuliah
-$sql_matakuliah    = "SELECT * FROM anggota_matakuliah WHERE id_anggota = $1 ORDER BY semester, urutan ASC";
+$sql_matakuliah = "SELECT * FROM anggota_matakuliah WHERE id_anggota = $1 ORDER BY semester, urutan ASC";
 $result_matakuliah = pg_query_params($conn, $sql_matakuliah, [$id_anggota]);
 $matakuliah_ganjil = [];
-$matakuliah_genap  = [];
+$matakuliah_genap = [];
 if ($result_matakuliah) {
     while ($row = pg_fetch_assoc($result_matakuliah)) {
         if ($row['semester'] === 'ganjil') {
@@ -75,20 +75,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
 
     // Ambil data form
-    $nama           = trim($_POST['nama'] ?? '');
-    $email          = trim($_POST['email'] ?? '');
-    $nip            = trim($_POST['nip'] ?? '');
-    $nidn           = trim($_POST['nidn'] ?? '');
-    $program_studi  = trim($_POST['program_studi'] ?? '');
-    $jabatan        = trim($_POST['jabatan'] ?? '');
-    $alamat_kantor  = trim($_POST['alamat_kantor'] ?? '');
-    $linkedin       = trim($_POST['linkedin'] ?? '');
-    $website        = trim($_POST['website'] ?? '');
+    $nama = trim($_POST['nama'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $nip = trim($_POST['nip'] ?? '');
+    $nidn = trim($_POST['nidn'] ?? '');
+    $program_studi = trim($_POST['program_studi'] ?? '');
+    $jabatan = trim($_POST['jabatan'] ?? '');
+    $alamat_kantor = trim($_POST['alamat_kantor'] ?? '');
+    $linkedin = trim($_POST['linkedin'] ?? '');
+    $website = trim($_POST['website'] ?? '');
     $google_scholar = trim($_POST['google_scholar'] ?? '');
-    $sinta          = trim($_POST['sinta'] ?? '');
-    $peran_lab      = trim($_POST['peran_lab'] ?? '');
-    $keahlian       = trim($_POST['keahlian'] ?? '');
-    $aktif          = isset($_POST['aktif']) ? true : false;
+    $sinta = trim($_POST['sinta'] ?? '');
+    $peran_lab = trim($_POST['peran_lab'] ?? '');
+    $keahlian = trim($_POST['keahlian'] ?? '');
+    $aktif = isset($_POST['aktif']) ? true : false;
 
     // === VALIDASI DASAR ===
     if (empty($nama)) {
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         ];
         $finfo_cv = finfo_open(FILEINFO_MIME_TYPE);
-        $cv_mime  = finfo_file($finfo_cv, $cv['tmp_name']);
+        $cv_mime = finfo_file($finfo_cv, $cv['tmp_name']);
         finfo_close($finfo_cv);
 
         if (!in_array($cv_mime, $allowed_cv_types)) {
@@ -160,16 +160,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $slug = $anggota['slug'];
             if ($nama !== $anggota['nama']) {
-                $slug = generateSlug($nama);
+                // Regenerate slug jika nama berubah, pastikan unik
+                $new_slug = generateSlug($nama);
+                $check_slug = pg_query_params($conn, "SELECT id_anggota FROM anggota_lab WHERE slug = $1 AND id_anggota != $2", [$new_slug, $id_anggota]);
+                if ($check_slug && pg_num_rows($check_slug) > 0) {
+                    $counter = 1;
+                    $original_slug = $new_slug;
+                    while ($check_slug && pg_num_rows($check_slug) > 0) {
+                        $new_slug = $original_slug . '-' . $counter;
+                        $check_slug = pg_query_params($conn, "SELECT id_anggota FROM anggota_lab WHERE slug = $1 AND id_anggota != $2", [$new_slug, $id_anggota]);
+                        $counter++;
+                    }
+                    $slug = $new_slug;
+                } else {
+                    $slug = $new_slug;
+                }
             }
 
             $id_foto_final = $anggota['id_foto'];
 
-            // Handle foto upload
+            // Handle foto upload (LOGIKA SUDAH BENAR)
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                $foto   = $_FILES['foto'];
-                $ext    = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
-                $fname  = 'anggota-' . time() . '-' . uniqid() . '.' . $ext;
+                $foto = $_FILES['foto'];
+                $ext = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
+                $fname = 'anggota-' . time() . '-' . uniqid() . '.' . $ext;
                 $up_dir = __DIR__ . '/../../uploads/anggota/';
 
                 if (!file_exists($up_dir)) {
@@ -177,11 +191,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if (move_uploaded_file($foto['tmp_name'], $up_dir . $fname)) {
-                    $finfo     = finfo_open(FILEINFO_MIME_TYPE);
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
                     $mime_type = finfo_file($finfo, $up_dir . $fname);
                     finfo_close($finfo);
 
-                    $media_sql    = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
+                    $media_sql = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
                                      VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id_media";
                     $media_result = pg_query_params($conn, $media_sql, [
                         'anggota/' . $fname,
@@ -197,42 +211,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // Handle CV upload
             $cv_file_final = $anggota['cv_file'] ?? null;
             if (isset($_FILES['cv_file']) && $_FILES['cv_file']['error'] === UPLOAD_ERR_OK) {
-                $cv      = $_FILES['cv_file'];
-                $ext     = strtolower(pathinfo($cv['name'], PATHINFO_EXTENSION));
-                $fname   = 'cv-' . time() . '-' . uniqid() . '.' . $ext;
-                $up_dir  = __DIR__ . '/../../uploads/cv/';
+                $cv = $_FILES['cv_file'];
+                $ext = strtolower(pathinfo($cv['name'], PATHINFO_EXTENSION));
+                $fname = 'cv-' . time() . '-' . uniqid() . '.' . $ext;
+                $up_dir = __DIR__ . '/../../uploads/cv/';
+                $relative_path = 'cv/' . $fname; 
+
                 if (!file_exists($up_dir)) {
                     mkdir($up_dir, 0755, true);
                 }
 
                 if (move_uploaded_file($cv['tmp_name'], $up_dir . $fname)) {
-                    $cv_file_final = 'cv/' . $fname;
+                    $cv_file_final = $relative_path; 
+
+                    $finfo_cv_new = finfo_open(FILEINFO_MIME_TYPE);
+                    $mime_type_new = finfo_file($finfo_cv_new, $up_dir . $fname);
+                    finfo_close($finfo_cv_new);
+
+                    $media_sql_cv = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
+                                     VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id_media";
+                    $media_result_cv = pg_query_params($conn, $media_sql_cv, [
+                        $relative_path, 
+                        $cv['size'],
+                        $mime_type_new,
+                        'CV Anggota: ' . $nama,
+                        $_SESSION['user_id'] ?? null
+                    ]);
+
+                    if (!$media_result_cv) {
+                         unlink($up_dir . $fname); 
+                         throw new Exception("Gagal menyimpan metadata CV ke database media.");
+                    }
                 }
             }
 
-            // === anggota_lab (tambah kolom status) ===
+            // === anggota_lab (update data) ===
             $sql_update = "UPDATE anggota_lab SET 
-                    nama           = $1,
-                    slug           = $2,
-                    email          = $3,
-                    nip            = $4,
-                    nidn           = $5,
-                    program_studi  = $6,
-                    jabatan        = $7,
-                    alamat_kantor  = $8,
-                    linkedin       = $9,
-                    website        = $10,
+                    nama = $1,
+                    slug = $2,
+                    email = $3,
+                    nip = $4,
+                    nidn = $5,
+                    program_studi = $6,
+                    jabatan = $7,
+                    alamat_kantor = $8,
+                    linkedin = $9,
+                    website = $10,
                     google_scholar = $11,
-                    sinta          = $12,
-                    peran_lab      = $13,
-                    keahlian       = $14,
-                    id_foto        = $15,
-                    cv_file        = $16,
-                    aktif          = $17,
-                    status         = $18,
+                    sinta = $12,
+                    peran_lab = $13,
+                    keahlian = $14,
+                    id_foto = $15,
+                    cv_file = $16,
+                    aktif = $17,
+                    status = $18,
                     diperbarui_pada = NOW()
                 WHERE id_anggota = $19";
 
@@ -262,14 +296,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Gagal memperbarui data anggota");
             }
 
-            // === Pendidikan ===
+            // === Pendidikan (Delete + Insert) ===
             pg_query_params($conn, "DELETE FROM anggota_pendidikan WHERE id_anggota = $1", [$id_anggota]);
             if (isset($_POST['pendidikan'])) {
                 foreach ($_POST['pendidikan'] as $idx => $pend) {
                     if (!empty($pend['jenjang']) && !empty($pend['institusi'])) {
                         $sql_pend = "INSERT INTO anggota_pendidikan 
-                                        (id_anggota, jenjang, institusi, jurusan, tahun_mulai, tahun_selesai, urutan) 
-                                     VALUES ($1, $2, $3, $4, $5, $6, $7)";
+                                         (id_anggota, jenjang, institusi, jurusan, tahun_mulai, tahun_selesai, urutan) 
+                                       VALUES ($1, $2, $3, $4, $5, $6, $7)";
                         pg_query_params($conn, $sql_pend, [
                             $id_anggota,
                             $pend['jenjang'],
@@ -283,14 +317,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // === Sertifikasi ===
+            // === Sertifikasi (Delete + Insert) ===
             pg_query_params($conn, "DELETE FROM anggota_sertifikasi WHERE id_anggota = $1", [$id_anggota]);
             if (isset($_POST['sertifikasi'])) {
                 foreach ($_POST['sertifikasi'] as $idx => $sert) {
                     if (!empty($sert['nama_sertifikasi'])) {
                         $sql_sert = "INSERT INTO anggota_sertifikasi 
-                                        (id_anggota, nama_sertifikasi, penerbit, tahun, urutan) 
-                                     VALUES ($1, $2, $3, $4, $5)";
+                                         (id_anggota, nama_sertifikasi, penerbit, tahun, urutan) 
+                                       VALUES ($1, $2, $3, $4, $5)";
                         pg_query_params($conn, $sql_sert, [
                             $id_anggota,
                             $sert['nama_sertifikasi'],
@@ -302,14 +336,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // === Mata Kuliah ===
+            // === Mata Kuliah (Delete + Insert) ===
             pg_query_params($conn, "DELETE FROM anggota_matakuliah WHERE id_anggota = $1", [$id_anggota]);
 
             if (isset($_POST['matakuliah_ganjil'])) {
                 foreach ($_POST['matakuliah_ganjil'] as $idx => $mk) {
                     if (!empty($mk)) {
                         $sql_mk = "INSERT INTO anggota_matakuliah 
-                                    (id_anggota, nama_matakuliah, semester, urutan) 
+                                     (id_anggota, nama_matakuliah, semester, urutan) 
                                    VALUES ($1, $2, 'ganjil', $3)";
                         pg_query_params($conn, $sql_mk, [$id_anggota, $mk, $idx]);
                     }
@@ -320,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($_POST['matakuliah_genap'] as $idx => $mk) {
                     if (!empty($mk)) {
                         $sql_mk = "INSERT INTO anggota_matakuliah 
-                                    (id_anggota, nama_matakuliah, semester, urutan) 
+                                     (id_anggota, nama_matakuliah, semester, urutan) 
                                    VALUES ($1, $2, 'genap', $3)";
                         pg_query_params($conn, $sql_mk, [$id_anggota, $mk, $idx]);
                     }
@@ -385,7 +419,6 @@ include __DIR__ . '/../includes/header.php';
 <form method="POST" enctype="multipart/form-data" id="formAnggota">
     <div class="row">
         <div class="col-lg-8">
-            <!-- Data Utama -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-person me-2"></i>Data Utama</h5>
@@ -408,12 +441,12 @@ include __DIR__ . '/../includes/header.php';
                         <div class="col-md-6 mb-3">
                             <label for="nip" class="form-label">NIP</label>
                             <input type="text" class="form-control" id="nip" name="nip"
-                                   value="<?php echo htmlspecialchars($anggota['nip'] ?? ''); ?>" maxlength="50">
+                                       value="<?php echo htmlspecialchars($anggota['nip'] ?? ''); ?>" maxlength="50">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="nidn" class="form-label">NIDN</label>
                             <input type="text" class="form-control" id="nidn" name="nidn"
-                                   value="<?php echo htmlspecialchars($anggota['nidn'] ?? ''); ?>" maxlength="20">
+                                       value="<?php echo htmlspecialchars($anggota['nidn'] ?? ''); ?>" maxlength="20">
                         </div>
                     </div>
 
@@ -440,13 +473,12 @@ include __DIR__ . '/../includes/header.php';
                     <div class="mb-3">
                         <label for="alamat_kantor" class="form-label">Alamat Kantor</label>
                         <textarea class="form-control" id="alamat_kantor" name="alamat_kantor"
-                                  rows="2"><?php echo htmlspecialchars($anggota['alamat_kantor'] ?? ''); ?></textarea>
+                                     rows="2"><?php echo htmlspecialchars($anggota['alamat_kantor'] ?? ''); ?></textarea>
                     </div>
 
                 </div>
             </div>
 
-            <!-- Keahlian -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-star me-2"></i>Keahlian</h5>
@@ -460,7 +492,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Social Media & Links -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Social Media & Links</h5>
@@ -496,7 +527,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Pendidikan -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-mortarboard me-2"></i>Pendidikan</h5>
@@ -590,7 +620,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Sertifikasi -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-award me-2"></i>Sertifikasi</h5>
@@ -662,7 +691,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Mata Kuliah -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-book me-2"></i>Mata Kuliah</h5>
@@ -737,7 +765,6 @@ include __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="col-lg-4">
-            <!-- Foto Profil -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-image me-2"></i>Foto Profil</h5>
@@ -746,8 +773,8 @@ include __DIR__ . '/../includes/header.php';
                     <?php if ($anggota['foto']): ?>
                         <div class="mb-3 anggota-current-photo-container" id="currentPhotoContainer">
                             <img src="<?php echo SITE_URL . '/uploads/' . $anggota['foto']; ?>"
-                                 class="img-fluid rounded anggota-current-photo"
-                                 id="currentPhoto">
+                                     class="img-fluid rounded anggota-current-photo"
+                                     id="currentPhoto">
                         </div>
                     <?php endif; ?>
 
@@ -759,7 +786,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Upload CV -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-file-earmark-pdf me-2"></i>CV / Resume</h5>
@@ -776,7 +802,7 @@ include __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                     <input type="file" class="form-control" id="cv_file" name="cv_file"
                            accept=".pdf,.doc,.docx">
-                    <div class="form-text">Format: PDF, DOC, DOCX. Max 5MB</div>
+                    <div class="form-text">Format: PDF, DOC, DOCX. Upload untuk mengganti CV. Max 5MB</div>
                 </div>
             </div>
 
@@ -788,13 +814,15 @@ include __DIR__ . '/../includes/header.php';
                 border: 1px solid #e9ecef;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                 background-color: #ffffff;">
-                          
-            <div class="card-body py-2 px-4">                   
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                        
-                    <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                           
-                        <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                             
+                             
+            <div class="card-body py-2 px-4">                
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                    
+                    <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                         
+                        <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                            
                         <div class="form-check form-switch mt-1">
-                            <input class="form-check-input" type="checkbox" id="aktif" name="aktif" checked style="transform: scale(1.15);">
+                            <input class="form-check-input" type="checkbox" id="aktif" name="aktif" 
+                                <?php echo ($anggota['aktif'] == 't' || $anggota['aktif'] === null) ? 'checked' : ''; ?> 
+                                style="transform: scale(1.15);">
                             <label class="form-check-label ms-2 small" for="aktif"> Aktif (tampil di website)
                              </label>
                         </div>
@@ -810,6 +838,7 @@ include __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -837,10 +866,10 @@ document.getElementById('foto').addEventListener('change', function(e) {
 });
 
 // Dynamic forms
-let pendidikanCount      = <?php echo count($pendidikan_list); ?>;
-let sertifikasiCount     = <?php echo count($sertifikasi_list); ?>;
+let pendidikanCount = <?php echo count($pendidikan_list); ?>;
+let sertifikasiCount = <?php echo count($sertifikasi_list); ?>;
 let matakuliahGanjilCount = <?php echo count($matakuliah_ganjil); ?>;
-let matakuliahGenapCount  = <?php echo count($matakuliah_genap); ?>;
+let matakuliahGenapCount = <?php echo count($matakuliah_genap); ?>;
 
 function addPendidikan() {
     const container = document.getElementById('pendidikanContainer');

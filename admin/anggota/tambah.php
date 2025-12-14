@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
@@ -107,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $id_foto = null;
             
-            // Handle foto upload
+            // Handle foto upload (sudah benar, memasukkan ke tabel media)
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
                 $foto = $_FILES['foto'];
                 
@@ -125,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     finfo_close($finfo);
                     
                     $media_sql = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
-                                  VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id_media";
+                                     VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id_media";
                     $media_result = pg_query_params($conn, $media_sql, [
                         'anggota/' . $filename,
                         $foto['size'],
@@ -140,23 +141,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            // Handle CV upload
-            $cv_file = null;
+            $cv_file = null; 
+            
             if (isset($_FILES['cv_file']) && $_FILES['cv_file']['error'] === UPLOAD_ERR_OK) {
                 $cv = $_FILES['cv_file'];
                 $ext = strtolower(pathinfo($cv['name'], PATHINFO_EXTENSION));
                 $filename = 'cv-' . time() . '-' . uniqid() . '.' . $ext;
                 $upload_path = __DIR__ . '/../../uploads/cv/';
+                $relative_path = 'cv/' . $filename; 
                 
                 if (!file_exists($upload_path)) {
                     mkdir($upload_path, 0755, true);
                 }
                 
                 if (move_uploaded_file($cv['tmp_name'], $upload_path . $filename)) {
-                    $cv_file = 'cv/' . $filename;
+                    // Dapatkan MIME type
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mime_type = finfo_file($finfo, $upload_path . $filename);
+                    finfo_close($finfo);
+
+                    $media_sql = "INSERT INTO media (lokasi_file, ukuran_file, tipe_file, keterangan_alt, dibuat_oleh, dibuat_pada) 
+                                  VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id_media";
+                    $media_result = pg_query_params($conn, $media_sql, [
+                        $relative_path, 
+                        $cv['size'],
+                        $mime_type,
+                        'CV Anggota: ' . $nama,
+                        $_SESSION['user_id'] ?? null
+                    ]);
+                    
+                    if ($media_result) {
+                        $cv_file = $relative_path; 
+                    } else {
+                         unlink($upload_path . $filename); 
+                         throw new Exception("Gagal menyimpan metadata CV ke database media.");
+                    }
                 }
             }
-            
             // Get next urutan
             $urutan_result = pg_query($conn, "SELECT COALESCE(MAX(urutan), 0) + 1 as next_urutan FROM anggota_lab");
             $urutan = $urutan_result ? pg_fetch_assoc($urutan_result)['next_urutan'] : 1;
@@ -189,10 +210,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $peran_lab ?: null,
                 $keahlian ?: null,
                 $id_foto,
-                $cv_file,
+                $cv_file, 
                 $aktif ? 't' : 'f',
                 $urutan,
-                $status   
+                $status  
             ]);
             
             if (!$result) {
@@ -322,7 +343,6 @@ include __DIR__ . '/../includes/header.php';
 <form method="POST" enctype="multipart/form-data" id="formAnggota">
     <div class="row">
         <div class="col-lg-8">
-            <!-- Data Utama -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-person me-2"></i>Data Utama</h5>
@@ -344,12 +364,12 @@ include __DIR__ . '/../includes/header.php';
                         <div class="col-md-6 mb-3">
                             <label for="nip" class="form-label">NIP</label>
                             <input type="text" class="form-control" id="nip" name="nip"
-                                   value="<?php echo htmlspecialchars($form_data['nip'] ?? ''); ?>" maxlength="50">
+                                       value="<?php echo htmlspecialchars($form_data['nip'] ?? ''); ?>" maxlength="50">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="nidn" class="form-label">NIDN</label>
                             <input type="text" class="form-control" id="nidn" name="nidn"
-                                   value="<?php echo htmlspecialchars($form_data['nidn'] ?? ''); ?>" maxlength="20">
+                                       value="<?php echo htmlspecialchars($form_data['nidn'] ?? ''); ?>" maxlength="20">
                         </div>
                     </div>
                     
@@ -380,7 +400,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- Keahlian -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-star me-2"></i>Keahlian</h5>
@@ -395,7 +414,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- Social Media -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Social Media & Links</h5>
@@ -428,7 +446,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- Pendidikan -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-mortarboard me-2"></i>Pendidikan</h5>
@@ -466,7 +483,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- Sertifikasi -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-award me-2"></i>Sertifikasi</h5>
@@ -501,7 +517,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- Mata Kuliah -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-book me-2"></i>Mata Kuliah</h5>
@@ -542,7 +557,6 @@ include __DIR__ . '/../includes/header.php';
         </div>
         
         <div class="col-lg-4">
-            <!-- Foto -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-image me-2"></i>Foto Profil</h5>
@@ -556,7 +570,6 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- CV -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-file-earmark-pdf me-2"></i>CV / Resume</h5>
@@ -575,11 +588,11 @@ include __DIR__ . '/../includes/header.php';
                 border: 1px solid #e9ecef;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                 background-color: #ffffff;">
-                          
-                <div class="card-body py-2 px-4">                   
-                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                        
-                        <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                           
-                            <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                             
+                             
+                <div class="card-body py-2 px-4">                
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                    
+                        <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                         
+                            <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                            
                             <div class="form-check form-switch mt-1">
                                 <input class="form-check-input" type="checkbox" id="aktif" name="aktif" checked style="transform: scale(1.15);">
                                 <label class="form-check-label ms-2 small" for="aktif"> Aktif (tampil di website)
