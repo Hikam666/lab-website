@@ -10,6 +10,9 @@ $conn = getDBConnection();
 $active_page = 'galeri';
 $page_title  = 'Foto & Video Album Galeri';
 
+// Cek role
+$is_admin = function_exists('isAdmin') ? isAdmin() : false;
+
 if (!isset($_GET['id'])) {
     setFlashMessage('Album tidak ditemukan.', 'danger');
     header('Location: index.php');
@@ -31,24 +34,26 @@ $album       = pg_fetch_assoc($res_album);
 $currentUser = getCurrentUser();
 $id_pengguna = $currentUser['id'] ?? ($_SESSION['user_id'] ?? null);
 
+// === HANDLE HAPUS ITEM ===
 if (isset($_GET['hapus_item'])) {
     $id_item = (int)$_GET['hapus_item'];
 
-    if (isOperator()) {
+    // ==== OPERATOR: ajukan penghapusan ====
+    if (!$is_admin) {
         $sql = "UPDATE galeri_item
                 SET status = 'diajukan', aksi_request = 'hapus'
                 WHERE id_item = $1 AND id_album = $2";
         pg_query_params($conn, $sql, [$id_item, $id_album]);
 
         $ket = "Operator mengajukan penghapusan item (id_item=$id_item) di album #$id_album ({$album['judul']})";
-        log_aktivitas($conn, 'REQUEST_DELETE', 'galeri_item', $id_item, $ket);
+        log_aktivitas($conn, 'request_delete', 'galeri_item', $id_item, $ket);
 
-        setFlashMessage('Permintaan penghapusan item diajukan ke admin.', 'warning');
+        setFlashMessage('Permintaan penghapusan item diajukan ke admin.', 'info');
         header('Location: foto.php?id=' . $id_album);
         exit;
     }
 
-    // ADMIN → hapus betulan
+    // ==== ADMIN: hapus beneran ====
     $q_cek = pg_query_params(
         $conn,
         "SELECT gi.id_item, gi.id_media, m.lokasi_file
@@ -68,7 +73,7 @@ if (isset($_GET['hapus_item'])) {
         pg_query_params($conn, "DELETE FROM media       WHERE id_media = $1", [$row['id_media']]);
 
         $ket = "Admin menghapus item (id_item=$id_item) dari album #$id_album ({$album['judul']})";
-        log_aktivitas($conn, 'DELETE', 'galeri_item', $id_item, $ket);
+        log_aktivitas($conn, 'delete', 'galeri_item', $id_item, $ket);
 
         setFlashMessage('Item berhasil dihapus.', 'success');
     } else {
@@ -103,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $caption = trim($_POST['caption'] ?? '');
 
-        $status_item  = isAdmin() ? 'disetujui' : 'diajukan';
-        $aksi_request = isAdmin() ? null : 'tambah';
+        $status_item  = $is_admin ? 'disetujui' : 'diajukan';
+        $aksi_request = $is_admin ? null : 'tambah';
 
         $upload_dir_fs = __DIR__ . '/../../uploads';
         
@@ -160,14 +165,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $item_type = ($file_input_name === 'video') ? 'video' : 'foto';
             
-            if (isAdmin()) {
+            if ($is_admin) {
                 $ket = "Admin menambahkan {$item_type} ke album #$id_album ({$album['judul']})";
-                log_aktivitas($conn, 'CREATE', 'galeri_item', $id_media, $ket);
+                log_aktivitas($conn, 'create', 'galeri_item', $id_media, $ket);
                 setFlashMessage(ucfirst($item_type) . ' berhasil ditambahkan.', 'success');
             } else {
                 $ket = "Operator mengajukan penambahan {$item_type} ke album #$id_album ({$album['judul']})";
-                log_aktivitas($conn, 'REQUEST_CREATE', 'galeri_item', $id_media, $ket);
-                setFlashMessage(ucfirst($item_type) . ' diajukan dan menunggu persetujuan admin.', 'warning');
+                log_aktivitas($conn, 'request_create', 'galeri_item', $id_media, $ket);
+                setFlashMessage(ucfirst($item_type) . ' diajukan dan menunggu persetujuan admin.', 'info');
             }
 
             header('Location: foto.php?id=' . $id_album);
@@ -189,11 +194,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $status_item  = isAdmin() ? 'disetujui' : 'diajukan';
-        $aksi_request = isAdmin() ? null : 'edit';
+        $status_item  = $is_admin ? 'disetujui' : 'diajukan';
+        $aksi_request = $is_admin ? null : 'edit';
 
-        if (isAdmin()) {
-
+        if ($is_admin) {
             $sql = "UPDATE galeri_item
                     SET caption = $1,
                         status = $2,
@@ -202,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             pg_query_params($conn, $sql, [$caption, $status_item, $id_item, $id_album]);
 
             $ket = "Admin mengedit item (id_item=$id_item) di album #$id_album ({$album['judul']})";
-            log_aktivitas($conn, 'UPDATE', 'galeri_item', $id_item, $ket);
+            log_aktivitas($conn, 'update', 'galeri_item', $id_item, $ket);
             setFlashMessage('Item berhasil diperbarui.', 'success');
         } else {
             $sql = "UPDATE galeri_item
@@ -213,8 +217,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             pg_query_params($conn, $sql, [$caption, $status_item, $aksi_request, $id_item, $id_album]);
 
             $ket = "Operator mengajukan pengeditan item (id_item=$id_item) di album #$id_album ({$album['judul']})";
-            log_aktivitas($conn, 'REQUEST_UPDATE', 'galeri_item', $id_item, $ket);
-            setFlashMessage('Perubahan item diajukan dan menunggu persetujuan admin.', 'warning');
+            log_aktivitas($conn, 'request_update', 'galeri_item', $id_item, $ket);
+            setFlashMessage('Perubahan item diajukan dan menunggu persetujuan admin.', 'info');
         }
 
         header('Location: foto.php?id=' . $id_album);
@@ -343,7 +347,7 @@ include __DIR__ . '/../includes/header.php';
                                 <th>Caption</th>
                                 <th width="140">Status</th>
                                 <th width="160">Dibuat</th>
-                                <th width="220" class="text-end">Aksi</th>
+                                <th width="120" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -379,12 +383,13 @@ include __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <form method="post" class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                                    <form method="post" id="form-<?php echo (int)$f['id_item']; ?>">
                                         <input type="hidden" name="aksi" value="edit_item">
                                         <input type="hidden" name="id_item" value="<?php echo (int)$f['id_item']; ?>">
                                         <input type="text" name="caption" class="form-control form-control-sm"
                                                value="<?php echo htmlspecialchars($f['caption']); ?>"
                                                placeholder="Caption">
+                                    </form>
                                 </td>
                                 <td>
                                     <?php echo getStatusBadge($f['status']); ?>
@@ -401,16 +406,20 @@ include __DIR__ . '/../includes/header.php';
                                         <?php echo formatTanggalWaktu($f['dibuat_pada']); ?>
                                     </small>
                                 </td>
-                                <td class="text-end">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary me-1">
-                                            <i class="bi bi-save"></i> Simpan
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="submit" form="form-<?php echo (int)$f['id_item']; ?>" 
+                                                class="btn btn-outline-primary"
+                                                title="Simpan">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                    </form>
-                                    <a href="foto.php?id=<?php echo $id_album; ?>&hapus_item=<?php echo (int)$f['id_item']; ?>"
-                                       class="btn btn-sm btn-danger"
-                                       onclick="return confirm('Yakin ingin menghapus item ini?');">
-                                        <i class="bi bi-trash"></i> Hapus
-                                    </a>
+                                        <a href="foto.php?id=<?php echo $id_album; ?>&hapus_item=<?php echo (int)$f['id_item']; ?>"
+                                           class="btn btn-outline-danger"
+                                           onclick="return confirm('Yakin ingin menghapus item ini?');"
+                                           title="Hapus">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
