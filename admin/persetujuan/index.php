@@ -19,7 +19,7 @@ $active_page = 'persetujuan';
 $page_title  = 'Persetujuan Konten';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis'], $_POST['id'])) {
-    $aksi       = $_POST['aksi'];       
+    $aksi       = $_POST['aksi'];      
     $jenis      = $_POST['jenis'];      
     $id         = (int)$_POST['id'];
     $catatan    = trim($_POST['catatan'] ?? '');
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     pg_query_params($conn, "DELETE FROM media      WHERE id_media = $1", [$id_media]);
 
                     $ket = 'Menyetujui penghapusan foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                           '" (ID_ALBUM=' . $id_album . ').';
+                            '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -109,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     pg_query_params($conn, $sql_update, [$id]);
 
                     $ket = 'Menyetujui ' . ($aksi_request ?: 'perubahan') .
-                           ' foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                           '" (ID_ALBUM=' . $id_album . ').';
+                            ' foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
+                            '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     pg_query_params($conn, $sql_update, [$id]);
 
                     $ket = 'Menolak penambahan foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                           '" (ID_ALBUM=' . $id_album . ').';
+                            '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     pg_query_params($conn, $sql_update, [$id]);
 
                     $ket = 'Menolak permintaan ' . $aksi_request . ' foto (ID_ITEM=' . $id .
-                           ') pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
+                            ') pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     pg_query_params($conn, $sql_update, [$id]);
 
                     $ket = 'Menolak perubahan foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                           '" (ID_ALBUM=' . $id_album . ').';
+                            '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -471,6 +471,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
+        // UNTUK KONTEN NON-KHUSUS (misal: Galeri)
         $sql_get = "SELECT {$title_col}, status FROM {$table} WHERE {$pk} = $1";
         $res_get = pg_query_params($conn, $sql_get, [$id]);
 
@@ -613,30 +614,33 @@ include __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
-                                    <small class="text-muted">(ID: <?php echo (int)$row['id_album']; ?>)</small>
                                 </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td class="text-end">
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="galeri">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
-                                        <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success me-1">
-                                            <i class="bi bi-check-circle"></i> Setujui
-                                        </button>
-                                    </form>
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="galeri">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
-                                        <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
-                                            <i class="bi bi-x-circle"></i> Tolak
-                                        </button>
-                                    </form>
-                                    <a href="../galeri/edit.php?id=<?php echo (int)$row['id_album']; ?>"
-                                        class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil-square"></i> Lihat
-                                    </a>
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Album Galeri">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="galeri">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui Album Ini">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="../galeri/edit.php?id=<?php echo (int)$row['id_album']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat/Edit Album">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="galeri">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Album Ini">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -673,7 +677,6 @@ include __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
-                                    <small class="text-muted">(ID: <?php echo (int)$row['id_berita']; ?>)</small>
                                 </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td>
@@ -684,27 +687,30 @@ include __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="berita">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_berita']; ?>">
-                                        <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success me-1">
-                                            <i class="bi bi-check-circle"></i>
-                                            <?php echo $is_delete_req ? 'Setujui Hapus' : 'Setujui'; ?>
-                                        </button>
-                                    </form>
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="berita">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_berita']; ?>">
-                                        <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
-                                            <i class="bi bi-x-circle"></i> Tolak
-                                        </button>
-                                    </form>
-                                    <a href="../berita/edit.php?id=<?php echo (int)$row['id_berita']; ?>"
-                                        class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil-square"></i> Lihat
-                                    </a>
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Berita">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="berita">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_berita']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui <?php echo $is_delete_req ? 'Penghapusan' : 'Berita Ini'; ?>">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <a href="../berita/edit.php?id=<?php echo (int)$row['id_berita']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat/Edit Berita">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="berita">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_berita']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Berita Ini">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -741,7 +747,6 @@ include __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
-                                    <small class="text-muted">(ID: <?php echo (int)$row['id_publikasi']; ?>)</small>
                                 </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td>
@@ -752,27 +757,30 @@ include __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="publikasi">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_publikasi']; ?>">
-                                        <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success me-1">
-                                            <i class="bi bi-check-circle"></i>
-                                            <?php echo $is_delete_req ? 'Setujui Hapus' : 'Setujui'; ?>
-                                        </button>
-                                    </form>
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="publikasi">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_publikasi']; ?>">
-                                        <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
-                                            <i class="bi bi-x-circle"></i> Tolak
-                                        </button>
-                                    </form>
-                                    <a href="../publikasi/edit.php?id=<?php echo (int)$row['id_publikasi']; ?>"
-                                        class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil-square"></i> Lihat
-                                    </a>
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Publikasi">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="publikasi">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_publikasi']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui <?php echo $is_delete_req ? 'Penghapusan' : 'Publikasi Ini'; ?>">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="../publikasi/edit.php?id=<?php echo (int)$row['id_publikasi']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat/Edit Publikasi">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="publikasi">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_publikasi']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Publikasi Ini">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -809,7 +817,6 @@ include __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($row['nama']); ?></div>
-                                    <small class="text-muted">(ID: <?php echo (int)$row['id_fasilitas']; ?>)</small>
                                 </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
                                 <td>
@@ -820,27 +827,30 @@ include __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="fasilitas">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_fasilitas']; ?>">
-                                        <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success me-1">
-                                            <i class="bi bi-check-circle"></i>
-                                            <?php echo $is_delete_req ? 'Setujui Hapus' : 'Setujui'; ?>
-                                        </button>
-                                    </form>
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="fasilitas">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_fasilitas']; ?>">
-                                        <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
-                                            <i class="bi bi-x-circle"></i> Tolak
-                                        </button>
-                                    </form>
-                                    <a href="../fasilitas/edit.php?id=<?php echo (int)$row['id_fasilitas']; ?>"
-                                        class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil-square"></i> Lihat
-                                    </a>
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Fasilitas">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="fasilitas">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_fasilitas']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui <?php echo $is_delete_req ? 'Penghapusan' : 'Fasilitas Ini'; ?>">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="../fasilitas/edit.php?id=<?php echo (int)$row['id_fasilitas']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat/Edit Fasilitas">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="fasilitas">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_fasilitas']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Fasilitas Ini">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -881,7 +891,6 @@ include __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($row['nama']); ?></div>
-                                    <small class="text-muted">(ID: <?php echo (int)$row['id_anggota']; ?>)</small>
                                 </td>
                                 <td>
                                     <?php if ($row['email']): ?>
@@ -915,26 +924,30 @@ include __DIR__ . '/../includes/header.php';
                                     </small>
                                 </td>
                                 <td class="text-end">
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="anggota">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_anggota']; ?>">
-                                        <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success me-1">
-                                            <i class="bi bi-check-circle"></i> Setujui
-                                        </button>
-                                    </form>
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="anggota">
-                                        <input type="hidden" name="id" value="<?php echo (int)$row['id_anggota']; ?>">
-                                        <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
-                                            <i class="bi bi-x-circle"></i> Tolak
-                                        </button>
-                                    </form>
-                                    <a href="../anggota/edit.php?id=<?php echo (int)$row['id_anggota']; ?>"
-                                        class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil-square"></i> Lihat
-                                    </a>
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Anggota Lab">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="anggota">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_anggota']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui <?php echo $is_delete_req ? 'Penghapusan' : 'Anggota Ini'; ?>">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="../anggota/edit.php?id=<?php echo (int)$row['id_anggota']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat/Edit Anggota">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="anggota">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_anggota']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak <?php echo $is_delete_req ? 'Pembatalan Penghapusan' : 'Anggota Ini'; ?>">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -971,35 +984,42 @@ include __DIR__ . '/../includes/header.php';
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($f['judul_album']); ?></div>
                                     <small class="text-muted">"<?php echo htmlspecialchars($f['caption']); ?>"</small><br>
-                                    <small class="text-muted">(ID Item: <?php echo (int)$f['id_item']; ?>)</small>
-                                </td>
+                                    </td>
                                 <td>
-                                    <span class="badge bg-warning text-dark">
-                                        <?php echo htmlspecialchars($f['aksi_request'] ?: '-'); ?>
+                                    <?php 
+                                        $request_type = htmlspecialchars($f['aksi_request'] ?: 'tambah/edit');
+                                        $badge_color = ($f['aksi_request'] === 'hapus') ? 'bg-danger' : 'bg-warning text-dark';
+                                    ?>
+                                    <span class="badge <?php echo $badge_color; ?>">
+                                        <?php echo $request_type; ?>
                                     </span>
                                 </td>
                                 <td><?php echo formatTanggalWaktu($f['dibuat_pada']); ?></td>
                                 <td class="text-end">
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="foto">
-                                        <input type="hidden" name="id" value="<?php echo (int)$f['id_item']; ?>">
-                                        <input type="hidden" name="aksi" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success me-1">
-                                            <i class="bi bi-check-circle"></i> Setujui
-                                        </button>
-                                    </form>
-                                    <form method="post" class="d-inline">
-                                        <input type="hidden" name="jenis" value="foto">
-                                        <input type="hidden" name="id" value="<?php echo (int)$f['id_item']; ?>">
-                                        <input type="hidden" name="aksi" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger me-1">
-                                            <i class="bi bi-x-circle"></i> Tolak
-                                        </button>
-                                    </form>
-                                    <a href="../galeri/foto.php?id=<?php echo (int)$f['id_album']; ?>"
-                                        class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-images"></i> Lihat Album
-                                    </a>
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Foto Galeri">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="foto">
+                                            <input type="hidden" name="id" value="<?php echo (int)$f['id_item']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui Foto Ini">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="../galeri/foto.php?id=<?php echo (int)$f['id_album']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat Album">
+                                            <i class="bi bi-images"></i>
+                                        </a>
+                                        
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="foto">
+                                            <input type="hidden" name="id" value="<?php echo (int)$f['id_item']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Foto Ini">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
