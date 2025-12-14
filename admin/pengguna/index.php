@@ -6,6 +6,9 @@ require_once "../../includes/config.php";
 requireLogin();
 $conn = getDBConnection();
 
+$page_title  = "Pengguna";
+$active_page = "pengguna";
+
 // Search
 $search = $_GET['s'] ?? '';
 

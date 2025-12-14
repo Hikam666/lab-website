@@ -3,16 +3,13 @@ $extra_css = ['pesan.css'];
 require_once "../includes/functions.php";
 require_once "../includes/auth.php";
 
-// PERBAIKAN: Atur Zona Waktu Default PHP ke Indonesia (WIB)
-// Ini memastikan bahwa fungsi date() di bawah akan menampilkan waktu yang benar
 date_default_timezone_set('Asia/Jakarta'); 
-
+$active_page  = "pesan";
+$page_title   = "pesan & Permintaan";
 include "../includes/header.php";
 include "../includes/sidebar.php";
 
 $conn = getDBConnection();
-$active_page = 'pesan';
-$page_title  = 'Pesan & Permintaan';
 
 // Ambil semua pesan (pastikan kolom diterima_pada adalah timestamptz)
 $list = pg_query($conn, "SELECT * FROM pesan_kontak ORDER BY diterima_pada DESC");
