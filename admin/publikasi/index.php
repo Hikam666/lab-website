@@ -85,7 +85,7 @@ include __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1><i class="bi bi-journal-text me-2"></i>Publikasi & Jurnal</h1>
+            <h1><i class="bi bi-journal-text me-2"></i>Publikasi</h1>
             <p class="text-muted mb-0">Kelola publikasi penelitian lab</p>
         </div>
         <div>
@@ -116,8 +116,6 @@ include __DIR__ . '/../includes/header.php';
                     <option value="">Semua Jenis</option>
                     <option value="Jurnal"      <?php echo $filter_jenis === 'Jurnal' ? 'selected' : ''; ?>>Jurnal</option>
                     <option value="Prosiding"   <?php echo $filter_jenis === 'Prosiding' ? 'selected' : ''; ?>>Prosiding</option>
-                    <option value="Buku"        <?php echo $filter_jenis === 'Buku' ? 'selected' : ''; ?>>Buku</option>
-                    <option value="Lainnya"     <?php echo $filter_jenis === 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
                 </select>
             </div>
 
