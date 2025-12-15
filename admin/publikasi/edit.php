@@ -78,9 +78,9 @@ $form = [
 
 $errors     = [];
 $id_cover   = $data['id_cover']; 
-$old_cover_file = $data['cover_file']; // File lama
+$old_cover_file = $data['cover_file'];
 $old_status = $data['status']; 
-$old_id_media = $data['id_cover']; // ID media lama
+$old_id_media = $data['id_cover']; 
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -106,9 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Tahun harus berupa angka.";
     }
 
-    // =========================
-    // Upload cover (opsional)
-    // =========================
     $new_id_media = null; 
     $media_deleted = false;
 
@@ -137,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!move_uploaded_file($file['tmp_name'], $path)) {
                     $errors[] = "Gagal upload cover.";
                 } else {
-                    // 1. Simpan metadata baru
                     $lokasi_file = 'publikasi/' . $new_name;
                     $tipe_file   = $file['type'];
                     $alt         = 'Cover publikasi';
@@ -155,19 +151,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($dataMedia) {
                         $new_id_media = $dataMedia['id_media'];
-                        
-                        // 2. Hapus file lama (jika ada)
+
                         if ($old_cover_file && $old_id_media) {
                             $old_path = __DIR__ . '/../../uploads/' . $old_cover_file;
                             @unlink($old_path);
-                            // Hapus entri media lama
                             pg_query_params($conn, "DELETE FROM media WHERE id_media = $1", [$old_id_media]);
                             $media_deleted = true;
                         }
                         $id_cover = $new_id_media;
 
                     } else {
-                        @unlink($path); // Hapus file yang baru diupload jika gagal simpan DB
+                        @unlink($path);
                         $errors[] = "Gagal menyimpan data cover: " . pg_last_error($conn);
                     }
                 }
@@ -188,19 +182,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
         $penulis   = $form['penulis'] === '' ? null : $form['penulis']; 
         
-        // Tentukan status baru. Jika operator mengedit yang sudah disetujui, kembalikan ke diajukan
         if (function_exists('isAdmin') && isAdmin()) {
-            $status_baru = $old_status; // Admin bisa mempertahankan status
+            $status_baru = $old_status; 
         } elseif ($old_status === 'ditolak') {
-            $status_baru = 'diajukan'; // Jika ditolak, pengajuan baru
+            $status_baru = 'diajukan'; 
         } else {
-            $status_baru = 'diajukan'; // Operator edit -> selalu diajukan ulang
+            $status_baru = 'diajukan'; 
         }
 
         $anggota_id = getLoggedUserIdFallback();
         
         if ($anggota_id) {
-            // Pastikan anggota yang mengedit tercatat sebagai penulis
             $checkPenulis = pg_query_params($conn, "SELECT 1 FROM publikasi_penulis WHERE id_publikasi = $1 AND id_anggota = $2", [$id, $anggota_id]);
             if (!$checkPenulis || pg_num_rows($checkPenulis) === 0) {
                 $sqlInsertPenulis = "
@@ -225,11 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 id_cover            = $9,
                 status              = $10,
                 penulis             = $11, 
-                diperbarui_pada     = NOW(),
-                -- Kosongkan status persetujuan jika ada perubahan yang diajukan
-                disetujui_oleh      = CASE WHEN $10 = 'diajukan' THEN NULL ELSE disetujui_oleh END, 
-                disetujui_pada      = CASE WHEN $10 = 'diajukan' THEN NULL ELSE disetujui_pada END,
-                catatan_review      = CASE WHEN $10 = 'diajukan' THEN NULL ELSE catatan_review END
+                diperbarui_pada     = NOW()
             WHERE id_publikasi      = $12
         ";
 
@@ -260,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($status_baru === 'disetujui') {
                 setFlashMessage("Publikasi berhasil diperbarui dan disetujui.", "success");
             } else {
-                setFlashMessage("Perubahan publikasi berhasil diajukan dan menunggu persetujuan admin.", "warning"); // Warning lebih tepat untuk status pending
+                setFlashMessage("Perubahan publikasi berhasil diajukan dan menunggu persetujuan admin.", "warning");
             }
 
             redirectAdmin("publikasi/index.php");
@@ -272,11 +260,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 }
 
-// Muat ulang data jika ada error tapi formulir telah dikirim
 if (!empty($errors) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Jika ada error, $form sudah berisi nilai POST yang gagal disimpan,
-    // dan $data masih berisi data asli dari DB (hanya cover_file yang relevan)
-    // $data['cover_file'] tidak berubah jika upload gagal, jadi tidak perlu refresh.
+
 }
 
 include __DIR__ . '/../includes/header.php';
@@ -288,12 +273,12 @@ include __DIR__ . '/../includes/header.php';
 
         <?php if ($data['status'] === 'ditolak'): ?>
             <div class="alert alert-danger mb-4">
-                **Publikasi Ditolak:** <?php echo htmlspecialchars($data['catatan_review'] ?? 'Tidak ada catatan penolakan.'); ?>
+                *Publikasi Ditolak*
                 <br>Silakan perbaiki data di bawah ini dan simpan untuk mengajukan ulang.
             </div>
         <?php elseif ($data['status'] === 'diajukan'): ?>
             <div class="alert alert-info mb-4">
-                **Publikasi Menunggu Persetujuan**
+                *Publikasi Menunggu Persetujuan*
             </div>
         <?php endif; ?>
 

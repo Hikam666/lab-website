@@ -10,12 +10,6 @@ $conn = getDBConnection();
 $active_page = 'galeri';
 $page_title  = 'Hapus Album Galeri';
 
-if (!isAdmin()) {
-    setFlashMessage('Hanya admin yang dapat menghapus album.', 'danger');
-    header('Location: index.php');
-    exit;
-}
-
 if (!isset($_GET['id'])) {
     setFlashMessage('Album tidak ditemukan.', 'danger');
     header('Location: index.php');
@@ -45,22 +39,38 @@ $album = pg_fetch_assoc($res_album);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
     pg_query($conn, "BEGIN");
     try {
-        // Hapus album (galeri_item akan terhapus via ON DELETE CASCADE)
-        $del = pg_query_params($conn, "DELETE FROM galeri_album WHERE id_album = $1", [$id_album]);
-        if (!$del) {
-            throw new Exception(pg_last_error($conn));
+        if (isAdmin()) {
+            $del = pg_query_params($conn, "DELETE FROM galeri_album WHERE id_album = $1", [$id_album]);
+            if (!$del) {
+                throw new Exception(pg_last_error($conn));
+            }
+
+            $ket = 'Admin menghapus album galeri: "' . $album['judul'] . '" (ID=' . $id_album . ')';
+            log_aktivitas($conn, 'DELETE', 'galeri_album', $id_album, $ket);
+
+            pg_query($conn, "COMMIT");
+            setFlashMessage('Album dan seluruh fotonya berhasil dihapus.', 'success');
+        } else {
+
+            $sql_req = "UPDATE galeri_album SET aksi_request = 'hapus' WHERE id_album = $1";
+            $req = pg_query_params($conn, $sql_req, [$id_album]);
+
+            if (!$req) {
+                throw new Exception(pg_last_error($conn));
+            }
+
+            $ket = 'Operator mengajukan penghapusan album: "' . $album['judul'] . '" (ID=' . $id_album . ')';
+            log_aktivitas($conn, 'REQUEST_DELETE', 'galeri_album', $id_album, $ket);
+
+            pg_query($conn, "COMMIT");
+            setFlashMessage('Permintaan penghapusan album telah diajukan ke Admin.', 'info');
         }
 
-        $ket = 'Admin menghapus album galeri: "' . $album['judul'] . '" (ID=' . $id_album . ')';
-        log_aktivitas($conn, 'DELETE', 'galeri_album', $id_album, $ket);
-
-        pg_query($conn, "COMMIT");
-        setFlashMessage('Album dan seluruh fotonya berhasil dihapus.', 'success');
         header('Location: index.php');
         exit;
     } catch (Exception $e) {
         pg_query($conn, "ROLLBACK");
-        setFlashMessage('Gagal menghapus album: ' . $e->getMessage(), 'danger');
+        setFlashMessage('Gagal memproses album: ' . $e->getMessage(), 'danger');
         header('Location: index.php');
         exit;
     }
@@ -72,7 +82,9 @@ include __DIR__ . '/../includes/header.php';
 <div class="container-fluid px-4">
     <div class="my-4">
         <h1 class="mt-4">Hapus Album Galeri</h1>
-        <p class="text-muted">Tindakan ini tidak dapat dibatalkan.</p>
+        <p class="text-muted">
+            <?php echo isAdmin() ? 'Tindakan ini tidak dapat dibatalkan.' : 'Permintaan ini memerlukan persetujuan Admin.'; ?>
+        </p>
     </div>
 
     <div class="card border-danger">
@@ -80,7 +92,7 @@ include __DIR__ . '/../includes/header.php';
             Konfirmasi Penghapusan
         </div>
         <div class="card-body">
-            <p>Anda akan menghapus album berikut:</p>
+            <p>Anda akan <?php echo isAdmin() ? 'menghapus' : 'mengajukan penghapusan'; ?> album berikut:</p>
             <ul>
                 <li><strong>ID:</strong> <?php echo (int)$album['id_album']; ?></li>
                 <li><strong>Judul:</strong> <?php echo htmlspecialchars($album['judul']); ?></li>
@@ -91,7 +103,8 @@ include __DIR__ . '/../includes/header.php';
             <form method="post">
                 <input type="hidden" name="confirm_delete" value="1">
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash me-1"></i> Ya, hapus album ini
+                    <i class="bi bi-trash me-1"></i> 
+                    <?php echo isAdmin() ? 'Ya, hapus album ini' : 'Ajukan Hapus'; ?>
                 </button>
                 <a href="index.php" class="btn btn-secondary">Batal</a>
             </form>
@@ -101,3 +114,4 @@ include __DIR__ . '/../includes/header.php';
 
 <?php
 include __DIR__ . '/../includes/footer.php';
+?>

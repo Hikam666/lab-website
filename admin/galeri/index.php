@@ -17,6 +17,7 @@ $sql = "
         ga.slug,
         ga.deskripsi,
         ga.status,
+        ga.aksi_request,
         ga.dibuat_pada,
         ga.diperbarui_pada,
         m.lokasi_file AS cover_image,
@@ -89,8 +90,14 @@ include __DIR__ . '/../includes/header.php';
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <?php echo getStatusBadge($row['status']); ?>
-                                </td>
+                                        <?php 
+                                        if ($row['aksi_request'] === 'hapus') {
+                                            echo '<span class="badge bg-danger text-white">Diajukan</span>';
+                                        } else {
+                                            echo getStatusBadge($row['status']); 
+                                        }
+                                        ?>
+                                    </td>
                                 <td class="text-center">
                                     <span class="badge bg-secondary px-3">
                                         <?php echo (int)$row['total_foto']; ?> foto

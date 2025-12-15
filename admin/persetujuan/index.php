@@ -50,6 +50,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
     pg_query($conn, "BEGIN");
 
     try {
+        // ==== KHUSUS ALBUM GALERI ====
+        if ($jenis === 'galeri') {
+            $sql_get = "SELECT judul, status, aksi_request FROM galeri_album WHERE id_album = $1";
+            $res_get = pg_query_params($conn, $sql_get, [$id]);
+
+            if (!$res_get || pg_num_rows($res_get) === 0) {
+                throw new Exception('Data album tidak ditemukan.');
+            }
+
+            $row          = pg_fetch_assoc($res_get);
+            $judul        = $row['judul'];
+            $aksi_request = $row['aksi_request'];
+            $is_delete_request = ($aksi_request === 'hapus');
+
+            if ($aksi === 'approve') {
+                if ($is_delete_request) {
+                    // Setujui Hapus -> Hapus Data
+                    $sql_del = "DELETE FROM galeri_album WHERE id_album = $1";
+                    pg_query_params($conn, $sql_del, [$id]);
+
+                    $ket = 'Menyetujui penghapusan album: "' . $judul . '" (ID=' . $id . ')';
+                    log_aktivitas($conn, 'APPROVE_DELETE', $table, $id, $ket);
+                } else {
+                    // Setujui Tambah/Edit -> Update Status
+                    $sql_update = "
+                        UPDATE galeri_album
+                        SET status = 'disetujui',
+                            aksi_request = NULL
+                        WHERE id_album = $1
+                    ";
+                    pg_query_params($conn, $sql_update, [$id]);
+                    
+                    $ket = 'Menyetujui album: "' . $judul . '" (ID=' . $id . ')';
+                    log_aktivitas($conn, 'APPROVE', $table, $id, $ket);
+                }
+            } else { 
+                // REJECT
+                if ($is_delete_request) {
+                    // Tolak Hapus -> Hapus Flag request, status tetap disetujui
+                    $sql_update = "
+                        UPDATE galeri_album
+                        SET status = 'disetujui',
+                            aksi_request = NULL
+                        WHERE id_album = $1
+                    ";
+                    pg_query_params($conn, $sql_update, [$id]);
+                    
+                    $ket = 'Menolak permintaan penghapusan album: "' . $judul . '" (ID=' . $id . ')';
+                    log_aktivitas($conn, 'REJECT_DELETE', $table, $id, $ket);
+                } else {
+                    // Tolak Tambah -> Status ditolak
+                    $sql_update = "
+                        UPDATE galeri_album
+                        SET status = 'ditolak',
+                            aksi_request = NULL
+                        WHERE id_album = $1
+                    ";
+                    pg_query_params($conn, $sql_update, [$id]);
+                    
+                    $ket = 'Menolak pengajuan album: "' . $judul . '" (ID=' . $id . ')';
+                    log_aktivitas($conn, 'REJECT', $table, $id, $ket);
+                }
+            }
+
+            pg_query($conn, "COMMIT");
+            setFlashMessage('Status album galeri berhasil diproses.', 'success');
+            header('Location: index.php');
+            exit;
+        }
         
         // ==== KHUSUS FOTO GALERI ====
         if ($jenis === 'foto') {
@@ -519,7 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
-        // UNTUK KONTEN NON-KHUSUS (misal: Galeri)
+        // UNTUK KONTEN NON-KHUSUS YANG TERSISA (Jaga-jaga)
         $sql_get = "SELECT {$title_col}, status FROM {$table} WHERE {$pk} = $1";
         $res_get = pg_query_params($conn, $sql_get, [$id]);
 
@@ -561,9 +630,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
 
 $pending_galeri = pg_query(
     $conn,
-    "SELECT id_album, judul, status, dibuat_pada 
+    "SELECT id_album, judul, status, dibuat_pada, aksi_request 
       FROM galeri_album 
-      WHERE status = 'diajukan'
+      WHERE status = 'diajukan' OR aksi_request IS NOT NULL
       ORDER BY dibuat_pada DESC"
 );
 
@@ -716,6 +785,7 @@ include __DIR__ . '/../includes/header.php';
             <?php endif; ?>
         </div>
     </div>
+
     <div class="card mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="bi bi-images me-2 text-primary"></i>Album Galeri - Menunggu Persetujuan</h5>
@@ -728,23 +798,32 @@ include __DIR__ . '/../includes/header.php';
                             <tr>
                                 <th>Judul Album</th>
                                 <th width="200">Diajukan Pada</th>
+                                <th width="160">Jenis Pengajuan</th>
                                 <th width="250" class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php while ($row = pg_fetch_assoc($pending_galeri)): ?>
+                            <?php $is_delete_req = ($row['aksi_request'] === 'hapus'); ?>
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?php echo htmlspecialchars($row['judul']); ?></div>
                                 </td>
                                 <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
+                                <td>
+                                    <?php if ($is_delete_req): ?>
+                                        <span class="badge bg-danger">Pengajuan Hapus</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-dark">Pengajuan Tambah/Edit</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="text-end">
                                     <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Album Galeri">
                                         <form method="post" class="d-inline">
                                             <input type="hidden" name="jenis" value="galeri">
                                             <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
                                             <input type="hidden" name="aksi" value="approve">
-                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui Album Ini">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui <?php echo $is_delete_req ? 'Penghapusan' : 'Album Ini'; ?>">
                                                 <i class="bi bi-check-lg"></i>
                                             </button>
                                         </form>
@@ -758,7 +837,7 @@ include __DIR__ . '/../includes/header.php';
                                             <input type="hidden" name="jenis" value="galeri">
                                             <input type="hidden" name="id" value="<?php echo (int)$row['id_album']; ?>">
                                             <input type="hidden" name="aksi" value="reject">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Album Ini">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak <?php echo $is_delete_req ? 'Penghapusan' : 'Album Ini'; ?>">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
                                         </form>

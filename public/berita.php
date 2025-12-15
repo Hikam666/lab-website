@@ -87,9 +87,8 @@ include __DIR__ . '/../includes/header.php';
                 <h1 class="display-6 mb-4">
                     <?php 
                         if ($filter == 'berita') echo 'Semua Berita';
-                        elseif ($filter == 'agenda') echo 'Agenda Kegiatan';
                         elseif ($filter == 'pengumuman') echo 'Pengumuman';
-                        else echo 'Semua Berita & Kegiatan';
+                        else echo 'Semua Berita & Pengumuman';
                     ?>
                 </h1>
             </div>

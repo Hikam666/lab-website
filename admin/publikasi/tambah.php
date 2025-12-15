@@ -48,7 +48,7 @@ $errors = [];
 $form = [
     'judul'     => '',
     'abstrak'   => '',
-    'jenis'     => 'Jurnal', // Nilai default yang digunakan jika tidak ada POST
+    'jenis'     => 'Jurnal', 
     'tempat'    => '',
     'tahun'     => date('Y'),
     'doi'       => '',
@@ -265,7 +265,7 @@ include __DIR__ . '/../includes/header.php';
             </div>
 
             <div class="pub-group">
-                <label>Nama Jurnal / Konferensi (Tempat)</label>
+                <label>Konferensi (Tempat)</label>
                 <input type="text" name="tempat" value="<?= htmlspecialchars($form['tempat']) ?>">
             </div>
 
