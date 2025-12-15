@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
         'fasilitas' => ['table' => 'fasilitas',    'pk' => 'id_fasilitas', 'title' => 'nama'],
         'foto'      => ['table' => 'galeri_item',  'pk' => 'id_item',      'title' => 'caption'],
         'anggota'   => ['table' => 'anggota_lab',  'pk' => 'id_anggota',   'title' => 'nama'],
+        'pesan'     => ['table' => 'pesan_kontak', 'pk' => 'id_pesan',     'title' => 'subjek'],
     ];
 
     if (!isset($map[$jenis])) {
@@ -49,6 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
     pg_query($conn, "BEGIN");
 
     try {
+        
+        // ==== KHUSUS FOTO GALERI ====
         if ($jenis === 'foto') {
             $sql_get = "
                 SELECT 
@@ -91,8 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     pg_query_params($conn, "DELETE FROM galeri_item WHERE id_item = $1", [$id]);
                     pg_query_params($conn, "DELETE FROM media      WHERE id_media = $1", [$id_media]);
 
-                    $ket = 'Menyetujui penghapusan foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                            '" (ID_ALBUM=' . $id_album . ').';
+                    $ket = 'Menyetujui penghapusan foto pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -108,9 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     ";
                     pg_query_params($conn, $sql_update, [$id]);
 
-                    $ket = 'Menyetujui ' . ($aksi_request ?: 'perubahan') .
-                            ' foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                            '" (ID_ALBUM=' . $id_album . ').';
+                    $ket = 'Menyetujui ' . ($aksi_request ?: 'perubahan') . ' foto pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -129,8 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     ";
                     pg_query_params($conn, $sql_update, [$id]);
 
-                    $ket = 'Menolak penambahan foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                            '" (ID_ALBUM=' . $id_album . ').';
+                    $ket = 'Menolak penambahan foto pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -146,8 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     ";
                     pg_query_params($conn, $sql_update, [$id]);
 
-                    $ket = 'Menolak permintaan ' . $aksi_request . ' foto (ID_ITEM=' . $id .
-                            ') pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
+                    $ket = 'Menolak permintaan ' . $aksi_request . ' foto pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -163,8 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
                     ";
                     pg_query_params($conn, $sql_update, [$id]);
 
-                    $ket = 'Menolak perubahan foto (ID_ITEM=' . $id . ') pada album "' . $judul_album .
-                            '" (ID_ALBUM=' . $id_album . ').';
+                    $ket = 'Menolak perubahan foto pada album "' . $judul_album . '" (ID_ALBUM=' . $id_album . ').';
                     if ($catatan !== '') {
                         $ket .= ' Catatan: ' . $catatan;
                     }
@@ -243,6 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
+        // ==== KHUSUS BERITA ====
         if ($jenis === 'berita') {
             $sql_get = "SELECT judul, status, aksi_request, id_cover FROM berita WHERE id_berita = $1";
             $res_get = pg_query_params($conn, $sql_get, [$id]);
@@ -335,6 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
+        // ==== KHUSUS PUBLIKASI ====
         if ($jenis === 'publikasi') {
             $sql_get = "SELECT judul, status, aksi_request FROM publikasi WHERE id_publikasi = $1";
             $res_get = pg_query_params($conn, $sql_get, [$id]);
@@ -403,6 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
             exit;
         }
 
+        // ==== KHUSUS FASILITAS ====
         if ($jenis === 'fasilitas') {
              $sql_get = "SELECT nama, status, aksi_request FROM fasilitas WHERE id_fasilitas = $1";
             $res_get = pg_query_params($conn, $sql_get, [$id]);
@@ -467,6 +467,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'], $_POST['jenis
 
             pg_query($conn, "COMMIT");
             setFlashMessage('Status fasilitas berhasil diproses.', 'success');
+            header('Location: index.php');
+            exit;
+        }
+
+        // ==== KHUSUS PESAN KONTAK ====
+        if ($jenis === 'pesan') {
+            // Ambil detail pesan
+            $sql_get = "SELECT subjek, nama_pengirim, aksi_request, status_request FROM pesan_kontak WHERE id_pesan = $1";
+            $res_get = pg_query_params($conn, $sql_get, [$id]);
+
+            if (!$res_get || pg_num_rows($res_get) === 0) {
+                throw new Exception('Data pesan tidak ditemukan.');
+            }
+
+            $row          = pg_fetch_assoc($res_get);
+            $subjek       = $row['subjek'] ?: '(Tanpa Subjek)';
+            $pengirim     = $row['nama_pengirim'] ?: 'Anonim';
+            $aksi_request = $row['aksi_request'];
+
+            if ($aksi === 'approve') {
+                // APPROVE: Hapus pesan dari database (karena ini hanya request hapus)
+                if ($aksi_request === 'hapus') {
+                    pg_query_params($conn, "DELETE FROM pesan_kontak WHERE id_pesan = $1", [$id]);
+                    $ket = 'Menyetujui penghapusan pesan dari ' . $pengirim . ' (Subjek: "' . $subjek . '")';
+                    log_aktivitas($conn, 'APPROVE_DELETE', $table, $id, $ket);
+                } else {
+                    throw new Exception('Aksi persetujuan untuk pesan tidak valid.');
+                }
+            } else { 
+                // REJECT: Tolak permintaan hapus, bersihkan request status
+                if ($aksi_request === 'hapus') {
+                    $sql_update = "
+                        UPDATE {$table}
+                        SET status_request = 'ditolak', 
+                            aksi_request = NULL
+                        WHERE {$pk} = $1
+                    ";
+                    pg_query_params($conn, $sql_update, [$id]);
+                    
+                    $ket = 'Menolak permintaan penghapusan pesan dari ' . $pengirim . ' (Subjek: "' . $subjek . '")';
+                    log_aktivitas($conn, 'REJECT_DELETE', $table, $id, $ket);
+                } else {
+                     throw new Exception('Aksi penolakan untuk pesan tidak valid.');
+                }
+            }
+
+            pg_query($conn, "COMMIT");
+            setFlashMessage('Status pesan berhasil diproses.', 'success');
             header('Location: index.php');
             exit;
         }
@@ -574,6 +622,15 @@ $pending_foto = pg_query(
       ORDER BY gi.dibuat_pada DESC"
 );
 
+$pending_pesan = pg_query(
+    $conn,
+    "SELECT id_pesan, subjek, nama_pengirim AS pengirim, diterima_pada AS dibuat_pada, aksi_request
+      FROM pesan_kontak 
+      WHERE aksi_request = 'hapus' AND status_request = 'diajukan'
+      ORDER BY diterima_pada DESC"
+);
+
+
 include __DIR__ . '/../includes/header.php';
 ?>
 
@@ -594,6 +651,71 @@ include __DIR__ . '/../includes/header.php';
 
 <div class="mt-4">
 
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-inbox me-2 text-danger"></i>Pesan Kontak - Menunggu Persetujuan Hapus</h5>
+        </div>
+        <div class="card-body p-0">
+            <?php if ($pending_pesan && pg_num_rows($pending_pesan) > 0): ?>
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Subjek & Pengirim</th>
+                                <th width="160">Jenis Pengajuan</th>
+                                <th width="200">Diajukan Pada</th>
+                                <th width="250" class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php while ($row = pg_fetch_assoc($pending_pesan)): ?>
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold"><?php echo htmlspecialchars($row['subjek'] ?: '(Tanpa Subjek)'); ?></div>
+                                    <small class="text-muted">Dari: <?php echo htmlspecialchars($row['pengirim']); ?></small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">Pengajuan Hapus</span>
+                                </td>
+                                <td><?php echo formatTanggalWaktu($row['dibuat_pada']); ?></td>
+                                <td class="text-end">
+                                    <div class="btn-group border rounded overflow-hidden" role="group" aria-label="Aksi Pesan">
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="pesan">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_pesan']; ?>">
+                                            <input type="hidden" name="aksi" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-0" title="Setujui Penghapusan">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="../pesan/detail.php?id=<?php echo (int)$row['id_pesan']; ?>"
+                                            class="btn btn-sm btn-outline-secondary rounded-0 border-start border-end" title="Lihat Pesan">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="jenis" value="pesan">
+                                            <input type="hidden" name="id" value="<?php echo (int)$row['id_pesan']; ?>">
+                                            <input type="hidden" name="aksi" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-0" title="Tolak Penghapusan">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="p-3 text-muted fst-italic">
+                    Tidak ada permintaan penghapusan pesan yang menunggu persetujuan.
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
     <div class="card mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="bi bi-images me-2 text-primary"></i>Album Galeri - Menunggu Persetujuan</h5>

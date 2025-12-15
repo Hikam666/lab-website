@@ -1,5 +1,4 @@
 <?php
-// ... (Bagian atas PHP tidak berubah, biarkan seperti file asli) ...
 session_start();
 require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php'; 
@@ -12,16 +11,13 @@ if (!isset($conn)) $conn = getDBConnection();
 
 $active_page = 'media';
 $page_title = 'Media Library';
-$extra_css = ['media.css'];  
 
-// --- QUERY MEDIA FILES ---
 $query = "SELECT id_media, lokasi_file, tipe_file, keterangan_alt, ukuran_file, dibuat_pada 
           FROM media 
           ORDER BY dibuat_pada DESC";
 
 $result = pg_query($conn, $query);
 
-// Helper function definitions... (Tetap sama)
 if (!function_exists('formatFileSize')) {
     function formatFileSize($bytes) {
         $units = ['B', 'KB', 'MB', 'GB'];
@@ -64,9 +60,6 @@ include __DIR__ . '/../includes/header.php';
             <h1 class="mt-4">Media Library</h1>
             <p class="text-muted">Kelola file gambar, video, dan dokumen</p>
         </div>
-        <a href="upload.php" class="btn btn-primary">
-            <i class="bi bi-cloud-upload me-2"></i> Upload File
-        </a>
     </div>
 
     <?php if (isset($_SESSION['message'])): ?>
@@ -187,7 +180,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="col-12">
                 <div class="alert alert-light border text-center py-5">
                     <i class="bi bi-inbox" style="font-size: 3rem; color: #adb5bd;"></i>
-                    <p class="text-muted mb-0 mt-3">Belum ada file media. <a href="upload.php">Upload file sekarang</a></p>
+                    <p class="text-muted mb-0 mt-3">Belum ada file media.</p>
                 </div>
             </div>
         <?php endif; ?>
