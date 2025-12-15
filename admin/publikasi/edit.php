@@ -34,8 +34,8 @@ function getLoggedUserIdFallback() {
             if (!empty($u['id_pengguna'])) return $u['id_pengguna'];
         }
     }
-    if (isset($_SESSION['user_id']))      return $_SESSION['user_id'];
-    if (isset($_SESSION['id_pengguna']))  return $_SESSION['id_pengguna'];
+    if (isset($_SESSION['user_id']))     return $_SESSION['user_id'];
+    if (isset($_SESSION['id_pengguna'])) return $_SESSION['id_pengguna'];
     return null;
 }
 
@@ -76,9 +76,12 @@ $form = [
     'penulis'   => $data['penulis'] ?? '' 
 ];
 
-$errors   = [];
-$id_cover = $data['id_cover'];   
-$old_status = $data['status'];   
+$errors     = [];
+$id_cover   = $data['id_cover']; 
+$old_cover_file = $data['cover_file']; // File lama
+$old_status = $data['status']; 
+$old_id_media = $data['id_cover']; // ID media lama
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -92,15 +95,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['url_sinta'] = trim($_POST['url_sinta'] ?? '');
     $form['penulis']   = trim($_POST['penulis'] ?? ''); 
 
+    // Validasi
     if ($form['judul'] === '') {
         $errors[] = "Judul wajib diisi.";
     }
     if ($form['penulis'] === '') {
         $errors[] = "Nama penulis wajib diisi.";
     }
-    if ($form['tahun'] !== '' && !ctype_digit($form['tahun'])) {
+    if ($form['tahun'] !== '' && !ctype_digit((string)$form['tahun'])) {
         $errors[] = "Tahun harus berupa angka.";
     }
+
+    // =========================
+    // Upload cover (opsional)
+    // =========================
+    $new_id_media = null; 
+    $media_deleted = false;
 
     if (!empty($_FILES['cover']['name'])) {
 
@@ -127,6 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!move_uploaded_file($file['tmp_name'], $path)) {
                     $errors[] = "Gagal upload cover.";
                 } else {
+                    // 1. Simpan metadata baru
                     $lokasi_file = 'publikasi/' . $new_name;
                     $tipe_file   = $file['type'];
                     $alt         = 'Cover publikasi';
@@ -138,26 +149,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         RETURNING id_media
                     ";
 
-                    $mediaParams = [
-                        $lokasi_file,
-                        $tipe_file,
-                        $alt,
-                        $dibuat_oleh
-                    ];
-
+                    $mediaParams = [ $lokasi_file, $tipe_file, $alt, $dibuat_oleh ];
                     $rsMedia   = pg_query_params($conn, $sqlMedia, $mediaParams);
                     $dataMedia = pg_fetch_assoc($rsMedia);
 
                     if ($dataMedia) {
-                        $id_cover = $dataMedia['id_media'];
+                        $new_id_media = $dataMedia['id_media'];
                         
+                        // 2. Hapus file lama (jika ada)
+                        if ($old_cover_file && $old_id_media) {
+                            $old_path = __DIR__ . '/../../uploads/' . $old_cover_file;
+                            @unlink($old_path);
+                            // Hapus entri media lama
+                            pg_query_params($conn, "DELETE FROM media WHERE id_media = $1", [$old_id_media]);
+                            $media_deleted = true;
+                        }
+                        $id_cover = $new_id_media;
+
                     } else {
+                        @unlink($path); // Hapus file yang baru diupload jika gagal simpan DB
                         $errors[] = "Gagal menyimpan data cover: " . pg_last_error($conn);
                     }
                 }
             }
         }
     }
+    // END Upload Cover
 
     if (empty($errors)) {
 
@@ -170,16 +187,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $doi       = $form['doi']     === '' ? null : $form['doi'];
         $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
         $penulis   = $form['penulis'] === '' ? null : $form['penulis']; 
-
+        
+        // Tentukan status baru. Jika operator mengedit yang sudah disetujui, kembalikan ke diajukan
         if (function_exists('isAdmin') && isAdmin()) {
-            $status_baru = 'disetujui';
+            $status_baru = $old_status; // Admin bisa mempertahankan status
+        } elseif ($old_status === 'ditolak') {
+            $status_baru = 'diajukan'; // Jika ditolak, pengajuan baru
         } else {
-            $status_baru = 'diajukan';
+            $status_baru = 'diajukan'; // Operator edit -> selalu diajukan ulang
         }
 
         $anggota_id = getLoggedUserIdFallback();
         
         if ($anggota_id) {
+            // Pastikan anggota yang mengedit tercatat sebagai penulis
             $checkPenulis = pg_query_params($conn, "SELECT 1 FROM publikasi_penulis WHERE id_publikasi = $1 AND id_anggota = $2", [$id, $anggota_id]);
             if (!$checkPenulis || pg_num_rows($checkPenulis) === 0) {
                 $sqlInsertPenulis = "
@@ -203,8 +224,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 url_sinta           = $8,
                 id_cover            = $9,
                 status              = $10,
-                penulis             = $11,  
-                diperbarui_pada     = NOW()
+                penulis             = $11, 
+                diperbarui_pada     = NOW(),
+                -- Kosongkan status persetujuan jika ada perubahan yang diajukan
+                disetujui_oleh      = CASE WHEN $10 = 'diajukan' THEN NULL ELSE disetujui_oleh END, 
+                disetujui_pada      = CASE WHEN $10 = 'diajukan' THEN NULL ELSE disetujui_pada END,
+                catatan_review      = CASE WHEN $10 = 'diajukan' THEN NULL ELSE catatan_review END
             WHERE id_publikasi      = $12
         ";
 
@@ -220,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_cover,
             $status_baru,
             $penulis, 
-            $id     
+            $id    
         ];
 
         $result = pg_query_params($conn, $sqlUpdate, $params);
@@ -235,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($status_baru === 'disetujui') {
                 setFlashMessage("Publikasi berhasil diperbarui dan disetujui.", "success");
             } else {
-                setFlashMessage("Perubahan publikasi berhasil diajukan dan menunggu persetujuan admin.", "success");
+                setFlashMessage("Perubahan publikasi berhasil diajukan dan menunggu persetujuan admin.", "warning"); // Warning lebih tepat untuk status pending
             }
 
             redirectAdmin("publikasi/index.php");
@@ -247,12 +272,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 }
 
+// Muat ulang data jika ada error tapi formulir telah dikirim
+if (!empty($errors) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Jika ada error, $form sudah berisi nilai POST yang gagal disimpan,
+    // dan $data masih berisi data asli dari DB (hanya cover_file yang relevan)
+    // $data['cover_file'] tidak berubah jika upload gagal, jadi tidak perlu refresh.
+}
+
 include __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="pub-container">
     <div class="pub-card">
-        <h2 class="pub-title">Edit Publikasi</h2>
+        <h2 class="pub-title">Edit Publikasi (ID: <?= htmlspecialchars($id) ?>)</h2>
+
+        <?php if ($data['status'] === 'ditolak'): ?>
+            <div class="alert alert-danger mb-4">
+                **Publikasi Ditolak:** <?php echo htmlspecialchars($data['catatan_review'] ?? 'Tidak ada catatan penolakan.'); ?>
+                <br>Silakan perbaiki data di bawah ini dan simpan untuk mengajukan ulang.
+            </div>
+        <?php elseif ($data['status'] === 'diajukan'): ?>
+            <div class="alert alert-info mb-4">
+                **Publikasi Menunggu Persetujuan**
+            </div>
+        <?php endif; ?>
 
         <?php if ($errors): ?>
             <div class="alert alert-danger">
@@ -269,13 +312,13 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>Judul</label>
                 <input type="text" name="judul" required
-                       value="<?= htmlspecialchars($form['judul']) ?>">
+                        value="<?= htmlspecialchars($form['judul']) ?>">
             </div>
 
             <div class="pub-group">
                 <label>Penulis</label>
                 <input type="text" name="penulis" required
-                       value="<?= htmlspecialchars($form['penulis']) ?>">
+                        value="<?= htmlspecialchars($form['penulis']) ?>">
                 <small class="text-muted">Masukkan nama semua penulis. Pisahkan dengan koma.</small>
             </div>
             <div class="pub-group">
@@ -286,41 +329,45 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>Jenis</label>
                 <select name="jenis">
-                    <option value="Jurnal"      <?= $form['jenis']=="Jurnal"      ? "selected":"" ?>>Jurnal</option>
-                    <option value="Prosiding"   <?= $form['jenis']=="Prosiding"   ? "selected":"" ?>>Prosiding</option>
+                    <option value="Jurnal"          <?php echo $form['jenis'] === 'Jurnal' ? 'selected' : ''; ?>>Jurnal</option>
+                    <option value="Prosiding"       <?php echo $form['jenis'] === 'Prosiding' ? 'selected' : ''; ?>>Prosiding</option>
+                    <option value="Buku"            <?php echo $form['jenis'] === 'Buku' ? 'selected' : ''; ?>>Buku</option>
+                    <option value="Artikel Ilmiah"  <?php echo $form['jenis'] === 'Artikel Ilmiah' ? 'selected' : ''; ?>>Artikel Ilmiah</option>
+                    <option value="Tesis"           <?php echo $form['jenis'] === 'Tesis' ? 'selected' : ''; ?>>Tesis</option>
                 </select>
             </div>
 
             <div class="pub-group">
                 <label>Nama Jurnal / Konferensi</label>
                 <input type="text" name="tempat"
-                       value="<?= htmlspecialchars($form['tempat']) ?>">
+                        value="<?= htmlspecialchars($form['tempat']) ?>">
             </div>
 
             <div class="pub-group">
                 <label>Tahun</label>
                 <input type="number" name="tahun"
-                       value="<?= htmlspecialchars($form['tahun']) ?>">
+                        value="<?= htmlspecialchars($form['tahun']) ?>">
             </div>
 
             <div class="pub-group">
                 <label>DOI</label>
                 <input type="text" name="doi"
-                       value="<?= htmlspecialchars($form['doi']) ?>">
+                        value="<?= htmlspecialchars($form['doi']) ?>">
             </div>
 
             <div class="pub-group">
                 <label>URL Publikasi</label>
                 <input type="text" name="url_sinta"
-                       value="<?= htmlspecialchars($form['url_sinta']) ?>">
+                        value="<?= htmlspecialchars($form['url_sinta']) ?>">
             </div>
 
             <div class="pub-group">
                 <label>Cover Saat Ini</label><br>
-                <?php if (!empty($data['cover_file'])): ?>
-                    <img src="<?= SITE_URL . '/uploads/' . htmlspecialchars($data['cover_file']) ?>"
-         style="max-width:220px; max-height:300px; object-fit:contain; border:1px solid #ddd; border-radius:8px; display:block;">
-
+                <?php if (!empty($data['cover_file'])): 
+                    $cover_url = SITE_URL . '/uploads/' . htmlspecialchars($data['cover_file']);
+                ?>
+                    <img src="<?= $cover_url ?>" 
+                         style="max-width:220px; max-height:300px; object-fit:contain; border:1px solid #ddd; border-radius:8px; display:block;">
                 <?php else: ?>
                     <div class="cover-null">Tidak Ada</div>
                 <?php endif; ?>

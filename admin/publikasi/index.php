@@ -116,6 +116,9 @@ include __DIR__ . '/../includes/header.php';
                     <option value="">Semua Jenis</option>
                     <option value="Jurnal"      <?php echo $filter_jenis === 'Jurnal' ? 'selected' : ''; ?>>Jurnal</option>
                     <option value="Prosiding"   <?php echo $filter_jenis === 'Prosiding' ? 'selected' : ''; ?>>Prosiding</option>
+                    <option value="Buku"        <?php echo $filter_jenis === 'Buku' ? 'selected' : ''; ?>>Buku</option>
+                    <option value="Artikel Ilmiah" <?php echo $filter_jenis === 'Artikel Ilmiah' ? 'selected' : ''; ?>>Artikel Ilmiah</option>
+                    <option value="Tesis"       <?php echo $filter_jenis === 'Tesis' ? 'selected' : ''; ?>>Tesis</option>
                 </select>
             </div>
 

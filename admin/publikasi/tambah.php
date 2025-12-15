@@ -38,8 +38,8 @@ function getLoggedUserIdFallback() {
             if (!empty($u['id_pengguna'])) return $u['id_pengguna'];
         }
     }
-    if (isset($_SESSION['user_id']))      return $_SESSION['user_id'];
-    if (isset($_SESSION['id_pengguna']))  return $_SESSION['id_pengguna'];
+    if (isset($_SESSION['user_id']))     return $_SESSION['user_id'];
+    if (isset($_SESSION['id_pengguna'])) return $_SESSION['id_pengguna'];
     return null;
 }
 
@@ -48,7 +48,7 @@ $errors = [];
 $form = [
     'judul'     => '',
     'abstrak'   => '',
-    'jenis'     => 'Jurnal',
+    'jenis'     => 'Jurnal', // Nilai default yang digunakan jika tidak ada POST
     'tempat'    => '',
     'tahun'     => date('Y'),
     'doi'       => '',
@@ -147,15 +147,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Simpan publikasi
     // =========================
     if (empty($errors)) {
-        $judul     = $form['judul'];
-        $slug      = generateSlugLocal($judul);
-        $abstrak   = $form['abstrak']   === '' ? null : $form['abstrak'];
-        $jenis     = $form['jenis']     === '' ? null : $form['jenis'];
-        $tempat    = $form['tempat']    === '' ? null : $form['tempat'];
-        $tahun     = $form['tahun']     === '' ? null : (int)$form['tahun'];
-        $doi       = $form['doi']       === '' ? null : $form['doi'];
-        $url_sinta = $form['url_sinta'] === '' ? null : $form['url_sinta'];
-        $penulis   = $form['penulis']   === '' ? null : $form['penulis']; 
+        $judul      = $form['judul'];
+        $slug       = generateSlugLocal($judul);
+        $abstrak    = $form['abstrak']   === '' ? null : $form['abstrak'];
+        $jenis      = $form['jenis']     === '' ? null : $form['jenis'];
+        $tempat     = $form['tempat']    === '' ? null : $form['tempat'];
+        $tahun      = $form['tahun']     === '' ? null : (int)$form['tahun'];
+        $doi        = $form['doi']       === '' ? null : $form['doi'];
+        $url_sinta  = $form['url_sinta'] === '' ? null : $form['url_sinta'];
+        $penulis    = $form['penulis']   === '' ? null : $form['penulis']; 
         $dibuat_oleh = getLoggedUserIdFallback();
 
         $sql = "
@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($status === 'disetujui') {
                 setFlashMessage("Publikasi berhasil ditambahkan dan langsung disetujui.", "success");
             } else {
-                setFlashMessage("Publikasi berhasil diajukan dan menunggu persetujuan admin.", "success");
+                setFlashMessage("Publikasi berhasil diajukan dan menunggu persetujuan admin.", "warning"); // Mengubah success ke warning untuk pending
             }
 
             redirectAdmin("publikasi/index.php");
@@ -256,8 +256,11 @@ include __DIR__ . '/../includes/header.php';
             <div class="pub-group">
                 <label>Jenis</label>
                 <select name="jenis">
-                    <option value="Jurnal"      <?= $form['jenis'] === 'Jurnal'      ? 'selected' : '' ?>>Jurnal</option>
-                    <option value="Prosiding"   <?= $form['jenis'] === 'Prosiding' ? 'selected' : '' ?>>Prosiding</option>
+                    <option value="Jurnal"          <?php echo $form['jenis'] === 'Jurnal' ? 'selected' : ''; ?>>Jurnal</option>
+                    <option value="Prosiding"       <?php echo $form['jenis'] === 'Prosiding' ? 'selected' : ''; ?>>Prosiding</option>
+                    <option value="Buku"            <?php echo $form['jenis'] === 'Buku' ? 'selected' : ''; ?>>Buku</option>
+                    <option value="Artikel Ilmiah"  <?php echo $form['jenis'] === 'Artikel Ilmiah' ? 'selected' : ''; ?>>Artikel Ilmiah</option>
+                    <option value="Tesis"           <?php echo $form['jenis'] === 'Tesis' ? 'selected' : ''; ?>>Tesis</option>
                 </select>
             </div>
 
