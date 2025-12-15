@@ -20,7 +20,7 @@ $id_album = (int)$_GET['id'];
 
 // Ambil data album
 $sql_album = "
-    SELECT ga.id_album, ga.judul, COUNT(gi.id_item) AS total_foto
+    SELECT ga.id_album, ga.judul, ga.status, ga.aksi_request, COUNT(gi.id_item) AS total_foto
     FROM galeri_album ga
     LEFT JOIN galeri_item gi ON gi.id_album = ga.id_album
     WHERE ga.id_album = $1
@@ -37,9 +37,45 @@ if (!$res_album || pg_num_rows($res_album) === 0) {
 $album = pg_fetch_assoc($res_album);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
-    pg_query($conn, "BEGIN");
-    try {
-        if (isAdmin()) {
+    
+    // ==== OPERATOR: AJUKAN HAPUS ====
+    if (!isAdmin()) {
+        pg_query($conn, "BEGIN");
+        try {
+            // Update status album menjadi diajukan dengan aksi_request = 'hapus'
+            $sql_update = "
+                UPDATE galeri_album 
+                SET status = 'diajukan',
+                    aksi_request = 'hapus',
+                    diperbarui_pada = NOW()
+                WHERE id_album = $1
+            ";
+            $res_update = pg_query_params($conn, $sql_update, [$id_album]);
+            
+            if (!$res_update) {
+                throw new Exception('Gagal mengajukan penghapusan album.');
+            }
+
+            // Log aktivitas
+            $ket = 'Operator mengajukan penghapusan album galeri: "' . $album['judul'] . '" (ID=' . $id_album . ')';
+            log_aktivitas($conn, 'REQUEST_DELETE', 'galeri_album', $id_album, $ket);
+
+            pg_query($conn, "COMMIT");
+            
+            setFlashMessage('Permintaan penghapusan album telah diajukan dan menunggu persetujuan admin.', 'warning');
+            header('Location: index.php');
+            exit;
+
+        } catch (Exception $e) {
+            pg_query($conn, "ROLLBACK");
+            setFlashMessage('Gagal mengajukan penghapusan: ' . $e->getMessage(), 'danger');
+        }
+    }
+    
+    // ==== ADMIN: HAPUS PERMANEN ====
+    else {
+        pg_query($conn, "BEGIN");
+        try {
             $del = pg_query_params($conn, "DELETE FROM galeri_album WHERE id_album = $1", [$id_album]);
             if (!$del) {
                 throw new Exception(pg_last_error($conn));
@@ -50,29 +86,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
 
             pg_query($conn, "COMMIT");
             setFlashMessage('Album dan seluruh fotonya berhasil dihapus.', 'success');
-        } else {
+            header('Location: index.php');
+            exit;
 
-            $sql_req = "UPDATE galeri_album SET aksi_request = 'hapus' WHERE id_album = $1";
-            $req = pg_query_params($conn, $sql_req, [$id_album]);
-
-            if (!$req) {
-                throw new Exception(pg_last_error($conn));
-            }
-
-            $ket = 'Operator mengajukan penghapusan album: "' . $album['judul'] . '" (ID=' . $id_album . ')';
-            log_aktivitas($conn, 'REQUEST_DELETE', 'galeri_album', $id_album, $ket);
-
-            pg_query($conn, "COMMIT");
-            setFlashMessage('Permintaan penghapusan album telah diajukan ke Admin.', 'info');
+        } catch (Exception $e) {
+            pg_query($conn, "ROLLBACK");
+            setFlashMessage('Gagal memproses album: ' . $e->getMessage(), 'danger');
+            header('Location: index.php');
+            exit;
         }
-
-        header('Location: index.php');
-        exit;
-    } catch (Exception $e) {
-        pg_query($conn, "ROLLBACK");
-        setFlashMessage('Gagal memproses album: ' . $e->getMessage(), 'danger');
-        header('Location: index.php');
-        exit;
     }
 }
 
@@ -98,7 +120,15 @@ include __DIR__ . '/../includes/header.php';
                 <li><strong>Judul:</strong> <?php echo htmlspecialchars($album['judul']); ?></li>
                 <li><strong>Jumlah Foto:</strong> <?php echo (int)$album['total_foto']; ?></li>
             </ul>
-            <p class="text-danger fw-semibold">Semua foto di dalam album ini juga akan terhapus.</p>
+            
+            <?php if (isAdmin()): ?>
+                <p class="text-danger fw-semibold">Semua foto di dalam album ini juga akan terhapus.</p>
+            <?php else: ?>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Sebagai operator, permintaan penghapusan Anda akan diajukan ke admin untuk persetujuan.
+                </div>
+            <?php endif; ?>
 
             <form method="post">
                 <input type="hidden" name="confirm_delete" value="1">

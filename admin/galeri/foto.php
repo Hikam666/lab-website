@@ -38,17 +38,25 @@ $id_pengguna = $currentUser['id'] ?? ($_SESSION['user_id'] ?? null);
 if (isset($_GET['hapus_item'])) {
     $id_item = (int)$_GET['hapus_item'];
 
-    // ==== OPERATOR: ajukan penghapusan ====
+   // ==== OPERATOR: ajukan penghapusan ====
     if (!$is_admin) {
         $sql = "UPDATE galeri_item
                 SET status = 'diajukan', aksi_request = 'hapus'
                 WHERE id_item = $1 AND id_album = $2";
-        pg_query_params($conn, $sql, [$id_item, $id_album]);
+        
+        $result = pg_query_params($conn, $sql, [$id_item, $id_album]);
 
-        $ket = "Operator mengajukan penghapusan item (id_item=$id_item) di album #$id_album ({$album['judul']})";
-        log_aktivitas($conn, 'request_delete', 'galeri_item', $id_item, $ket);
+        // Cek apakah query berhasil DAN ada baris yang berubah
+        if ($result && pg_affected_rows($result) > 0) {
+            $ket = "Operator mengajukan penghapusan item (id_item=$id_item) di album #$id_album ({$album['judul']})";
+            log_aktivitas($conn, 'request_delete', 'galeri_item', $id_item, $ket);
 
-        setFlashMessage('Permintaan penghapusan item diajukan ke admin.', 'info');
+            setFlashMessage('Permintaan penghapusan item BERHASIL diajukan ke admin.', 'info');
+        } else {
+            // Jika gagal update (misal ID tidak cocok)
+            setFlashMessage('Gagal mengajukan penghapusan. Item tidak ditemukan atau sudah diajukan.', 'danger');
+        }
+
         header('Location: foto.php?id=' . $id_album);
         exit;
     }
