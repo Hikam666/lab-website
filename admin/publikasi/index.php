@@ -125,11 +125,9 @@ include __DIR__ . '/../includes/header.php';
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Semua Status</option>
-                    <option value="draft"       <?php echo $filter_status === 'draft' ? 'selected' : ''; ?>>Draft</option>
                     <option value="diajukan"    <?php echo $filter_status === 'diajukan' ? 'selected' : ''; ?>>Diajukan</option>
                     <option value="disetujui"   <?php echo $filter_status === 'disetujui' ? 'selected' : ''; ?>>Disetujui</option>
                     <option value="ditolak"     <?php echo $filter_status === 'ditolak' ? 'selected' : ''; ?>>Ditolak</option>
-                    <option value="arsip"       <?php echo $filter_status === 'arsip' ? 'selected' : ''; ?>>Arsip</option>
                 </select>
             </div>
 
