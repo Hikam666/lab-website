@@ -8,75 +8,92 @@ $active_page = 'anggota';
 $page_title  = 'Anggota Peneliti';
 
 $is_admin = function_exists('isAdmin') ? isAdmin() : false;
+$conn     = getDBConnection();
 
-$conn = getDBConnection();
-
+/* ===============================
+ * Pagination
+ * =============================== */
 $items_per_page = 20;
-$current_page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-if ($current_page < 1) $current_page = 1;
-$offset = ($current_page - 1) * $items_per_page;
+$current_page   = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$offset         = ($current_page - 1) * $items_per_page;
 
+/* ===============================
+ * Filter & Search
+ * =============================== */
 $search        = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_peran  = isset($_GET['peran']) ? trim($_GET['peran']) : '';
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 
-$where_conditions = [];
-$params           = [];
-$param_count      = 1;
+$where   = [];
+$params  = [];
+$idx     = 1;
 
-if (!empty($search)) {
-    $where_conditions[] = "(a.nama ILIKE $" . $param_count . " OR a.email ILIKE $" . $param_count . ")";
-    $params[]           = "%$search%";
-    $param_count++;
+if ($search !== '') {
+    $where[]  = "(a.nama ilike $".$idx." or a.email ilike $".$idx.")";
+    $params[] = "%{$search}%";
+    $idx++;
 }
 
-if (!empty($filter_peran)) {
-    $where_conditions[] = "a.peran_lab ILIKE $" . $param_count;
-    $params[]           = "%$filter_peran%";
-    $param_count++;
+if ($filter_peran !== '') {
+    $where[]  = "a.peran_lab ilike $".$idx;
+    $params[] = "%{$filter_peran}%";
+    $idx++;
 }
 
 if ($filter_status !== '') {
-    $where_conditions[] = "a.aktif = $" . $param_count;
-    $params[]           = $filter_status === '1' ? 't' : 'f';
-    $param_count++;
+    $where[]  = "a.aktif = $".$idx;
+    $params[] = $filter_status === '1' ? 't' : 'f';
+    $idx++;
 }
 
-$where_sql = !empty($where_conditions)
-    ? 'WHERE ' . implode(' AND ', $where_conditions)
-    : '';
+$where_sql = $where ? 'where ' . implode(' and ', $where) : '';
 
-$count_sql    = "SELECT COUNT(*) as total FROM anggota_lab a $where_sql";
-$count_result = pg_query_params($conn, $count_sql, $params);
-$total_items  = $count_result ? (int) pg_fetch_assoc($count_result)['total'] : 0;
-$total_pages  = $total_items > 0 ? ceil($total_items / $items_per_page) : 1;
+/* ===============================
+ * Count Data
+ * =============================== */
+$count_sql   = "select count(*) as total from anggota_lab a {$where_sql}";
+$count_query = pg_query_params($conn, $count_sql, $params);
+$total_items = $count_query ? (int) pg_fetch_assoc($count_query)['total'] : 0;
+$total_pages = max(1, ceil($total_items / $items_per_page));
 
-$sql = "SELECT 
-            a.id_anggota,
-            a.nama,
-            a.slug,
-            a.email,
-            a.peran_lab,
-            a.aktif,
-            a.status,
-            a.urutan,
-            a.dibuat_pada,
-            m.lokasi_file as foto,
-            m.keterangan_alt as foto_alt
-        FROM anggota_lab a
-        LEFT JOIN media m ON a.id_foto = m.id_media
-        $where_sql
-        ORDER BY a.urutan ASC, a.nama ASC
-        LIMIT $items_per_page OFFSET $offset";
-
+/* ===============================
+ * Main Query
+ * =============================== */
+$sql = "
+    select
+        a.id_anggota,
+        a.nama,
+        a.slug,
+        a.email,
+        a.peran_lab,
+        a.aktif,
+        a.status,
+        a.urutan,
+        a.dibuat_pada,
+        m.lokasi_file as foto,
+        m.keterangan_alt as foto_alt
+    from anggota_lab a
+    left join media m on a.id_foto = m.id_media
+    {$where_sql}
+    order by a.urutan asc, a.nama asc
+    limit {$items_per_page} offset {$offset}
+";
 $result = pg_query_params($conn, $sql, $params);
 
-$peran_sql    = "SELECT DISTINCT peran_lab FROM anggota_lab WHERE peran_lab IS NOT NULL AND peran_lab <> '' ORDER BY peran_lab";
-$peran_result = pg_query($conn, $peran_sql);
-$peran_list   = [];
-if ($peran_result) {
-    while ($row = pg_fetch_assoc($peran_result)) {
-        $peran_list[] = $row['peran_lab'];
+/* ===============================
+ * List Peran
+ * =============================== */
+$peran_list = [];
+$peran_q    = pg_query(
+    $conn,
+    "select distinct peran_lab from anggota_lab 
+     where peran_lab is not null and peran_lab <> ''
+     order by peran_lab"
+);
+
+if ($peran_q) {
+    while ($r = pg_fetch_assoc($peran_q)) {
+        $peran_list[] = $r['peran_lab'];
     }
 }
 
@@ -89,30 +106,29 @@ include __DIR__ . '/../includes/header.php';
             <h1><i class="bi bi-people me-2"></i>Anggota Peneliti</h1>
             <p class="text-muted mb-0">Kelola data anggota dan peneliti laboratorium</p>
         </div>
-        <div>
-            <a href="<?php echo getAdminUrl('anggota/tambah.php'); ?>" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>
-                Tambah Anggota
-            </a>
-        </div>
+        <a href="<?= getAdminUrl('anggota/tambah.php'); ?>" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Tambah Anggota
+        </a>
     </div>
 </div>
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="" class="row g-3">
+        <form method="get" class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Cari Anggota</label>
-                <input type="text" name="search" class="form-control" placeholder="Nama atau email..." value="<?php echo htmlspecialchars($search); ?>">
+                <input type="text" name="search" class="form-control"
+                       placeholder="Nama atau email..."
+                       value="<?= htmlspecialchars($search); ?>">
             </div>
 
             <div class="col-md-3">
                 <label class="form-label">Peran Lab</label>
                 <select name="peran" class="form-select">
                     <option value="">Semua Peran</option>
-                    <?php foreach ($peran_list as $peran): ?>
-                        <option value="<?php echo htmlspecialchars($peran); ?>" <?php echo $filter_peran === $peran ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($peran); ?>
+                    <?php foreach ($peran_list as $p): ?>
+                        <option value="<?= htmlspecialchars($p); ?>" <?= $filter_peran === $p ? 'selected' : ''; ?>>
+                            <?= htmlspecialchars($p); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -122,16 +138,16 @@ include __DIR__ . '/../includes/header.php';
                 <label class="form-label">Status Aktif</label>
                 <select name="status" class="form-select">
                     <option value="">Semua Status</option>
-                    <option value="1" <?php echo $filter_status === '1' ? 'selected' : ''; ?>>Aktif</option>
-                    <option value="0" <?php echo $filter_status === '0' ? 'selected' : ''; ?>>Non-aktif</option>
+                    <option value="1" <?= $filter_status === '1' ? 'selected' : ''; ?>>Aktif</option>
+                    <option value="0" <?= $filter_status === '0' ? 'selected' : ''; ?>>Non-aktif</option>
                 </select>
             </div>
 
             <div class="col-md-2 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary flex-fill">
+                <button class="btn btn-primary flex-fill">
                     <i class="bi bi-search"></i> Filter
                 </button>
-                <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary">
+                <a href="<?= getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary">
                     <i class="bi bi-x-circle"></i>
                 </a>
             </div>
@@ -143,83 +159,75 @@ include __DIR__ . '/../includes/header.php';
     <div class="card-body">
 
         <div class="text-muted mb-3">
-            <?php if ($total_items > 0): ?>
-                Menampilkan <?php echo min($offset + 1, $total_items); ?> -
-                <?php echo min($offset + $items_per_page, $total_items); ?> dari
-                <?php echo $total_items; ?> anggota
+            <?php if ($total_items): ?>
+                Menampilkan <?= min($offset + 1, $total_items); ?> –
+                <?= min($offset + $items_per_page, $total_items); ?>
+                dari <?= $total_items; ?> anggota
             <?php else: ?>
                 Tidak ada data anggota
             <?php endif; ?>
         </div>
 
-        <?php if ($result && pg_num_rows($result) > 0): ?>
+        <?php if ($result && pg_num_rows($result)): ?>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>ANGGOTA</th>
-                            <th class="text-center" width="150">STATUS</th>
-                            <th class="text-center" width="200">PERAN LAB</th>
-                            <th class="text-center" width="160">DIBUAT</th>
-                            <th class="text-center" width="180">AKSI</th>
+                            <th class="text-center" width="120">PERSETUJUAN</th>
+                            <th class="text-center" width="120">KEAKTIFAN</th>
+                            <th class="text-center" width="150">PERAN LAB</th>
+                            <th class="text-center" width="140">DIBUAT</th>
+                            <th class="text-center" width="150">AKSI</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($row = pg_fetch_assoc($result)): 
-                            $foto_url = $row['foto']
-                                ? SITE_URL . '/uploads/' . $row['foto']
-                                : SITE_URL . '/assets/img/default-avatar.jpg';
+                    <?php while ($row = pg_fetch_assoc($result)): 
+                        $foto = $row['foto']
+                            ? SITE_URL . '/uploads/' . $row['foto']
+                            : SITE_URL . '/assets/img/default-avatar.jpg';
 
-                            $is_active = ($row['aktif'] === 't' || $row['aktif'] === true || $row['aktif'] == 1);
-                        ?>
+                        $aktif = ($row['aktif'] === 't' || $row['aktif'] == 1);
+                    ?>
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="me-3">
-                                        <img src="<?php echo $foto_url; ?>"
-                                             alt="<?php echo htmlspecialchars($row['nama']); ?>"
-                                             style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px;"
-                                             onerror="this.src='<?php echo SITE_URL; ?>/assets/img/default-avatar.jpg'">
-                                    </div>
+                                    <img src="<?= $foto; ?>" class="me-3"
+                                         style="width:90px;height:90px;object-fit:cover;border-radius:8px"
+                                         onerror="this.src='<?= SITE_URL ?>/assets/img/default-avatar.jpg'">
                                     <div>
-                                        <div class="fw-semibold"><?php echo htmlspecialchars($row['nama']); ?></div>
-                                        <small class="text-muted"><?php echo htmlspecialchars($row['email']); ?></small>
+                                        <div class="fw-semibold"><?= htmlspecialchars($row['nama']); ?></div>
+                                        <small class="text-muted"><?= htmlspecialchars($row['email']); ?></small>
                                     </div>
                                 </div>
                             </td>
 
                             <td class="text-center">
-                                <div class="d-flex flex-column align-items-center">
-                                    <?php
-                                    if (isset($row['status']) && $row['status'] !== '') {
-                                        echo getStatusBadge($row['status']);
-                                    }
-                                    echo getActiveBadge($is_active);
-                                    ?>
-                                </div>
+                                <?= $row['status'] ? getStatusBadge($row['status']) : '<span class="text-muted">-</span>'; ?>
+                            </td>
+
+                            <td class="text-center"><?= getActiveBadge($aktif); ?></td>
+
+                            <td class="text-center">
+                                <?= $row['peran_lab']
+                                    ? '<span class="badge bg-info text-dark px-3">'.htmlspecialchars($row['peran_lab']).'</span>'
+                                    : '<span class="text-muted">-</span>'; ?>
                             </td>
 
                             <td class="text-center">
-                                <?php if (!empty($row['peran_lab'])): ?>
-                                    <span class="badge bg-info text-dark px-3"><?php echo htmlspecialchars($row['peran_lab']); ?></span>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
+                                <small><?= formatDateTime($row['dibuat_pada'], 'd M Y, H:i'); ?></small>
                             </td>
 
                             <td class="text-center">
-                                <small><?php echo formatDateTime($row['dibuat_pada'], 'd M Y, H:i'); ?></small>
-                            </td>
-
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="<?php echo getAdminUrl('anggota/edit.php?id=' . $row['id_anggota']); ?>" class="btn btn-outline-primary">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="<?= getAdminUrl('anggota/edit.php?id='.$row['id_anggota']); ?>" class="btn btn-outline-primary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="<?php echo SITE_URL . '/public/profil-anggota-detail.php?slug=' . urlencode($row['slug']); ?>" class="btn btn-outline-secondary" target="_blank">
+                                    <a href="<?= SITE_URL.'/public/profil-anggota-detail.php?slug='.urlencode($row['slug']); ?>"
+                                       target="_blank" class="btn btn-outline-secondary">
                                         <i class="bi bi-box-arrow-up-right"></i>
                                     </a>
-                                    <a href="<?php echo getAdminUrl('anggota/hapus.php?id=' . $row['id_anggota']); ?>"
+                                    <a href="<?= getAdminUrl('anggota/hapus.php?id='.$row['id_anggota']); ?>"
                                        class="btn btn-outline-danger"
                                        onclick="return confirm('Yakin ingin menghapus anggota ini?');">
                                         <i class="bi bi-trash"></i>
@@ -227,30 +235,10 @@ include __DIR__ . '/../includes/header.php';
                                 </div>
                             </td>
                         </tr>
-                        <?php endwhile; ?>
+                    <?php endwhile; ?>
                     </tbody>
                 </table>
             </div>
-
-            <?php if ($total_pages > 1): ?>
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item <?php echo $current_page <= 1 ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $current_page - 1; ?>">&laquo;</a>
-                        </li>
-
-                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <li class="page-item <?php echo $i === $current_page ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                            </li>
-                        <?php endfor; ?>
-
-                        <li class="page-item <?php echo $current_page >= $total_pages ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $current_page + 1; ?>">&raquo;</a>
-                        </li>
-                    </ul>
-                </nav>
-            <?php endif; ?>
 
         <?php else: ?>
             <div class="text-center py-5">

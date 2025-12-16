@@ -32,12 +32,12 @@ include __DIR__ . '/../includes/header.php';
                             <div class="row justify-content-start">
                                 <div class="col-lg-7 text-start">
                                     <h1 class="display-2 text-white animated slideInRight mb-3">
-                                        Lab Teknologi Data
+                                        <span style="font-size: 70px;">Laboratorium Teknologi Data</span>
                                     </h1>
                                     <p class="lead text-white animated slideInRight mb-4" style="max-width: 500px;">
                                         Riset terapan dan pengembangan solusi berbasis data & jaringan di JTI Polinema.
                                     </p>
-                                    <a href="profil.php" class="btn btn-primary py-3 px-5 animated slideInRight">Lihat Profil Lab</a>
+                                    <a href="profil.php" style="font-size: 18px;" class="btn btn-primary py-3 px-5 animated slideInRight">Lihat Profil Lab</a>
                                 </div>
                             </div>
                         </div>
@@ -50,7 +50,7 @@ include __DIR__ . '/../includes/header.php';
 
 
 <!-- About (Profil singkat) Start -->
-<div class="container-fluid py-5 section-profile-lab">
+<div style="position: cent" class="container-fluid py-5 section-profile-lab">
     <div class="container">
         <div class="row g-5 align-items-start">
 
@@ -124,7 +124,7 @@ include __DIR__ . '/../includes/header.php';
             <div class="col-lg-6 pt-lg-5">
                 <div class="bg-white p-5 mt-lg-5">
                     <h1 class="display-6 mb-4 wow fadeIn" data-wow-delay="0.3s">
-                        Penelitian & Publikasi Ilmiah
+                       Publikasi
                     </h1>
 
                     <p class="mb-4 wow fadeIn" data-wow-delay="0.4s">

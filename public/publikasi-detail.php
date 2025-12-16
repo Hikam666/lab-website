@@ -157,7 +157,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="card mb-4">
                         <div class="card-body">
                             <h4 class="card-title mb-3">Abstrak</h4>
-                            <p class="text-justify"><?php echo nl2br(htmlspecialchars($publikasi['abstrak'])); ?></p>
+                            <p style=""; class="text-justify"><?php echo nl2br(htmlspecialchars($publikasi['abstrak'])); ?></p>
                         </div>
                     </div>
                     <?php endif; ?>
