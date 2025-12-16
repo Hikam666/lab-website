@@ -33,7 +33,7 @@ $sql = "SELECT
             COUNT(gi.id_item) as jumlah_foto
         FROM galeri_album ga
         LEFT JOIN media m ON ga.id_cover = m.id_media
-        LEFT JOIN galeri_item gi ON ga.id_album = gi.id_album
+        LEFT JOIN galeri_item gi ON ga.id_album = gi.id_album AND gi.status = 'disetujui' 
         WHERE ga.status = 'disetujui'
         GROUP BY ga.id_album, m.lokasi_file, m.keterangan_alt
         ORDER BY ga.dibuat_pada DESC
