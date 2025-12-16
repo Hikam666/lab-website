@@ -149,37 +149,37 @@ include __DIR__ . '/../includes/header.php';
 
             <?php 
             if ($result && pg_num_rows($result) > 0):
-                $kepala_lab = null;
+                $ketua_lab = null;
                 $anggota_list = [];
                 
                 while ($row = pg_fetch_assoc($result)) {
-                    if (stripos($row['peran_lab'], 'kepala') !== false) {
-                        $kepala_lab = $row;
+                    if (stripos($row['peran_lab'], 'ketua') !== false) {
+                        $ketua_lab = $row;
                     } else {
                         $anggota_list[] = $row;
                     }
                 }
                 
                 // Display Kepala Lab if exists
-                if ($kepala_lab):
-                    $image_src = $kepala_lab['foto'] ? SITE_URL . '/uploads/' . $kepala_lab['foto'] : SITE_URL . '/assets/img/default-avatar.jpg';
+                if ($ketua_lab):
+                    $image_src = $ketua_lab['foto'] ? SITE_URL . '/uploads/' . $ketua_lab['foto'] : SITE_URL . '/assets/img/default-avatar.jpg';
             ?>
             <!-- Kepala Lab - Center Top -->
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="profile-page-team-card profile-page-team-head" style="cursor: pointer;" onclick="window.location.href='profil-anggota-detail.php?slug=<?php echo $kepala_lab['slug']; ?>'">
+                    <div class="profile-page-team-card profile-page-team-head" style="cursor: pointer;" onclick="window.location.href='profil-anggota-detail.php?slug=<?php echo $ketua_lab['slug']; ?>'">
                         <div class="profile-page-team-img">
                             <img src="<?php echo $image_src; ?>" class="img-fluid" alt="Kepala Lab">
                             <div class="profile-page-team-social" onclick="event.stopPropagation();">
-                                <?php if (!empty($kepala_lab['linkedin'])): ?> 
-                                <a href="<?php echo htmlspecialchars($kepala_lab['linkedin']); ?>" 
+                                <?php if (!empty($ketua_lab['linkedin'])): ?> 
+                                <a href="<?php echo htmlspecialchars($ketua_lab['linkedin']); ?>" 
                                 target="_blank" title="LinkedIn" rel="noopener noreferrer">
                                     <i class="fab fa-linkedin-in"></i>
                                 </a>
                                 <?php endif; ?>
                                 
-                                <?php if (!empty($kepala_lab['email'])): ?>
-                                <a href="mailto:<?php echo htmlspecialchars($kepala_lab['email']); ?>" 
+                                <?php if (!empty($ketua_lab['email'])): ?>
+                                <a href="mailto:<?php echo htmlspecialchars($ketua_lab['email']); ?>" 
                                 title="Email">
                                     <i class="fas fa-envelope"></i>
                                 </a>
@@ -187,10 +187,10 @@ include __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                         <div class="profile-page-team-content">
-                            <h5><?php echo htmlspecialchars($kepala_lab['nama']); ?></h5>
-                            <span class="profile-page-team-position kepala-lab"><?php echo htmlspecialchars($kepala_lab['peran_lab']); ?></span>
-                            <?php if ($kepala_lab['keahlian']): ?>
-                            <p class="profile-page-team-expertise"><?php echo truncateText($kepala_lab['keahlian'], 80); ?></p>
+                            <h5><?php echo htmlspecialchars($ketua_lab['nama']); ?></h5>
+                            <span class="profile-page-team-position kepala-lab"><?php echo htmlspecialchars($ketua_lab['peran_lab']); ?></span>
+                            <?php if ($ketua_lab['keahlian']): ?>
+                            <p class="profile-page-team-expertise"><?php echo truncateText($ketua_lab['keahlian'], 80); ?></p>
                             <?php endif; ?>
                             <div class="mt-2">
                                 <small class="text-primary"><i class="bi bi-arrow-right-circle me-1"></i>Lihat Profil Lengkap</small>

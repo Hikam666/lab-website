@@ -18,10 +18,21 @@ if ($id_anggota <= 0) {
     exit;
 }
 
+// =========================================================
+// CEK KEBERADAAN KETUA LAB LAIN YANG AKTIF
+// Pengecekan ini mengecualikan anggota yang sedang di-edit ($id_anggota)
+// =========================================================
+$sql_check_ketua = "SELECT id_anggota FROM anggota_lab 
+                    WHERE peran_lab = $1 AND aktif = TRUE AND status = 'disetujui' AND id_anggota != $2";
+$check_ketua = pg_query_params($conn, $sql_check_ketua, ['Ketua Lab', $id_anggota]);
+$ketua_lab_exists = ($check_ketua && pg_num_rows($check_ketua) > 0);
+// =========================================================
+
+
 // Ambil data anggota dari database
 $sql = "SELECT a.*, 
-              m.lokasi_file AS foto, 
-              m.id_media AS id_foto_current
+             m.lokasi_file AS foto, 
+             m.id_media AS id_foto_current
         FROM anggota_lab a
         LEFT JOIN media m ON a.id_foto = m.id_media
         WHERE a.id_anggota = $1";
@@ -111,6 +122,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Email sudah digunakan anggota lain";
         }
     }
+    
+    // =========================================================
+    // VALIDASI PERAN LAB (BARU)
+    // =========================================================
+    $allowed_roles = ['Anggota Lab', 'Ketua Lab'];
+    
+    if (!in_array($peran_lab, $allowed_roles)) {
+        $errors[] = "Peran Lab tidak valid.";
+    } elseif ($peran_lab === 'Ketua Lab' && $ketua_lab_exists) {
+        // Jika form mengirim 'Ketua Lab' dan sudah ada Ketua Lab lain yang aktif, tolak.
+        $errors[] = "Tidak dapat mengubah peran menjadi 'Ketua Lab' karena sudah ada Ketua Lab lain yang aktif di sistem.";
+    }
+    // =========================================================
+
 
     // Validasi URL (opsional)
     if (!empty($linkedin) && !filter_var($linkedin, FILTER_VALIDATE_URL)) {
@@ -249,26 +274,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // === anggota_lab (update data) ===
             $sql_update = "UPDATE anggota_lab SET 
-                    nama = $1,
-                    slug = $2,
-                    email = $3,
-                    nip = $4,
-                    nidn = $5,
-                    program_studi = $6,
-                    jabatan = $7,
-                    alamat_kantor = $8,
-                    linkedin = $9,
-                    website = $10,
-                    google_scholar = $11,
-                    sinta = $12,
-                    peran_lab = $13,
-                    keahlian = $14,
-                    id_foto = $15,
-                    cv_file = $16,
-                    aktif = $17,
-                    status = $18,
-                    diperbarui_pada = NOW()
-                WHERE id_anggota = $19";
+                     nama = $1,
+                     slug = $2,
+                     email = $3,
+                     nip = $4,
+                     nidn = $5,
+                     program_studi = $6,
+                     jabatan = $7,
+                     alamat_kantor = $8,
+                     linkedin = $9,
+                     website = $10,
+                     google_scholar = $11,
+                     sinta = $12,
+                     peran_lab = $13,
+                     keahlian = $14,
+                     id_foto = $15,
+                     cv_file = $16,
+                     aktif = $17,
+                     status = $18,
+                     diperbarui_pada = NOW()
+                   WHERE id_anggota = $19";
 
             $result_update = pg_query_params($conn, $sql_update, [
                 $nama,
@@ -343,8 +368,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($_POST['matakuliah_ganjil'] as $idx => $mk) {
                     if (!empty($mk)) {
                         $sql_mk = "INSERT INTO anggota_matakuliah 
-                                     (id_anggota, nama_matakuliah, semester, urutan) 
-                                   VALUES ($1, $2, 'ganjil', $3)";
+                                         (id_anggota, nama_matakuliah, semester, urutan) 
+                                       VALUES ($1, $2, 'ganjil', $3)";
                         pg_query_params($conn, $sql_mk, [$id_anggota, $mk, $idx]);
                     }
                 }
@@ -354,8 +379,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($_POST['matakuliah_genap'] as $idx => $mk) {
                     if (!empty($mk)) {
                         $sql_mk = "INSERT INTO anggota_matakuliah 
-                                     (id_anggota, nama_matakuliah, semester, urutan) 
-                                   VALUES ($1, $2, 'genap', $3)";
+                                         (id_anggota, nama_matakuliah, semester, urutan) 
+                                       VALUES ($1, $2, 'genap', $3)";
                         pg_query_params($conn, $sql_mk, [$id_anggota, $mk, $idx]);
                     }
                 }
@@ -441,12 +466,12 @@ include __DIR__ . '/../includes/header.php';
                         <div class="col-md-6 mb-3">
                             <label for="nip" class="form-label">NIP</label>
                             <input type="text" class="form-control" id="nip" name="nip"
-                                       value="<?php echo htmlspecialchars($anggota['nip'] ?? ''); ?>" maxlength="50">
+                                     value="<?php echo htmlspecialchars($anggota['nip'] ?? ''); ?>" maxlength="50">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="nidn" class="form-label">NIDN</label>
                             <input type="text" class="form-control" id="nidn" name="nidn"
-                                       value="<?php echo htmlspecialchars($anggota['nidn'] ?? ''); ?>" maxlength="20">
+                                     value="<?php echo htmlspecialchars($anggota['nidn'] ?? ''); ?>" maxlength="20">
                         </div>
                     </div>
 
@@ -466,9 +491,28 @@ include __DIR__ . '/../includes/header.php';
 
                     <div class="mb-3">
                         <label for="peran_lab" class="form-label">Peran Lab</label>
-                        <input type="text" class="form-control" id="peran_lab" name="peran_lab"
-                               value="<?php echo htmlspecialchars($anggota['peran_lab'] ?? ''); ?>">
+                        <select class="form-select" id="peran_lab" name="peran_lab">
+                            <?php $current_peran = $anggota['peran_lab'] ?? 'Anggota Lab'; ?>
+                            
+                            <option value="Anggota Lab" 
+                                <?php echo ($current_peran === 'Anggota Lab') ? 'selected' : ''; ?>>
+                                Anggota Lab
+                            </option>
+                            
+                            <option value="Ketua Lab" 
+                                <?php echo ($current_peran === 'Ketua Lab') ? 'selected' : ''; ?>
+                                <?php echo ($ketua_lab_exists && $current_peran !== 'Ketua Lab') ? 'disabled' : ''; ?>>
+                                Ketua Lab
+                                <?php echo ($ketua_lab_exists && $current_peran !== 'Ketua Lab') ? ' (Sudah Terisi)' : ''; ?>
+                            </option>
+                        </select>
+                        <?php if ($ketua_lab_exists && $current_peran !== 'Ketua Lab'): ?>
+                            <div class="form-text text-danger">Ketua Lab sudah terisi dan aktif oleh anggota lain.</div>
+                        <?php elseif ($current_peran === 'Ketua Lab'): ?>
+                            <div class="form-text text-info">Anggota ini saat ini menjabat sebagai Ketua Lab.</div>
+                        <?php endif; ?>
                     </div>
+
 
                     <div class="mb-3">
                         <label for="alamat_kantor" class="form-label">Alamat Kantor</label>
@@ -541,32 +585,32 @@ include __DIR__ . '/../includes/header.php';
                                 <div class="row">
                                     <div class="col-md-3 mb-2">
                                         <input type="text" class="form-control"
-                                               name="pendidikan[0][jenjang]"
-                                               placeholder="Jenjang (S2, S1, D4)" maxlength="50">
+                                             name="pendidikan[0][jenjang]"
+                                             placeholder="Jenjang (S2, S1, D4)" maxlength="50">
                                     </div>
                                     <div class="col-md-5 mb-2">
                                         <input type="text" class="form-control"
-                                               name="pendidikan[0][institusi]"
-                                               placeholder="Nama Institusi" maxlength="200">
+                                             name="pendidikan[0][institusi]"
+                                             placeholder="Nama Institusi" maxlength="200">
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <input type="text" class="form-control"
-                                               name="pendidikan[0][jurusan]"
-                                               placeholder="Jurusan" maxlength="150">
+                                             name="pendidikan[0][jurusan]"
+                                             placeholder="Jurusan" maxlength="150">
                                     </div>
                                     <div class="col-md-3 mb-2">
                                         <input type="text" class="form-control"
-                                               name="pendidikan[0][tahun_mulai]"
-                                               placeholder="Tahun Mulai" maxlength="20">
+                                             name="pendidikan[0][tahun_mulai]"
+                                             placeholder="Tahun Mulai" maxlength="20">
                                     </div>
                                     <div class="col-md-3 mb-2">
                                         <input type="text" class="form-control"
-                                               name="pendidikan[0][tahun_selesai]"
-                                               placeholder="Tahun Selesai" maxlength="20">
+                                             name="pendidikan[0][tahun_selesai]"
+                                             placeholder="Tahun Selesai" maxlength="20">
                                     </div>
                                     <div class="col-md-6 mb-2 text-end">
                                         <button type="button" class="btn btn-sm btn-danger"
-                                                onclick="removePendidikan(this)">
+                                                 onclick="removePendidikan(this)">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -578,37 +622,37 @@ include __DIR__ . '/../includes/header.php';
                                     <div class="row">
                                         <div class="col-md-3 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="pendidikan[<?php echo $idx; ?>][jenjang]"
-                                                   value="<?php echo htmlspecialchars($pend['jenjang']); ?>"
-                                                   placeholder="Jenjang" maxlength="50">
+                                                     name="pendidikan[<?php echo $idx; ?>][jenjang]"
+                                                     value="<?php echo htmlspecialchars($pend['jenjang']); ?>"
+                                                     placeholder="Jenjang" maxlength="50">
                                         </div>
                                         <div class="col-md-5 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="pendidikan[<?php echo $idx; ?>][institusi]"
-                                                   value="<?php echo htmlspecialchars($pend['institusi']); ?>"
-                                                   placeholder="Institusi" maxlength="200">
+                                                     name="pendidikan[<?php echo $idx; ?>][institusi]"
+                                                     value="<?php echo htmlspecialchars($pend['institusi']); ?>"
+                                                     placeholder="Institusi" maxlength="200">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="pendidikan[<?php echo $idx; ?>][jurusan]"
-                                                   value="<?php echo htmlspecialchars($pend['jurusan'] ?? ''); ?>"
-                                                   placeholder="Jurusan" maxlength="150">
+                                                     name="pendidikan[<?php echo $idx; ?>][jurusan]"
+                                                     value="<?php echo htmlspecialchars($pend['jurusan'] ?? ''); ?>"
+                                                     placeholder="Jurusan" maxlength="150">
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="pendidikan[<?php echo $idx; ?>][tahun_mulai]"
-                                                   value="<?php echo htmlspecialchars($pend['tahun_mulai'] ?? ''); ?>"
-                                                   placeholder="Tahun Mulai" maxlength="20">
+                                                     name="pendidikan[<?php echo $idx; ?>][tahun_mulai]"
+                                                     value="<?php echo htmlspecialchars($pend['tahun_mulai'] ?? ''); ?>"
+                                                     placeholder="Tahun Mulai" maxlength="20">
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="pendidikan[<?php echo $idx; ?>][tahun_selesai]"
-                                                   value="<?php echo htmlspecialchars($pend['tahun_selesai'] ?? ''); ?>"
-                                                   placeholder="Tahun Selesai" maxlength="20">
+                                                     name="pendidikan[<?php echo $idx; ?>][tahun_selesai]"
+                                                     value="<?php echo htmlspecialchars($pend['tahun_selesai'] ?? ''); ?>"
+                                                     placeholder="Tahun Selesai" maxlength="20">
                                         </div>
                                         <div class="col-md-6 mb-2 text-end">
                                             <button type="button" class="btn btn-sm btn-danger"
-                                                    onclick="removePendidikan(this)">
+                                                     onclick="removePendidikan(this)">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -634,22 +678,22 @@ include __DIR__ . '/../includes/header.php';
                                 <div class="row">
                                     <div class="col-md-5 mb-2">
                                         <input type="text" class="form-control"
-                                               name="sertifikasi[0][nama_sertifikasi]"
-                                               placeholder="Nama Sertifikasi" maxlength="200">
+                                             name="sertifikasi[0][nama_sertifikasi]"
+                                             placeholder="Nama Sertifikasi" maxlength="200">
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <input type="text" class="form-control"
-                                               name="sertifikasi[0][penerbit]"
-                                               placeholder="Penerbit" maxlength="150">
+                                             name="sertifikasi[0][penerbit]"
+                                             placeholder="Penerbit" maxlength="150">
                                     </div>
                                     <div class="col-md-2 mb-2">
                                         <input type="text" class="form-control"
-                                               name="sertifikasi[0][tahun]"
-                                               placeholder="Tahun" maxlength="20">
+                                             name="sertifikasi[0][tahun]"
+                                             placeholder="Tahun" maxlength="20">
                                     </div>
                                     <div class="col-md-1 mb-2 text-end">
                                         <button type="button" class="btn btn-sm btn-danger"
-                                                onclick="removeSertifikasi(this)">
+                                                 onclick="removeSertifikasi(this)">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -661,25 +705,25 @@ include __DIR__ . '/../includes/header.php';
                                     <div class="row">
                                         <div class="col-md-5 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="sertifikasi[<?php echo $idx; ?>][nama_sertifikasi]"
-                                                   value="<?php echo htmlspecialchars($sert['nama_sertifikasi']); ?>"
-                                                   placeholder="Nama Sertifikasi" maxlength="200">
+                                                     name="sertifikasi[<?php echo $idx; ?>][nama_sertifikasi]"
+                                                     value="<?php echo htmlspecialchars($sert['nama_sertifikasi']); ?>"
+                                                     placeholder="Nama Sertifikasi" maxlength="200">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="sertifikasi[<?php echo $idx; ?>][penerbit]"
-                                                   value="<?php echo htmlspecialchars($sert['penerbit'] ?? ''); ?>"
-                                                   placeholder="Penerbit" maxlength="150">
+                                                     name="sertifikasi[<?php echo $idx; ?>][penerbit]"
+                                                     value="<?php echo htmlspecialchars($sert['penerbit'] ?? ''); ?>"
+                                                     placeholder="Penerbit" maxlength="150">
                                         </div>
                                         <div class="col-md-2 mb-2">
                                             <input type="text" class="form-control"
-                                                   name="sertifikasi[<?php echo $idx; ?>][tahun]"
-                                                   value="<?php echo htmlspecialchars($sert['tahun'] ?? ''); ?>"
-                                                   placeholder="Tahun" maxlength="20">
+                                                     name="sertifikasi[<?php echo $idx; ?>][tahun]"
+                                                     value="<?php echo htmlspecialchars($sert['tahun'] ?? ''); ?>"
+                                                     placeholder="Tahun" maxlength="20">
                                         </div>
                                         <div class="col-md-1 mb-2 text-end">
                                             <button type="button" class="btn btn-sm btn-danger"
-                                                    onclick="removeSertifikasi(this)">
+                                                     onclick="removeSertifikasi(this)">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -708,18 +752,18 @@ include __DIR__ . '/../includes/header.php';
                                 <?php if (empty($matakuliah_ganjil)): ?>
                                     <div class="mb-2">
                                         <input type="text" class="form-control"
-                                               name="matakuliah_ganjil[0]"
-                                               placeholder="Nama Mata Kuliah" maxlength="200">
+                                             name="matakuliah_ganjil[0]"
+                                             placeholder="Nama Mata Kuliah" maxlength="200">
                                     </div>
                                 <?php else: ?>
                                     <?php foreach ($matakuliah_ganjil as $idx => $mk): ?>
                                         <div class="mb-2 input-group">
                                             <input type="text" class="form-control"
-                                                   name="matakuliah_ganjil[<?php echo $idx; ?>]"
-                                                   value="<?php echo htmlspecialchars($mk['nama_matakuliah']); ?>"
-                                                   placeholder="Nama Mata Kuliah" maxlength="200">
+                                                     name="matakuliah_ganjil[<?php echo $idx; ?>]"
+                                                     value="<?php echo htmlspecialchars($mk['nama_matakuliah']); ?>"
+                                                     placeholder="Nama Mata Kuliah" maxlength="200">
                                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="this.parentElement.remove()">
+                                                     onclick="this.parentElement.remove()">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -739,18 +783,18 @@ include __DIR__ . '/../includes/header.php';
                                 <?php if (empty($matakuliah_genap)): ?>
                                     <div class="mb-2">
                                         <input type="text" class="form-control"
-                                               name="matakuliah_genap[0]"
-                                               placeholder="Nama Mata Kuliah" maxlength="200">
+                                             name="matakuliah_genap[0]"
+                                             placeholder="Nama Mata Kuliah" maxlength="200">
                                     </div>
                                 <?php else: ?>
                                     <?php foreach ($matakuliah_genap as $idx => $mk): ?>
                                         <div class="mb-2 input-group">
                                             <input type="text" class="form-control"
-                                                   name="matakuliah_genap[<?php echo $idx; ?>]"
-                                                   value="<?php echo htmlspecialchars($mk['nama_matakuliah']); ?>"
-                                                   placeholder="Nama Mata Kuliah" maxlength="200">
+                                                     name="matakuliah_genap[<?php echo $idx; ?>]"
+                                                     value="<?php echo htmlspecialchars($mk['nama_matakuliah']); ?>"
+                                                     placeholder="Nama Mata Kuliah" maxlength="200">
                                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="this.parentElement.remove()">
+                                                     onclick="this.parentElement.remove()">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -801,7 +845,7 @@ include __DIR__ . '/../includes/header.php';
                         </div>
                     <?php endif; ?>
                     <input type="file" class="form-control" id="cv_file" name="cv_file"
-                           accept=".pdf,.doc,.docx">
+                            accept=".pdf,.doc,.docx">
                     <div class="form-text">Format: PDF, DOC, DOCX. Upload untuk mengganti CV. Max 5MB</div>
                 </div>
             </div>
@@ -815,30 +859,30 @@ include __DIR__ . '/../includes/header.php';
                 box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                 background-color: #ffffff;">
                              
-            <div class="card-body py-2 px-4">                
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                    
-                    <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                         
-                        <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                            
-                        <div class="form-check form-switch mt-1">
-                            <input class="form-check-input" type="checkbox" id="aktif" name="aktif" 
-                                <?php echo ($anggota['aktif'] == 't' || $anggota['aktif'] === null) ? 'checked' : ''; ?> 
-                                style="transform: scale(1.15);">
-                            <label class="form-check-label ms-2 small" for="aktif"> Aktif (tampil di website)
-                             </label>
+                <div class="card-body py-2 px-4">                
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">                    
+                        <div style="flex-grow: 1; max-width: 55%; padding-right: 15px;">                         
+                            <p class="mb-0 text-muted small text-uppercase" style="font-weight: 600;">STATUS</p>                            
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input" type="checkbox" id="aktif" name="aktif" 
+                                    <?php echo ($anggota['aktif'] == 't' || $anggota['aktif'] === null) ? 'checked' : ''; ?> 
+                                    style="transform: scale(1.15);">
+                                <label class="form-check-label ms-2 small" for="aktif"> Aktif (tampil di website)
+                                 </label>
+                            </div>
                         </div>
-                    </div>
-                    <div style="min-width: 170px;"> 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="bi bi-save me-1"></i>Simpan
-                            </button>
-                            <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary btn-sm">
-                                <i class="bi bi-x-circle me-1"></i>Batal
-                            </a>
+                        <div style="min-width: 170px;"> 
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>Simpan
+                                </button>
+                                <a href="<?php echo getAdminUrl('anggota/index.php'); ?>" class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-x-circle me-1"></i>Batal
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
             </div>
         </div>
     </div>
@@ -878,32 +922,32 @@ function addPendidikan() {
             <div class="row">
                 <div class="col-md-3 mb-2">
                     <input type="text" class="form-control"
-                           name="pendidikan[${pendidikanCount}][jenjang]"
-                           placeholder="Jenjang (S2, S1)" maxlength="50">
+                            name="pendidikan[${pendidikanCount}][jenjang]"
+                            placeholder="Jenjang (S2, S1)" maxlength="50">
                 </div>
                 <div class="col-md-5 mb-2">
                     <input type="text" class="form-control"
-                           name="pendidikan[${pendidikanCount}][institusi]"
-                           placeholder="Institusi" maxlength="200">
+                            name="pendidikan[${pendidikanCount}][institusi]"
+                            placeholder="Institusi" maxlength="200">
                 </div>
                 <div class="col-md-4 mb-2">
                     <input type="text" class="form-control"
-                           name="pendidikan[${pendidikanCount}][jurusan]"
-                           placeholder="Jurusan" maxlength="150">
+                            name="pendidikan[${pendidikanCount}][jurusan]"
+                            placeholder="Jurusan" maxlength="150">
                 </div>
                 <div class="col-md-3 mb-2">
                     <input type="text" class="form-control"
-                           name="pendidikan[${pendidikanCount}][tahun_mulai]"
-                           placeholder="Tahun Mulai" maxlength="20">
+                            name="pendidikan[${pendidikanCount}][tahun_mulai]"
+                            placeholder="Tahun Mulai" maxlength="20">
                 </div>
                 <div class="col-md-3 mb-2">
                     <input type="text" class="form-control"
-                           name="pendidikan[${pendidikanCount}][tahun_selesai]"
-                           placeholder="Tahun Selesai" maxlength="20">
+                            name="pendidikan[${pendidikanCount}][tahun_selesai]"
+                            placeholder="Tahun Selesai" maxlength="20">
                 </div>
                 <div class="col-md-6 mb-2 text-end">
                     <button type="button" class="btn btn-sm btn-danger"
-                            onclick="removePendidikan(this)">
+                             onclick="removePendidikan(this)">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -925,22 +969,22 @@ function addSertifikasi() {
             <div class="row">
                 <div class="col-md-5 mb-2">
                     <input type="text" class="form-control"
-                           name="sertifikasi[${sertifikasiCount}][nama_sertifikasi]"
-                           placeholder="Nama Sertifikasi" maxlength="200">
+                            name="sertifikasi[${sertifikasiCount}][nama_sertifikasi]"
+                            placeholder="Nama Sertifikasi" maxlength="200">
                 </div>
                 <div class="col-md-4 mb-2">
                     <input type="text" class="form-control"
-                           name="sertifikasi[${sertifikasiCount}][penerbit]"
-                           placeholder="Penerbit" maxlength="150">
+                            name="sertifikasi[${sertifikasiCount}][penerbit]"
+                            placeholder="Penerbit" maxlength="150">
                 </div>
                 <div class="col-md-2 mb-2">
                     <input type="text" class="form-control"
-                           name="sertifikasi[${sertifikasiCount}][tahun]"
-                           placeholder="Tahun" maxlength="20">
+                            name="sertifikasi[${sertifikasiCount}][tahun]"
+                            placeholder="Tahun" maxlength="20">
                 </div>
                 <div class="col-md-1 mb-2 text-end">
                     <button type="button" class="btn btn-sm btn-danger"
-                            onclick="removeSertifikasi(this)">
+                             onclick="removeSertifikasi(this)">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -963,10 +1007,10 @@ function addMatakuliah(semester) {
     const html = `
         <div class="mb-2 input-group">
             <input type="text" class="form-control"
-                   name="matakuliah_${semester}[${count}]"
-                   placeholder="Nama Mata Kuliah" maxlength="200">
+                    name="matakuliah_${semester}[${count}]"
+                    placeholder="Nama Mata Kuliah" maxlength="200">
             <button type="button" class="btn btn-sm btn-outline-danger"
-                    onclick="this.parentElement.remove()">
+                     onclick="this.parentElement.remove()">
                 <i class="bi bi-trash"></i>
             </button>
         </div>
